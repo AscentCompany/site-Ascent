@@ -1,56 +1,218 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="/site/css/home.css">
+    <title>Ascent</title>
+    <link rel="stylesheet" href="css/home.css">
 </head>
 <body>
+    <!-- navbar -->
     <header>
         <div class="navbar1">
-            <img class="logo_navbar" src="/icons/logo.png" alt="" >
-            <div>início</div>
-            <div>Como funciona</div>
-            <div>Sobre nós</div>
-            <div>FAQ</div>
+            <img class="logo_navbar" src="../icons/logo.png" alt="Logo Ascent">
+            <nav class="nav_links" id="navLinks">
+                <div>início</div>
+                <div>Como funciona</div>
+                <div>Sobre nós</div>
+                <div>FAQ</div>
+                <div class="navbar2_mobile">
+                    <button class="login">LOGIN</button>
+                    <button class="cadastro">CADASTRO</button>
+                </div>
+            </nav>
         </div>
         <div class="navbar2">
             <button class="login">LOGIN</button>
             <button class="cadastro">CADASTRO</button>
         </div>
+        <button class="menu_toggle" id="menuToggle" aria-label="Abrir menu" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </header>
 
-    <div class="primeira_tela">
-        <img class="img_fundo" src="/imgs/fundo.png" alt="">
-    </div>
+    <!-- imagem fundo com logo -->
+    <section class="primeira_tela">
+        <img class="img_fundo" src="../imgs/fundo.png" alt="Ascent">
+    </section>
 
-    <div class="segunda_tela">
+    <!-- transforme dados em decisões -->
+    <section class="segunda_tela">
+
         <div class="texto_tela2">
-            Transforme dados em decisões.<br>
-            Antecipe ademanda antes que ela se<br>
-            torne um problema.
+            Transforme dados em decisões. Antecipe a demanda antes que ela se torne um problema.
         </div>
-        <br>
+
         <div class="cards_tela2">
             <div class="card1">
-                <img class="icon_card" src="/icons/1.png" alt="">
-                <br>
-                Visualize o histórico de ocupação e o comportamento dos passageiros em diferentes rotas.
+                <img class="icon_card" src="../icons/1.png" alt="">
+                <p>Visualize o histórico de ocupação e o comportamento dos passageiros em diferentes rotas.</p>
             </div>
 
             <div class="card2">
-                <img class="icon_card" src="/icons/2.png" alt="">
-                <br>
-                Encontre rotas com baixa ocupação ou períodos em que a procura por assentos aumenta.
+                <img class="icon_card" src="../icons/2.png" alt="">
+                <p>Encontre rotas com baixa ocupação ou períodos em que a procura por assentos aumenta.</p>
             </div>
 
-            <div class="card3"> 
-                <img class="icon_card" src="/icons/3.png" alt="">
-                <br>
-                Use os padrões identificados para tomar decisões antes dos períodos de alta ou baixa demanda.
+            <div class="card3">
+                <img class="icon_card" src="../icons/3.png" alt="">
+                <p>Use os padrões identificados para tomar decisões antes dos períodos de alta ou baixa demanda.</p>
             </div>
         </div>
-    </div>
+
+    </section>
+
+    <!-- Previna sua empresa -->
+    <section class="terceira_tela">
+
+        <h2 class="subtitulo_tela3">Previna sua empresa</h2>
+
+        <h1 class="pergunta_tela3">Sua operação está preparada para a próxima mudança de demanda?</h1>
+
+        <p class="texto_tela3">
+            A demanda por voos muda constantemente. Em alguns períodos, aeronaves podem operar com muitos assentos vazios.
+            Em outros, a procura pode superar a quantidade de assentos disponíveis.
+            Sem uma visão clara do histórico, decisões sobre rotas, frequência de voos e capacidade podem ser tomadas de forma reativa.
+        </p>
+
+        <div class="linha"></div>
+
+        <div class="cards_tela3">
+            <div class="card_baixaDemanda">
+                <h1 class="titulo_card">Baixa demanda</h1>
+
+                <p class="texto_card">
+                    Aeronaves subutilizadas, desperdício de recursos e prejuízo.
+                </p>
+
+            </div>
+
+            <div class="card_altaDemanda">
+                <h1 class="titulo_card">Alta demanda</h1>
+
+                <p class="texto_card">
+                    Falta de assentos, perda de passageiros e oportunidades de receita.
+                </p>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Para quem é a Ascent? -->
+    <section class="quarta_tela">
+        <h1 class="titulo_tela4">Para quem é a Ascent?</h1>
+        <h2 class="subtitulo_tela4">Uma plataforma para quem precisa planejar melhor.</h2>
+
+        <div class="cards_tela4">
+            <div class="card1_tela4">
+                <h1 class="titulo_card_tela4">Planejamento de Rotas e Operações</h1>
+                <p class="texto_card_tela4">
+                    Analise o histórico de ocupação para apoiar decisões sobre rotas, horários, frequência de voos e capacidade das aeronaves.
+                </p>
+            </div>
+
+            <div class="card2_tela4">
+                <h1 class="titulo_card_tela4">Gestão de Rentabilidade e Preços</h1>
+                <p class="texto_card_tela4">
+                    Identifique oportunidades para melhorar a ocupação e aumentar o potencial de receita das operações.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Por que escolher a Ascent? -->
+    <section class="quinta_tela">
+        <h1 class="titulo_tela5">Por que escolher a Ascent?</h1>
+
+        <div class="cards_tela5">
+            <div class="card1_tela5">
+                <img class="img_tela5" src="../icons/2.png" alt="">
+                <div class="textos_tela5">
+                    <h1 class="titulo_card_tela5">Otimize a capacidade</h1>
+                    <p class="texto_card_tela5">
+                        Tenha uma visão clara do comportamento das rotas e da ocupação dos voos.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card2_tela5">
+                <img class="img_tela5" src="../icons/1.png" alt="">
+                <div class="textos_tela5">
+                    <h1 class="titulo_card_tela5">Reduza desperdícios</h1>
+                    <p class="texto_card_tela5">
+                        Evite operações com baixa ocupação e utilize os recursos da companhia de maneira mais eficiente.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card3_tela5">
+                <img class="img_tela5" src="../icons/6.png" alt="">
+                <div class="textos_tela5">
+                    <h1 class="titulo_card_tela5">Antecipe períodos críticos</h1>
+                    <p class="texto_card_tela5">
+                        Identifique padrões de alta e baixa demanda antes que eles impactem a operação.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Sobre nós -->
+    <section class="setima_tela" id="sobre-nos">
+        <h1 class="titulo_sobre">Sobre nós</h1>
+        <p class="texto_sobre">
+            A Ascent nasceu para transformar grandes volumes de dados do setor aéreo em informações simples, visuais e úteis para a tomada de decisões.
+            Nossa plataforma utiliza dados históricos de fluxo de passageiros e ocupação para auxiliar equipes de planejamento e rentabilidade na identificação de padrões, oportunidades e possíveis gargalos.
+            Mais dados. Mais previsibilidade. Melhores decisões.
+        </p>
+    </section>
+
+    <!-- Galeria de imagens -->
+    <section class="sexta_tela">
+        <div class="galeria_grid">
+            <div class="galeria_item item_grande">
+                <img src="../imgs/3.jpg" alt="Avião voando acima das nuvens">
+            </div>
+            <div class="galeria_item">
+                <img src="../imgs/1.jpg" alt="Cabine do avião">
+            </div>
+            <div class="galeria_item">
+                <img src="../imgs/2.jpg" alt="Avião decolando">
+            </div>
+            <div class="galeria_item item_texto">
+                <p>Antecipe a demanda. Planeje melhor.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="newsletter">
+            <p class="newsletter_texto">Fique por dentro das <strong>novidades</strong> da Ascent</p>
+            <div class="newsletter_form">
+                <input type="email" class="newsletter_input" placeholder="Seu melhor Email">
+                <button class="newsletter_botao">Quero ficar por dentro</button>
+            </div>
+        </div>
+
+        <div class="footer_bottom">
+            <div class="footer_logo"><img src="/icons/logo2.png" alt=""></div>
+            <div class="footer_linha"></div>
+            <p class="footer_texto">Projeto desenvolvido para fins educacionais por alunos da SPTECH</p>
+        </div>
+    </footer>
 </body>
 </html>
+<script>
+        const menuToggle = document.getElementById('menuToggle');
+        const navLinks = document.getElementById('navLinks');
+
+        menuToggle.addEventListener('click', () => {
+            const isOpen = navLinks.classList.toggle('open');
+            menuToggle.classList.toggle('active');
+            menuToggle.setAttribute('aria-expanded', isOpen);
+        });
+    </script>
