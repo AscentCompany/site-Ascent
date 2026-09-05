@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascent | Login</title>
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+  <header>
+    <div class="navbar1">
+      <a href="index.html"><img class="logo_navbar" src="assets/icon/logo.png" alt="Logo Ascent"></a>
+      <nav class="nav_links" id="navLinks">
+        <div onclick="window.location.href='index.html'">Início</div>
+        <div onclick="window.location.href='index.html#como-funciona'">Como funciona</div>
+        <div onclick="window.location.href='index.html#sobre-nos'">Sobre nós</div>
+        <div onclick="window.location.href='index.html#faq'">FAQ</div>
+        <div class="navbar2_mobile">
+          <button class="login" onclick="window.location.href='login.html'">LOGIN</button>
+          <button class="cadastro" onclick="window.location.href='cadastro.html'">CADASTRO</button>
+        </div>
+      </nav>
+    </div>
+    <div class="navbar2">
+      <button class="login" onclick="window.location.href='login.html'">LOGIN</button>
+      <button class="cadastro" onclick="window.location.href='cadastro.html'">CADASTRO</button>
+    </div>
+    <button class="menu_toggle" id="menuToggle" aria-label="Abrir menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </header>
+
+  <main class="container-login">
+    <div class="cartao-login">
+
+      <section class="painel-formulario">
+        <h1 class="titulo-boas-vindas">Bem-vindo de volta</h1>
+        <p class="subtitulo-formulario">
+          Acesse sua conta e continue transformando dados de ocupação
+          em decisões mais inteligentes para a sua operação aérea.
+        </p>
+
+        <form class="formulario" action="#" method="post">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" placeholder="seuemail@empresa.com" required>
+
+          <label for="senha">Senha</label>
+          <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+
+          <a href="#" class="esqueci-senha">Esqueceu a senha?</a>
+
+          <button type="submit" class="botao-enviar">Entrar</button>
+        </form>
+
+        <p class="texto-alternar">
+          Não tem uma conta? <a href="cadastro.html">Cadastre-se</a>
+        </p>
+      </section>
+
+      <aside class="painel-imagem">
+        <div class="logo-painel">
+          <img src="assets/icon/logo.png" alt="Ascent">
+          ASCENT
+        </div>
+        <div class="texto-painel">
+          <h2>Antecipe a demanda. Planeje melhor.</h2>
+          <p>
+            Visualize o histórico de ocupação, encontre rotas com baixa
+            ou alta procura e tome decisões antes que a demanda vire prejuízo.
+          </p>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+  
+  <script>
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+    menuToggle.addEventListener('click', () => {
+      const isOpen = navLinks.classList.toggle('open');
+      menuToggle.classList.toggle('active');
+      menuToggle.setAttribute('aria-expanded', isOpen);
+    });
+  </script>
+
+</body>
+</html>
