@@ -49,7 +49,9 @@
           <input type="text" id="nome" name="nome" placeholder="Digite seu nome completo" required>
 
           <label for="email">E-mail</label>
-          <input type="email" id="email" name="email" placeholder="seuemail@empresa.com" required>
+          <input type="email" id="email" name="email" placeholder="seuemail@empresa.com" required oninput="validarEmail()">
+          <p style="color: red; font-size: 16px; display: none;" id="emailInvalido">
+            Email deve conter '@' E '.com OU .school'</p>
 
           <div class="campos-lado-a-lado">
             <div>
@@ -156,8 +158,30 @@
       return false;
     }
 
-
   </script>
+
+<!-- Validacoes -->
+
+<script>
+
+  function validarEmail(){
+    let digitado = email.value;
+
+    if (!digitado.includes('@') || (!digitado.includes('.com') && !digitado.includes('.school'))){
+      emailInvalido.style.display = "block";
+    }else{
+      emailInvalido.style.display = "none";
+    }
+
+
+
+
+  }
+
+
+
+
+</script>
 
 </body>
 </html>
