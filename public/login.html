@@ -53,7 +53,7 @@
 
           <a href="#" class="esqueci-senha">Esqueceu a senha?</a>
 
-          <button type="submit" class="botao-enviar">Entrar</button>
+          <button type="submit" class="botao-enviar" onclick="entrar()">Entrar</button>
         </form>
 
         <p class="texto-alternar">
@@ -86,6 +86,74 @@
       menuToggle.classList.toggle('active');
       menuToggle.setAttribute('aria-expanded', isOpen);
     });
+  </script>
+
+<!-- WEB DATA VIZ !!!-->
+
+  <script>
+
+
+    function entrar() {
+
+      var emailVar = email.value;
+      var senhaVar = senha.value;
+
+      if (emailVar == "" || senhaVar == "") {
+        console.log("Por favor, preencha todos os campos!!")
+        return false;
+      }
+
+      console.log("FORM LOGIN: ", emailVar);
+      console.log("FORM SENHA: ", senhaVar);
+
+      fetch("/usuarios/autenticar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          emailServer: emailVar,
+          senhaServer: senhaVar
+        })
+      }).then(function (resposta) {
+        console.log("ESTOU NO THEN DO entrar()!")
+
+        if (resposta.ok) {
+          console.log(resposta);
+
+          resposta.json().then(json => {
+            console.log(json);
+            console.log(JSON.stringify(json));
+            sessionStorage.EMAIL_USUARIO = json.email;
+            sessionStorage.NOME_USUARIO = json.nome;
+            sessionStorage.ID_USUARIO = json.idUsuario;
+
+            console.log("Login funcionou antes do setTimeout")
+
+            setTimeout(function () {
+              window.location = "./index.html";
+            }, 1000); // apenas para exibir o loading
+            console.log("Login funcionou depois do setTimeout")
+
+          });
+
+        } else {
+
+          console.log("Houve um erro ao tentar realizar o login!");
+
+          resposta.text().then(texto => {
+            console.error(texto);
+          });
+        }
+
+      }).catch(function (erro) {
+        console.log(erro);
+      })
+
+      return false;
+    }
+
+
   </script>
 
 </body>
