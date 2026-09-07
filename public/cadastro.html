@@ -56,13 +56,20 @@
           <div class="campos-lado-a-lado">
             <div>
               <label for="senha">Senha</label>
-              <input type="password" id="senha" name="senha" placeholder="Mínimo 8 caracteres" required>
+              <input type="password" id="senha" name="senha" placeholder="Mínimo 8 caracteres" required oninput="validarSenha()">
+
             </div>
             <div>
               <label for="confirmarSenha">Confirmar senha</label>
               <input type="password" id="confirmarSenha" name="confirmarSenha" placeholder="Repita a senha" required>
             </div>
           </div>
+
+          <p style="color: red; font-size: 12px; display: none;" id="senhaCurta">Senha deve conter pelo menos 8 caracteres!</p>
+          <p style="color: red; font-size: 12px; display: none;" id="senhaSemEspecial">Senha deve conter pelo menos 1 caractere especial!</p>
+          <p style="color: red; font-size: 12px; display: none;" id="senhaSemNumero">Senha deve conter pelo menos 1 numero!</p>
+          <p style="color: red; font-size: 12px; display: none;" id="senhaSemMaiuscula">Senha deve conter pelo menos 1 letra maiuscula!</p>
+          <p style="color: red; font-size: 12px; display: none;" id="senhaSemMinuscula">Senha deve conter pelo menos 1 letra minuscula!</p>
 
           <button type="submit" class="botao-enviar" onclick="cadastrar()">Cadastrar</button>
         </form>
@@ -165,20 +172,67 @@
 <script>
 
   function validarEmail(){
-    let digitado = email.value;
+    let emailDigitado = email.value;
 
-    if (!digitado.includes('@') || (!digitado.includes('.com') && !digitado.includes('.school'))){
+    if (!emailDigitado.includes('@') || (!emailDigitado.includes('.com') && !emailDigitado.includes('.school'))){
       emailInvalido.style.display = "block";
     }else{
       emailInvalido.style.display = "none";
     }
-
-
-
-
   }
 
+  let caracteresEspeciais = ['@', '!', '#', '$']
+  let caracteresNumericos = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+  function validarSenha(){
+    let senhaDigitada = senha.value;
 
+    let senhaTemCaracteresEspeciais = false;
+    let senhaTemCaracteresNumericos = false;
+    let senhaTemPeloMenos8Caracteres = senhaDigitada.length >= 8;
+    let senhaTemLetraMaiuscula = senhaDigitada != senhaDigitada.toLowerCase();
+    let senhaTemLetraMinuscula = senhaDigitada != senhaDigitada.toUpperCase();
+
+    for (let i = 0; i < senhaDigitada.length; i++) {
+      if (caracteresEspeciais.includes(senhaDigitada[i])) {
+        senhaTemCaracteresEspeciais = true;
+      }
+      if (caracteresNumericos.includes(senhaDigitada[i])) {
+        senhaTemCaracteresNumericos = true;
+      }
+    }
+
+
+    if (senhaTemPeloMenos8Caracteres) {
+      senhaCurta.style.display = "none";
+    } else {
+      senhaCurta.style.display = "block";
+    }
+
+    if (senhaTemCaracteresEspeciais) {
+      senhaSemEspecial.style.display = "none";
+    } else {
+      senhaSemEspecial.style.display = "block";
+    }
+
+    if (senhaTemCaracteresNumericos) {
+      senhaSemNumero.style.display = "none";
+    } else {
+      senhaSemNumero.style.display = "block";
+    }
+
+    if (senhaTemLetraMaiuscula) {
+      senhaSemMaiuscula.style.display = "none";
+    } else {
+      senhaSemMaiuscula.style.display = "block";
+    }
+
+    if (senhaTemLetraMinuscula) {
+      senhaSemMinuscula.style.display = "none";
+    } else {
+      senhaSemMinuscula.style.display = "block";
+    }
+
+  }
 
 
 </script>
