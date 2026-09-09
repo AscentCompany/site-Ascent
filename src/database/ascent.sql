@@ -55,7 +55,7 @@ CREATE TABLE aeroporto (
 CREATE TABLE IF NOT EXISTS aeroportoVoo (
     fkAeroporto INT NOT NULL,
     fkVoo INT NOT NULL,
-    aeroportoVoo VARCHAR(45),
+    direcao VARCHAR(45),
     dia DATE,
     hora TIME,
     PRIMARY KEY (fkAeroporto, fkVoo),
