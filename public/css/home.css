@@ -94,7 +94,7 @@ h2{
     flex-shrink: 0;
 }
 
-/* hamburger button (hidden on desktop) */
+/* botão mobile*/
 .menu_toggle{
     display: none;
     flex-direction: column;
@@ -381,12 +381,12 @@ h2{
     display: flex;
     align-items: flex-start;
     gap: 15px;
-    background-color:rgb(255, 117, 31, 0.3);
+    background-color:rgb(255, 117, 31, 0.8);
     border-radius: 20px;
 }
 
 .titulo_card_tela5{
-    color: #545454;
+    color: white;
     font-size: 20px;
     font-family: 'Open Sans', sans-serif;
     font-weight: 700;
@@ -394,7 +394,7 @@ h2{
 }
 
 .texto_card_tela5{
-    color: #737373;
+    color: white;
     font-size: 17px;
     font-family: 'Open Sans', sans-serif;
 }
@@ -575,11 +575,29 @@ h2{
     margin-bottom: 40px;
 }
 
+.segunda_linhas_futter{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .footer_texto{
     color: white;
     font-family:Open Sans;
     font-size: 14px;
     opacity: 0.95;
+}
+
+.logo_github{
+    width: 7%;
+}
+
+.texto_contato{
+    color: white;
+    font-family: Open sans;
+    font-size: 14px;
+    opacity: 0.95;
+
 }
 
 @media (max-width: 700px){
