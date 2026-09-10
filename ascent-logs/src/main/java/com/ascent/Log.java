@@ -1,3 +1,5 @@
+package com.ascent;
+
 import java.time.LocalDateTime;
 
 public class Log {

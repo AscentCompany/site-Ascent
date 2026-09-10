@@ -71,7 +71,7 @@
           <p style="color: red; font-size: 12px; display: none;" id="senhaSemMaiuscula">Senha deve conter pelo menos 1 letra maiuscula!</p>
           <p style="color: red; font-size: 12px; display: none;" id="senhaSemMinuscula">Senha deve conter pelo menos 1 letra minuscula!</p>
 
-          <button type="submit" class="botao-enviar" onclick="cadastrar()">Cadastrar</button>
+          <button type="button" class="botao-enviar" onclick="cadastrar()">Cadastrar</button>
         </form>
 
         <p class="texto-alternar">
@@ -149,6 +149,17 @@
                 console.log("resposta: ", resposta);
 
                 if (resposta.ok) {
+
+                  fetch("http://localhost:8080/enviar-alerta-slack", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      nomeServer: nomeVar,
+                      emailServer: emailVar
+                    }),
+                  }).catch(err => console.log("Erro ao avisar o Slack: ", err));
 
                   setTimeout(() => {
                     window.location = "login.html";

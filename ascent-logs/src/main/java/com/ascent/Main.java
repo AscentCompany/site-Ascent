@@ -1,3 +1,5 @@
+package com.ascent;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -87,13 +89,13 @@ public class Main {
         System.out.print("Digite a quantidade de Passageiros: ");
         novoVoo.numPassageiros = scnNumeros.nextInt();
 
-        System.out.print("Quanto de Combustível foi Gasto no Voo em Litros: ");
+        System.out.print("Quanto de Combustível foi Gasto no com.ascent.Voo em Litros: ");
         novoVoo.combustivelGasto = scnNumeros.nextDouble();
 
         voos.add(novoVoo);
 
         cadastrarNovoLog(logs, "Cadastrou o voo ID " + novoVoo.idVoo + " da companhia: " + novoVoo.nomeCompanhia);
-        System.out.println("Voo Cadastrado com Sucesso!!");
+        System.out.println("com.ascent.Voo Cadastrado com Sucesso!!");
     }
 
     public static void listarTodosOsVoos(List<Voo> voos) {
@@ -105,7 +107,7 @@ public class Main {
         System.out.println("\n==== LISTA DE VOOS ====");
         for (Voo v : voos) {
             System.out.print("""
-                    ID do Voo: %d
+                    ID do com.ascent.Voo: %d
                     Companhia: %s
                     Data/Hora: %s às %s
                     Assentos Disponíveis: %d
@@ -128,11 +130,11 @@ public class Main {
                 v.numPassageiros = scnNumeros.nextInt();
 
                 cadastrarNovoLog(logs, "Editou informações do voo ID " + v.idVoo);
-                System.out.println("Voo atualizado com sucesso!");
+                System.out.println("com.ascent.Voo atualizado com sucesso!");
                 return;
             }
         }
-        System.out.println("Voo com ID " + idBusca + " não encontrado.");
+        System.out.println("com.ascent.Voo com ID " + idBusca + " não encontrado.");
     }
 
     public static void excluirVoo(List<Voo> voos, List<Log> logs) {
@@ -143,11 +145,11 @@ public class Main {
             if (voos.get(i).idVoo == idBusca) {
                 Voo vooRemovido = voos.remove(i);
                 cadastrarNovoLog(logs, "Excluiu o voo ID " + vooRemovido.idVoo + " da companhia " + vooRemovido.nomeCompanhia);
-                System.out.println("Voo excluído com sucesso!");
+                System.out.println("com.ascent.Voo excluído com sucesso!");
                 return;
             }
         }
-        System.out.println("Voo com ID " + idBusca + " não encontrado.");
+        System.out.println("com.ascent.Voo com ID " + idBusca + " não encontrado.");
     }
 
     public static void cadastrarNovoLog(List<Log> logs, String acao) {

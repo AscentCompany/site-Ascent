@@ -20,8 +20,8 @@ CREATE TABLE usuario (
     cpf CHAR(14),
     email VARCHAR(45),
     senha VARCHAR(45),
-    fkCompanhia INT NOT NULL,
-    fkCargo INT NOT NULL,
+    fkCompanhia INT,
+    fkCargo INT,
     CONSTRAINT fk_Companhia FOREIGN KEY (fkCompanhia) REFERENCES companhia (idCompanhia),
     CONSTRAINT fk_Cargo FOREIGN KEY (fkCargo) REFERENCES cargo (idCargo)
 );
