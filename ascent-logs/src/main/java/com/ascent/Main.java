@@ -6,15 +6,12 @@ import com.ascent.Conexao;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     static Scanner scnNumeros = new Scanner(System.in);
     static Scanner scnTextos = new Scanner(System.in);
-    static Integer simuladorDeId = 1;
     static Conexao bancoAscent;
     static JdbcTemplate bd;
 
@@ -24,41 +21,30 @@ public class Main {
         bancoAscent = new Conexao();
         bd = new JdbcTemplate(bancoAscent.getConexao());
 
-//        do {
-//            exibirMenu();
-//            opcao = scnNumeros.nextInt();
-//
-//            switch (opcao) {
-//                case 0:
-//                    System.out.println("Encerrando o sistema. Até Breve!");
-//                    break;
-//                case 1:
-//                    cadastrarNovoVoo(listaDeVoos, listaDeLogs);
-//                    esperarUsuario();
-//                    break;
-//                case 2:
-//                    listarTodosOsVoos(listaDeVoos);
-//                    esperarUsuario();
-//                    break;
-//                case 3:
-//                    exibirLogs(listaDeLogs);
-//                    esperarUsuario();
-//                    break;
-//                case 4:
-//                    editarVoo(listaDeVoos, listaDeLogs);
-//                    esperarUsuario();
-//                    break;
-//                case 5:
-//                    excluirVoo(listaDeVoos, listaDeLogs);
-//                    esperarUsuario();
-//                    break;
-//                default:
-//                    System.out.println("Opção inválida! Tente novamente.");
-//            }
-//        } while (opcao != 0);
+        Integer opcao;
+        do {
+            exibirMenu();
+            opcao = scnNumeros.nextInt();
 
-    cadastrarNovoUsuario();
-
+            switch (opcao) {
+                case 0:
+                    System.out.println("Encerrando o sistema. Até Breve!");
+                    break;
+                case 1:
+                  cadastrarNovoUsuario();
+                  esperarUsuario();
+                  break;
+                case 2:
+                    trocarSenha();
+                    esperarUsuario();
+                    break;
+                case 3:
+                    esperarUsuario();
+                    break;
+                default:
+                    System.out.println("Opção inválida! Tente novamente.");
+            }
+        } while (opcao != 0);
 
     }
 
@@ -67,11 +53,9 @@ public class Main {
                 
                 =================================
                 Olá, o que deseja fazer?
-                1- Cadastrar Novo voo
-                2- Ver todos os voos
+                1- Cadastrar Novo Usuario
+                2- Alterar Senha
                 3- Ver todos os logs
-                4- Editar um voo
-                5- Excluir um voo
                 0- Sair
                 =================================
                 Digite a sua opcao: """);
@@ -120,5 +104,30 @@ public class Main {
         }
 
     }
+
+    public static void trocarSenha(){
+        System.out.println("CPF do usuario que deseja editar: ");
+        String cpf = scnTextos.nextLine();
+
+        System.out.println("Nova Senha: ");
+        String senha = scnTextos.nextLine();
+
+        System.out.println("Confirme a senha: ");
+        String confirmarSenha = scnTextos.nextLine();
+
+        if (senha.equals(confirmarSenha)){
+            bd.update("UPDATE usuario SET senha = ? WHERE cpf = ?;", senha, cpf);
+
+            novoLogBanco("INFO", "auth", "Usuario com cpf " + cpf + " alterou a senha!", LocalDateTime.now(), "Java");
+        }else{
+            System.out.println("Senhas Nao Coincidem!!!!!!!!");
+            novoLogBanco("ERROR", "auth", "Usuario com cpf " + cpf + " nao alterou a senha!", LocalDateTime.now(), "Java");
+        }
+
+
+    }
+
+
+
 
 }
