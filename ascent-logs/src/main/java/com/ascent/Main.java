@@ -1,9 +1,12 @@
 package com.ascent;
 
+import org.springframework.cglib.core.Local;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.ascent.Conexao;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -11,14 +14,16 @@ public class Main {
 
     static Scanner scnNumeros = new Scanner(System.in);
     static Scanner scnTextos = new Scanner(System.in);
-    static Integer simuladorDeId = 1;
+    static Conexao bancoAscent;
+    static JdbcTemplate bd;
+
 
     public static void main(String[] args) {
 
-        List<Voo> listaDeVoos = new ArrayList<>();
-        List<Log> listaDeLogs = new ArrayList<>();
-        Integer opcao;
+        bancoAscent = new Conexao();
+        bd = new JdbcTemplate(bancoAscent.getConexao());
 
+        Integer opcao;
         do {
             exibirMenu();
             opcao = scnNumeros.nextInt();
@@ -28,29 +33,22 @@ public class Main {
                     System.out.println("Encerrando o sistema. Até Breve!");
                     break;
                 case 1:
-                    cadastrarNovoVoo(listaDeVoos, listaDeLogs);
-                    esperarUsuario();
-                    break;
+                  cadastrarNovoUsuario();
+                  esperarUsuario();
+                  break;
                 case 2:
-                    listarTodosOsVoos(listaDeVoos);
+                    trocarSenha();
                     esperarUsuario();
                     break;
                 case 3:
-                    exibirLogs(listaDeLogs);
-                    esperarUsuario();
-                    break;
-                case 4:
-                    editarVoo(listaDeVoos, listaDeLogs);
-                    esperarUsuario();
-                    break;
-                case 5:
-                    excluirVoo(listaDeVoos, listaDeLogs);
+                    exibirTodosOsLogs();
                     esperarUsuario();
                     break;
                 default:
                     System.out.println("Opção inválida! Tente novamente.");
             }
         } while (opcao != 0);
+
     }
 
     public static void exibirMenu() {
@@ -58,11 +56,9 @@ public class Main {
                 
                 =================================
                 Olá, o que deseja fazer?
-                1- Cadastrar Novo voo
-                2- Ver todos os voos
+                1- Cadastrar Novo Usuario
+                2- Alterar Senha
                 3- Ver todos os logs
-                4- Editar um voo
-                5- Excluir um voo
                 0- Sair
                 =================================
                 Digite a sua opcao: """);
@@ -73,102 +69,73 @@ public class Main {
         scnTextos.nextLine();
     }
 
-    public static void cadastrarNovoVoo(List<Voo> voos, List<Log> logs) {
-        Voo novoVoo = new Voo();
-
-        novoVoo.idVoo = simuladorDeId++;
-        novoVoo.dataPartida = LocalDate.now();
-        novoVoo.horaPartida = LocalTime.now();
-
-        System.out.print("Digite o Nome da Companhia Aérea: ");
-        novoVoo.nomeCompanhia = scnTextos.nextLine();
-
-        System.out.print("Digite a quantidade de Assentos Disponíveis: ");
-        novoVoo.numAssentos = scnNumeros.nextInt();
-
-        System.out.print("Digite a quantidade de Passageiros: ");
-        novoVoo.numPassageiros = scnNumeros.nextInt();
-
-        System.out.print("Quanto de Combustível foi Gasto no com.ascent.Voo em Litros: ");
-        novoVoo.combustivelGasto = scnNumeros.nextDouble();
-
-        voos.add(novoVoo);
-
-        cadastrarNovoLog(logs, "Cadastrou o voo ID " + novoVoo.idVoo + " da companhia: " + novoVoo.nomeCompanhia);
-        System.out.println("com.ascent.Voo Cadastrado com Sucesso!!");
+    public static void novoLogBanco(String categoria, String servico, String mensagem, LocalDateTime dataHora, String origemCadastro){
+        bd.update("INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro) VALUES (?, ?, ?, ?, ?);",
+                categoria, servico, mensagem, LocalDateTime.now(), origemCadastro);
     }
 
-    public static void listarTodosOsVoos(List<Voo> voos) {
-        if (voos == null || voos.size() == 0) {
-            System.out.println("Nenhum voo cadastrado no momento.");
-            return;
+    public static void cadastrarNovoUsuario(){
+        System.out.print("Nome do Usuario: ");
+        String nome = scnTextos.nextLine();
+
+        System.out.println("CPF do Usuario: ");
+        String cpf = scnTextos.nextLine();
+
+        System.out.println("Email: ");
+        String email = scnTextos.nextLine();
+
+        System.out.println("Senha: ");
+        String senha = scnTextos.nextLine();
+
+        System.out.println("Confirme a senha: ");
+        String confirmarSenha = scnTextos.nextLine();
+
+        System.out.println("ID da Companhia que Trabalha: ");
+        Integer fkCompanhia = scnNumeros.nextInt();
+
+        System.out.println("Cargo do Usuario: ");
+        Integer fkCargo = scnNumeros.nextInt();
+
+        if (senha.equals(confirmarSenha)){
+            bd.update("INSERT INTO usuario (nome, cpf, email, senha, fkCompanhia, fkCargo) VALUES (?, ?, ?, ?, ?, ?);",
+                    nome, cpf, email, senha, fkCompanhia, fkCargo);
+
+            novoLogBanco("INFO", "auth", "Usuario " + nome + " cadastrado", LocalDateTime.now(), "Java");
+        }else{
+            System.out.println("Senhas Nao Coincidem!!!!!!!!");
+            novoLogBanco("ERROR", "auth", "Usuario " + nome + " nao foi cadastrado", LocalDateTime.now(), "Java");
         }
 
-        System.out.println("\n==== LISTA DE VOOS ====");
-        for (Voo v : voos) {
-            System.out.print("""
-                    ID do com.ascent.Voo: %d
-                    Companhia: %s
-                    Data/Hora: %s às %s
-                    Assentos Disponíveis: %d
-                    Quantidade de Passageiros: %d
-                    Combustível Utilizado: %.2fL
-                    ------------------------------
-                    """.formatted(v.idVoo, v.nomeCompanhia, v.dataPartida, v.horaPartida, v.numAssentos, v.numPassageiros, v.combustivelGasto));
-        }
     }
 
-    public static void editarVoo(List<Voo> voos, List<Log> logs) {
-        System.out.print("Digite o ID do voo que deseja editar: ");
-        Integer idBusca = scnNumeros.nextInt();
+    public static void trocarSenha(){
+        System.out.println("CPF do usuario que deseja editar: ");
+        String cpf = scnTextos.nextLine();
 
-        for (Voo v : voos) {
-            if (v.idVoo == idBusca) {
-                System.out.println("Editando voo da companhia: " + v.nomeCompanhia);
+        System.out.println("Nova Senha: ");
+        String senha = scnTextos.nextLine();
 
-                System.out.print("Nova quantidade de Passageiros (Atual: " + v.numPassageiros + "): ");
-                v.numPassageiros = scnNumeros.nextInt();
+        System.out.println("Confirme a senha: ");
+        String confirmarSenha = scnTextos.nextLine();
 
-                cadastrarNovoLog(logs, "Editou informações do voo ID " + v.idVoo);
-                System.out.println("com.ascent.Voo atualizado com sucesso!");
-                return;
-            }
-        }
-        System.out.println("com.ascent.Voo com ID " + idBusca + " não encontrado.");
-    }
+        if (senha.equals(confirmarSenha)){
+            bd.update("UPDATE usuario SET senha = ? WHERE cpf = ?;", senha, cpf);
 
-    public static void excluirVoo(List<Voo> voos, List<Log> logs) {
-        System.out.print("Digite o ID do voo que deseja excluir: ");
-        int idBusca = scnNumeros.nextInt();
-
-        for (int i = 0; i < voos.size(); i++) {
-            if (voos.get(i).idVoo == idBusca) {
-                Voo vooRemovido = voos.remove(i);
-                cadastrarNovoLog(logs, "Excluiu o voo ID " + vooRemovido.idVoo + " da companhia " + vooRemovido.nomeCompanhia);
-                System.out.println("com.ascent.Voo excluído com sucesso!");
-                return;
-            }
-        }
-        System.out.println("com.ascent.Voo com ID " + idBusca + " não encontrado.");
-    }
-
-    public static void cadastrarNovoLog(List<Log> logs, String acao) {
-        Log novoLog = new Log();
-        novoLog.usuario = "XPTO";
-        novoLog.acao = acao;
-        novoLog.dataHora = LocalDateTime.now();
-        logs.add(novoLog);
-    }
-
-    public static void exibirLogs(List<Log> logs) {
-        if (logs == null || logs.size() == 0) {
-            System.out.println("Nenhum log registrado ainda.");
-            return;
+            novoLogBanco("INFO", "auth", "Usuario com cpf " + cpf + " alterou a senha!", LocalDateTime.now(), "Java");
+        }else{
+            System.out.println("Senhas Nao Coincidem!!!!!!!!");
+            novoLogBanco("ERROR", "auth", "Usuario com cpf " + cpf + " nao alterou a senha!", LocalDateTime.now(), "Java");
         }
 
-        System.out.println("\n==== REGISTRO DE ATIVIDADES ====");
-        for (Log l : logs) {
-            System.out.println("[" + l.dataHora + "] O usuário '" + l.usuario + "' realizou a ação: " + l.acao);
-        }
     }
+
+    public static void exibirTodosOsLogs(){
+        List<Log> logs =  bd.query("SELECT * FROM logsServico", new BeanPropertyRowMapper<>(Log.class));
+        System.out.println(logs);
+
+    }
+
+
+
+
 }

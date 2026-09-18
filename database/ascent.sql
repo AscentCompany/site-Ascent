@@ -62,3 +62,13 @@ CREATE TABLE IF NOT EXISTS aeroportoVoo (
     CONSTRAINT fk_Aeroporto FOREIGN KEY (fkAeroporto) REFERENCES aeroporto (idAeroporto),
     CONSTRAINT fk_Voo FOREIGN KEY (fkVoo) REFERENCES voo (idVoo)
 );
+
+CREATE TABLE IF NOT EXISTS logsServico(
+	logId INT PRIMARY KEY AUTO_INCREMENT,
+    categoria VARCHAR(50),
+	servico VARCHAR(50),
+    mensagem VARCHAR(100),
+    dataHora DATETIME,
+    origemCadastro VARCHAR(50)
+    
+);
