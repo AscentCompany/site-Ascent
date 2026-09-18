@@ -1,11 +1,13 @@
 package com.ascent;
 
 import org.springframework.cglib.core.Local;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import com.ascent.Conexao;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -39,6 +41,7 @@ public class Main {
                     esperarUsuario();
                     break;
                 case 3:
+                    exibirTodosOsLogs();
                     esperarUsuario();
                     break;
                 default:
@@ -124,6 +127,11 @@ public class Main {
             novoLogBanco("ERROR", "auth", "Usuario com cpf " + cpf + " nao alterou a senha!", LocalDateTime.now(), "Java");
         }
 
+    }
+
+    public static void exibirTodosOsLogs(){
+        List<Log> logs =  bd.query("SELECT * FROM logsServico", new BeanPropertyRowMapper<>(Log.class));
+        System.out.println(logs);
 
     }
 

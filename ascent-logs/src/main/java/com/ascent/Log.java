@@ -80,7 +80,7 @@ public class Log {
 
     @Override
     public String toString() {
-        return "Log{" +
+        return "\nLog{" +
                 "logId=" + logId +
                 ", categoria='" + categoria + '\'' +
                 ", servico='" + servico + '\'' +
