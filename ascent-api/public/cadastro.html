@@ -210,9 +210,10 @@
     let senhaDigitada = senha.value;
     let confirmacaoDeSenha = confirmarSenha.value;
 
+    let validador = true;
 
     if (senhaDigitada != confirmacaoDeSenha){
-      return false;
+      validador = false;
     }
 
     let senhaTemCaracteresEspeciais = false;
@@ -235,38 +236,38 @@
       senhaCurta.style.display = "none";
     } else {
       senhaCurta.style.display = "block";
-      return false;
+      validador = false;
     }
 
     if (senhaTemCaracteresEspeciais) {
       senhaSemEspecial.style.display = "none";
     } else {
       senhaSemEspecial.style.display = "block";
-      return false;
+      validador = false;
     }
 
     if (senhaTemCaracteresNumericos) {
       senhaSemNumero.style.display = "none";
     } else {
       senhaSemNumero.style.display = "block";
-      return false;
+      validador = false;
     }
 
     if (senhaTemLetraMaiuscula) {
       senhaSemMaiuscula.style.display = "none";
     } else {
       senhaSemMaiuscula.style.display = "block";
-      return false;
+      validador = false;
     }
 
     if (senhaTemLetraMinuscula) {
       senhaSemMinuscula.style.display = "none";
     } else {
       senhaSemMinuscula.style.display = "block";
-      return false;
+      validador = false;
     }
 
-    return true;
+    return validador;
 
   }
 
