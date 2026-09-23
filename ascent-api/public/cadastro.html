@@ -114,7 +114,7 @@
     function cadastrar() {
 
       //Recupere o valor da nova input pelo nome do id
-      // Agora vá para o método fetch logo abaixo
+      // Agora vá para o metodo fetch logo abaixo
       var nomeVar = nome.value;
       var emailVar = email.value;
       var senhaVar = senha.value;
@@ -132,48 +132,57 @@
       }
 
       // Enviando o valor da nova input
-      fetch("/usuarios/cadastrar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          // crie um atributo que recebe o valor recuperado aqui
-          // Agora vá para o arquivo routes/usuario.js
-          nomeServer: nomeVar,
-          emailServer: emailVar,
-          senhaServer: senhaVar
-        }),
-      })
-              .then(function (resposta) {
-                console.log("resposta: ", resposta);
 
-                if (resposta.ok) {
+      if(validarSenha() && validarEmail()){
+        fetch("/usuarios/cadastrar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // crie um atributo que recebe o valor recuperado aqui
+            // Agora vá para o arquivo routes/usuario.js
+            nomeServer: nomeVar,
+            emailServer: emailVar,
+            senhaServer: senhaVar
+          }),
+        })
+                .then(function (resposta) {
+                  console.log("resposta: ", resposta);
 
-                  fetch("http://localhost:8080/enviar-alerta-slack", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      nomeServer: nomeVar,
-                      emailServer: emailVar
-                    }),
-                  }).catch(err => console.log("Erro ao avisar o Slack: ", err));
+                  if (resposta.ok) {
 
-                  setTimeout(() => {
-                    window.location = "login.html";
-                  }, "2000");
+                    limparFormulario();
 
-                } else {
-                  throw "Houve um erro ao tentar realizar o cadastro!";
-                }
-              })
-              .catch(function (resposta) {
-                console.log(`#ERRO: ${resposta}`);
-              });
+                    setTimeout(() => {
+                      window.location = "login.html";
+                    }, "2000");
+
+                  } else {
+                    throw "Houve um erro ao tentar realizar o cadastro!";
+                  }
+                })
+                .catch(function (resposta) {
+                  console.log(`#ERRO: ${resposta}`);
+                });
+      }
+
+
+
+
+
+
 
       return false;
+    }
+
+    function limparFormulario(){
+
+      nome.value = "";
+      email.value = "";
+      senha.value = "";
+      confirmarSenha.value = "";
+
     }
 
   </script>
@@ -182,13 +191,16 @@
 
 <script>
 
-  function validarEmail(){
+  function  validarEmail(){
     let emailDigitado = email.value;
 
     if (!emailDigitado.includes('@') || (!emailDigitado.includes('.com') && !emailDigitado.includes('.school'))){
       emailInvalido.style.display = "block";
+      return false;
     }else{
       emailInvalido.style.display = "none";
+      return true;
+
     }
   }
 
@@ -196,6 +208,13 @@
   let caracteresNumericos = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
   function validarSenha(){
     let senhaDigitada = senha.value;
+    let confirmacaoDeSenha = confirmarSenha.value;
+
+    let validador = true;
+
+    if (senhaDigitada != confirmacaoDeSenha){
+      validador = false;
+    }
 
     let senhaTemCaracteresEspeciais = false;
     let senhaTemCaracteresNumericos = false;
@@ -217,31 +236,38 @@
       senhaCurta.style.display = "none";
     } else {
       senhaCurta.style.display = "block";
+      validador = false;
     }
 
     if (senhaTemCaracteresEspeciais) {
       senhaSemEspecial.style.display = "none";
     } else {
       senhaSemEspecial.style.display = "block";
+      validador = false;
     }
 
     if (senhaTemCaracteresNumericos) {
       senhaSemNumero.style.display = "none";
     } else {
       senhaSemNumero.style.display = "block";
+      validador = false;
     }
 
     if (senhaTemLetraMaiuscula) {
       senhaSemMaiuscula.style.display = "none";
     } else {
       senhaSemMaiuscula.style.display = "block";
+      validador = false;
     }
 
     if (senhaTemLetraMinuscula) {
       senhaSemMinuscula.style.display = "none";
     } else {
       senhaSemMinuscula.style.display = "block";
+      validador = false;
     }
+
+    return validador;
 
   }
 
