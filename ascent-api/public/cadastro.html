@@ -48,6 +48,9 @@
           <label for="nome">Nome completo</label>
           <input type="text" id="nome" name="nome" placeholder="Digite seu nome completo" required>
 
+          <label for="companhia">Codigo Companhia</label>
+          <input type="text" id="companhia" name="companhia" placeholder="Digite o codigo de sua companhia" required>
+
           <label for="email">E-mail</label>
           <input type="email" id="email" name="email" placeholder="seuemail@empresa.com" required oninput="validarEmail()">
           <p style="color: red; font-size: 16px; display: none;" id="emailInvalido">
@@ -119,13 +122,16 @@
       var emailVar = email.value;
       var senhaVar = senha.value;
       var confirmacaoSenhaVar = confirmarSenha.value;
+      var idCompanhiaVar = companhia.value;
 
       // Verificando se há algum campo em branco
       if (
               nomeVar == "" ||
               emailVar == "" ||
               senhaVar == "" ||
-              confirmacaoSenhaVar == ""
+              confirmacaoSenhaVar == "" ||
+              idCompanhiaVar == ""
+
       ) {
         console.log("Por favor, Preencha todos os campos!!")
         return false;
@@ -144,7 +150,8 @@
             // Agora vá para o arquivo routes/usuario.js
             nomeServer: nomeVar,
             emailServer: emailVar,
-            senhaServer: senhaVar
+            senhaServer: senhaVar,
+            idCompanhiaServer: idCompanhiaVar
           }),
         })
                 .then(function (resposta) {
@@ -182,6 +189,7 @@
       email.value = "";
       senha.value = "";
       confirmarSenha.value = "";
+      companhia.value = "";
 
     }
 
