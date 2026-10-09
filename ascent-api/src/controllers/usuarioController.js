@@ -23,7 +23,9 @@ function autenticar(req, res) {
                             idUsuario: resultadoAutenticar[0].idUsuario,
                             email: resultadoAutenticar[0].email,
                             nome: resultadoAutenticar[0].nome,
-                            senha: resultadoAutenticar[0].senha
+                            senha: resultadoAutenticar[0].senha,
+                            idCompanhia: resultadoAutenticar[0].fkCompanhia,
+                            idCargo: resultadoAutenticar[0].fkCargo
                         });
 
 
@@ -81,7 +83,69 @@ function cadastrar(req, res) {
     }
 }
 
+
+// funcoes da tela de gerencia
+function verificarPermissaoAdmin(req, res) {
+    var idCompanhia = req.params.idCompanhia;
+    usuarioModel.verificarPermissaoAdmin(idCompanhia)
+        .then(resultado => res.json(resultado))
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
+function listarCargos(req, res) {
+    var idCompanhia = req.params.idCompanhia;
+    usuarioModel.listarCargos(idCompanhia)
+        .then(resultado => res.json(resultado))
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
+function listarUsuariosCompanhia(req, res) {
+    var idCompanhia = req.params.idCompanhia;
+    usuarioModel.listarUsuariosCompanhia(idCompanhia)
+        .then(resultado => res.json(resultado))
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
+function cadastrarFuncionario(req, res) {
+    var nome = req.body.nomeServer;
+    var email = req.body.emailServer;
+    var senha = req.body.senhaServer;
+    var idCompanhia = req.body.idCompanhiaServer;
+    var idCargo = req.body.idCargoServer;
+
+    if (nome == undefined || email == undefined || senha == undefined || idCompanhia == undefined || idCargo == undefined) {
+        res.status(400).send("Valores indefinidos!");
+    } else {
+        usuarioModel.cadastrarFuncionario(nome, email, senha, idCompanhia, idCargo)
+            .then(resultado => res.json(resultado))
+            .catch(erro => res.status(500).json(erro.sqlMessage));
+    }
+}
+
+function editarUsuario(req, res) {
+    var idUsuario = req.params.idUsuario;
+    var email = req.body.email;
+    var fkCargo = req.body.fkCargo;
+
+    usuarioModel.editarUsuario(idUsuario, email, fkCargo)
+        .then(resultado => res.json(resultado))
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
+function deletarUsuario(req, res) {
+    var idUsuario = req.params.idUsuario;
+    usuarioModel.deletarUsuario(idUsuario)
+        .then(resultado => res.json(resultado))
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
 module.exports = {
     autenticar,
-    cadastrar
+    cadastrar,
+    verificarPermissaoAdmin,
+    listarCargos,
+    listarUsuariosCompanhia,
+    cadastrarFuncionario,
+    editarUsuario,
+    deletarUsuario
 }

@@ -78,8 +78,7 @@ public class Main {
         System.out.print("Nome do Usuario: ");
         String nome = scnTextos.nextLine();
 
-        System.out.println("CPF do Usuario: ");
-        String cpf = scnTextos.nextLine();
+
 
         System.out.println("Email: ");
         String email = scnTextos.nextLine();
@@ -97,8 +96,8 @@ public class Main {
         Integer fkCargo = scnNumeros.nextInt();
 
         if (senha.equals(confirmarSenha)){
-            bd.update("INSERT INTO usuario (nome, cpf, email, senha, fkCompanhia, fkCargo) VALUES (?, ?, ?, ?, ?, ?);",
-                    nome, cpf, email, senha, fkCompanhia, fkCargo);
+            bd.update("INSERT INTO usuario (nome, email, senha, fkCompanhia, fkCargo) VALUES (?, ?, ?, ?, ?);",
+                    nome, email, senha, fkCompanhia, fkCargo);
 
             novoLogBanco("INFO", "auth", "Usuario " + nome + " cadastrado", LocalDateTime.now(), "Java");
         }else{
