@@ -1,26 +1,29 @@
 .container-gerenciar {
-    min-height: calc(100vh - 90px);
     background: linear-gradient(160deg, #FFF3E8 0%, #FFFFFF 55%);
-    padding: 48px 20px;
+    padding: 40px 60px;
     font-family: 'Open Sans', sans-serif;
+
+    width: 100%;
+
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .cartao-gerenciar {
     width: 100%;
-    max-width: 1100px;
-    background: var(--branco);
+    background: var(--branco, #ffffff);
+    border: 2px solid var(--cor-borda, #222222);
     border-radius: 28px;
-    box-shadow: var(--sombra-suave);
-    padding: 40px;
+    padding: 30px;
 }
 
 .header-gerenciar {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+    align-items: flex-end;
+    margin-bottom: 25px;
+    width: 100%;
 }
 
 .btn-novo-usuario {
@@ -42,8 +45,9 @@
 }
 
 .tabela-cabecalho {
-    display: grid;
-    grid-template-columns: 1.5fr 2fr 1.5fr 1fr;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
     padding: 10px 20px;
     font-weight: 700;
     color: var(--cinza-texto);
@@ -52,9 +56,9 @@
 }
 
 .linha-usuario {
-    display: grid;
-    grid-template-columns: 1.5fr 2fr 1.5fr 1fr;
+    display: flex;
     align-items: center;
+    justify-content: space-around;
     padding: 15px 20px;
     border: 1.5px solid var(--cor-borda);
     border-radius: 12px;
@@ -136,4 +140,93 @@
     cursor: pointer;
     font-weight: bold;
     color: var(--cinza-texto);
+}
+
+.page-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(160deg, #FFF3E8 0%, #FFFFFF 55%);
+}
+
+.sidebar {
+    width: 260px;
+    background-color: var(--branco);
+    border-right: 1.5px solid var(--cor-borda);
+    border-radius: 0 28px 28px 0;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: var(--sombra-suave);
+}
+
+.logo-container {
+    margin-bottom: 50px;
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 15px;
+}
+
+.menu-btn {
+    padding: 12px;
+    background-color: transparent;
+    border: 1.5px solid var(--cor-borda);
+    color: var(--cinza-texto);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+    text-align: center;
+}
+
+.menu-btn:hover {
+    border-color: var(--laranja);
+    color: var(--laranja);
+}
+
+.menu-btn.active {
+    background-color: var(--laranja);
+    color: var(--branco);
+    border-color: var(--laranja);
+}
+
+.titulos {
+    display: flex;
+    flex-direction: column;
+}
+
+.titulo-boas-vindas {
+    font-size: 36px;
+    margin: 0;
+}
+
+.subtitulo {
+    font-size: 13px;
+    color: var(--cinza-texto);
+    opacity: 0.8;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.col-nome {
+    width: 25%;
+}
+
+.col-email {
+    width: 40%;
+}
+
+.col-cargo {
+    width: 20%;
+}
+
+.col-acoes {
+    width: 15%;
+    display: flex;
+    justify-content: flex-end;
 }

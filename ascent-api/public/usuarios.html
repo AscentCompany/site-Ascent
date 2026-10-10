@@ -33,40 +33,50 @@
     </div>
 </div>
 
-<header>
-    <div class="navbar1">
-        <a href="index.html"><img class="logo_navbar" src="assets/icon/logo.png" alt="Logo Ascent"></a>
-        <nav class="nav_links" id="navLinks">
-            <div onclick="window.location.href='index.html'">Início</div>
+<div class="page-wrapper">
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="assets/icon/logo.png" alt="Logo da Ascent" />
+        </div>
+        <nav class="sidebar-menu">
+            <button class="menu-btn active" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
+            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Cargos</button>
+            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Funcionalidades</button>
         </nav>
     </div>
-</header>
 
-<main class="container-gerenciar">
-    <div class="cartao-gerenciar">
+    <main class="container-gerenciar">
+
         <div class="header-gerenciar">
-            <h1 class="titulo-boas-vindas">Gerenciar Organização</h1>
-            <button class="btn-novo-usuario" onclick="abrirModal()">+ Novo Usuario</button>
+            <div class="titulos">
+                <h1 class="titulo-boas-vindas">Gerenciar Funcionários</h1>
+                <span class="subtitulo">*Gerenciar atributos da conta e cargos</span>
+            </div>
+            <button class="btn-novo-usuario" onclick="abrirModal()">+ Novo Usuário</button>
         </div>
 
-        <div class="tabela-cabecalho">
-            <div>Nome</div>
-            <div>Email</div>
-            <div>Cargo</div>
-            <div>Ações</div>
-        </div>
+        <div class="cartao-gerenciar">
 
-        <div id="listaUsuarios">
+            <div class="tabela-cabecalho">
+                <div class="col-nome">Nome</div>
+                <div class="col-email">Email</div>
+                <div class="col-cargo">Cargo</div>
+                <div class="col-acoes">Ações</div>
+            </div>
+
+            <div id="listaUsuarios">
                 <!--vazio aqui pq preenche com o js-->
-        </div>
-    </div>
-</main>
+            </div>
 
+        </div>
+    </main>
+</div>
 
 
 <script>
-    const idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
-    const idCargoUsuarioLogado = Number(sessionStorage.CARGO_USUARIO);
+    let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+    let idCargoUsuarioLogado = Number(sessionStorage.CARGO_USUARIO);
     let cargosGlobais = [];
 
     function verificarPermissao() {
@@ -78,7 +88,7 @@
         fetch(`/usuarios/permissao/${idCompanhia}`)
             .then(res => res.json())
             .then(res => {
-                const menorCargo = res[0].adminCargo;
+                let menorCargo = res[0].adminCargo;
                 if(idCargoUsuarioLogado > menorCargo) {
                     alert("Você não tem permissão para acessar esta tela.");
                     window.location.href = "index.html";
@@ -94,7 +104,7 @@
             .then(cargos => {
                 cargosGlobais = cargos;
 
-                const modalSelect = document.getElementById("modalCargo");
+                let modalSelect = document.getElementById("modalCargo");
 
                 let opcoesHtml = "";
                 for (let i = 0; i < cargos.length; i++) {
@@ -111,7 +121,7 @@
         fetch(`/usuarios/listar/${idCompanhia}`)
             .then(res => res.json())
             .then(usuarios => {
-                const lista = document.getElementById("listaUsuarios");
+                let lista = document.getElementById("listaUsuarios");
                 lista.innerHTML = "";
 
                 for (let i = 0; i < usuarios.length; i++) {
@@ -130,24 +140,24 @@
                     }
 
                     lista.innerHTML += `
-                  <div class="linha-usuario" id="linha_${u.idUsuario}">
-                    <div style="color: var(--cinza-texto); font-weight: 600;">${u.nome}</div>
-                    <div><input type="email" id="email_${u.idUsuario}" value="${u.email}"></div>
-                    <div><select id="cargo_${u.idUsuario}">${opcoesCargos}</select></div>
-                    <div class="acoes-botoes">
-                      <button class="btn-acao" onclick="editarUsuario(${u.idUsuario})">Editar</button>
-                      <button class="btn-acao" onclick="excluirUsuario(${u.idUsuario})">Excluir</button>
-                    </div>
-                  </div>
-                `;
+                        <div class="linha-usuario" id="linha_${u.idUsuario}">
+                          <div class="col-nome" style="color: var(--cinza-texto); font-weight: 600;">${u.nome}</div>
+                          <div class="col-email"><input type="email" id="email_${u.idUsuario}" value="${u.email}"></div>
+                          <div class="col-cargo"><select id="cargo_${u.idUsuario}">${opcoesCargos}</select></div>
+                          <div class="col-acoes acoes-botoes">
+                            <button class="btn-acao" onclick="editarUsuario(${u.idUsuario})">Editar</button>
+                            <button class="btn-acao" onclick="excluirUsuario(${u.idUsuario})">Excluir</button>
+                          </div>
+                        </div>
+                    `;
                 }
             });
     }
 
     function editarUsuario(idUsuario) {
         if(confirm("Tem certeza que deseja atualizar os dados deste usuário?")) {
-            const novoEmail = document.getElementById(`email_${idUsuario}`).value;
-            const novoCargo = document.getElementById(`cargo_${idUsuario}`).value;
+            let novoEmail = document.getElementById(`email_${idUsuario}`).value;
+            let novoCargo = document.getElementById(`cargo_${idUsuario}`).value;
 
             fetch(`/usuarios/editar/${idUsuario}`, {
                 method: "PUT",
@@ -180,10 +190,10 @@
     }
 
     function cadastrarNovoUsuario() {
-        const nomeVar = modalNome.value;
-        const emailVar = modalEmail.value;
-        const senhaVar = modalSenha.value;
-        const cargoVar = modalCargo.value;
+        let nomeVar = modalNome.value;
+        let emailVar = modalEmail.value;
+        let senhaVar = modalSenha.value;
+        let cargoVar = modalCargo.value;
 
         if(!nomeVar || !emailVar || !senhaVar || !cargoVar) {
             alert("Preencha todos os campos do modal!");
@@ -223,8 +233,6 @@
     verificarPermissao();
 
 </script>
-
-
 
 </body>
 </html>
