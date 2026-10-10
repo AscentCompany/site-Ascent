@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ascent | Gerenciar Cargos</title>
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/users.css">
+
+</head>
+<body>
+
+<div class="modal-overlay" id="modalCadastro">
+    <div class="modal-content formulario">
+        <span class="fechar-modal" onclick="fecharModal()">X</span>
+        <h2 class="titulo-boas-vindas" style="font-size: 24px;">Novo Cargo</h2>
+
+        <label for="modalNomeCargo">Nome do Cargo</label>
+        <input type="text" id="modalNomeCargo" placeholder="Nome do Cargo">
+
+        <label for="modalCargo">Permissões</label>
+        <select id="modalCargo">
+        </select>
+
+        <button class="botao-enviar" onclick="criarNovoCargo()">Criar Cargo</button>
+    </div>
+</div>
+
+<div class="page-wrapper">
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <a href="index.html">
+                <img src="assets/icon/logo.png" alt="Logo da Ascent" />
+            </a>
+        </div>
+        <nav class="sidebar-menu">
+            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
+            <button class="menu-btn active" onclick="window.location.href='usuarios.html'">Gerenciar Cargos</button>
+            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Funcionalidades</button>
+        </nav>
+    </div>
+
+    <main class="container-gerenciar">
+
+        <div class="header-gerenciar">
+            <div class="titulos">
+                <h1 class="titulo-boas-vindas">Gerenciar Cargos</h1>
+                <span class="subtitulo">*Gerenciar cargos e suas permissões</span>
+            </div>
+            <button class="btn-novo-usuario" onclick="abrirModal()">+ Novo Cargo</button>
+        </div>
+
+        <div class="cartao-gerenciar">
+
+            <div class="tabela-cabecalho">
+                <div class="col-nome">Cargo</div>
+                <div class="col-email">Permissões</div>
+                <div class="col-acoes">Ações</div>
+            </div>
+
+            <div id="listaCargos">
+                <!--vazio aqui pq preenche com o js-->
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    function abrirModal() {
+        document.getElementById("modalCadastro").style.display = "flex";
+    }
+
+    function fecharModal() {
+        document.getElementById("modalCadastro").style.display = "none";
+        modalNome.value = "";
+        modalEmail.value = "";
+        modalSenha.value = "";
+    }
+</script>
+
+</body>
+</html>
