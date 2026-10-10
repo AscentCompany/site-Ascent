@@ -69,6 +69,9 @@
 </div>
 
 <script>
+
+    let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+
     function abrirModal() {
         document.getElementById("modalCadastro").style.display = "flex";
     }
@@ -79,6 +82,78 @@
         modalEmail.value = "";
         modalSenha.value = "";
     }
+
+    function listarCargos() {
+        fetch(`/cargos/cargos/${idCompanhia}`)
+            .then(res => res.json())
+            .then(linhasBd => {
+                let lista = document.getElementById("listaCargos");
+                lista.innerHTML = "";
+
+                let cargosAgrupados = [];
+                let ultimoIdVisto = -1;
+                let indexAtual = -1;
+
+                for (let i = 0; i < linhasBd.length; i++) {
+                    let linha = linhasBd[i];
+
+                    if (linha.idCargo !== ultimoIdVisto) {
+                        indexAtual++;
+                        cargosAgrupados[indexAtual] = {
+                            idCargo: linha.idCargo,
+                            cargo: linha.cargo,
+                            permissoes: ""
+                        };
+                        ultimoIdVisto = linha.idCargo;
+                    }
+
+                    let estaMarcado = "";
+                    if (linha.idCargoPermissao !== null) {
+                        estaMarcado = "checked";
+                    }
+
+                    let permissaoBloco = `
+                        <label style="display: flex; align-items: center; cursor: pointer; white-space: nowrap;">
+                            <input type="checkbox" ${estaMarcado} style="margin-right: 5px;">
+                            <span>${linha.permissao}</span>
+                        </label>
+                    `;
+
+                    cargosAgrupados[indexAtual].permissoes += permissaoBloco;
+                }
+
+                for (let i = 0; i < cargosAgrupados.length; i++) {
+                    let c = cargosAgrupados[i];
+
+                    let textoPermissoes = c.permissoes;
+                    if (textoPermissoes === "") {
+                        textoPermissoes = "Nenhuma permissão vinculada";
+                    }
+
+                    lista.innerHTML += `
+                        <div class="linha-usuario" id="linha_cargo_${c.idCargo}">
+                            <div class="col-nome" style="color: var(--cinza-texto); font-weight: 600; font-size: 16px;">
+                                ${c.cargo}
+                            </div>
+                            <div class="col-email" style="color: var(--cinza-texto); font-size: 14px;">
+                                ${textoPermissoes}
+                            </div>
+                            <div class="col-acoes acoes-botoes">
+                                <button class="btn-acao" onclick="abrirModalEdicao(${c.idCargo})">Editar</button>
+                                <button class="btn-acao" onclick="excluirCargo(${c.idCargo})">Excluir</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(erro => {
+                console.error("Erro ao carregar cargos:", erro);
+            });
+    }
+
+
+        listarCargos();
+
 </script>
 
 </body>
