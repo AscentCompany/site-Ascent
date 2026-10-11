@@ -54,10 +54,28 @@ function cadastrar(req, res) {
         .catch(erro => res.status(500).json(erro.sqlMessage));
 }
 
+function deletar(req, res) {
+    var idCargo = req.params.idCargo;
+
+    // primeiro deleta na associativa, depois o cargo
+    cargoModel.deletarCargoPermissoes(idCargo)
+        .then(() => {
+            return cargoModel.deletarCargo(idCargo);
+        })
+        .then(resultado => {
+            res.json(resultado);
+        })
+        .catch(erro => {
+            console.log(erro);
+            res.status(500).json(erro.sqlMessage);
+        });
+}
+
 module.exports = {
     verificarPermissaoAdmin,
     listarCargos,
     listarPermissoes,
-    cadastrar
+    cadastrar,
+    deletar
 
 }

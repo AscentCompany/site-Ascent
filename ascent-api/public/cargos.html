@@ -248,6 +248,23 @@
             }
         });
     }
+
+    function excluirCargo(idCargo) {
+        if(confirm("Atenção! Tem certeza que deseja excluir este cargo?")) {
+            fetch(`/cargos/deletar/${idCargo}`, {
+                method: "DELETE"
+            }).then(res => {
+                if(res.ok) {
+                    alert("Cargo excluído com sucesso!");
+                    listarCargos();
+                } else {
+                    alert("Erro ao excluir cargo. Verifique se existem usuários vinculados a ele.");
+                }
+            }).catch(erro => {
+                console.error("Erro na exclusão:", erro);
+            });
+        }
+    }
         listarCargos();
 
 </script>

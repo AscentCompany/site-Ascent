@@ -39,6 +39,16 @@ function buscarUltimoCargo(idCompanhia) {
     return database.executar(instrucaoSql);
 }
 
+function deletarCargoPermissoes(idCargo) {
+    var instrucaoSql = `DELETE FROM cargoPermissao WHERE fkCargo = ${idCargo};`;
+    return database.executar(instrucaoSql);
+}
+
+function deletarCargo(idCargo) {
+    var instrucaoSql = `DELETE FROM cargo WHERE idCargo = ${idCargo};`;
+    return database.executar(instrucaoSql);
+}
+
 
 module.exports = {
     verificarPermissaoAdmin,
@@ -46,5 +56,7 @@ module.exports = {
     listarPermissoes,
     cadastrarCargo,
     cadastrarCargoPermissao,
-    buscarUltimoCargo
+    buscarUltimoCargo,
+    deletarCargoPermissoes,
+    deletarCargo
 };

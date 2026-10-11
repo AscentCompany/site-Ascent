@@ -20,4 +20,8 @@ router.post("/cadastrar", function (req, res) {
     cargoController.cadastrar(req, res);
 });
 
+router.delete("/deletar/:idCargo", function (req, res) {
+    cargoController.deletar(req, res);
+});
+
 module.exports = router;
