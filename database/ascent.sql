@@ -1,74 +1,108 @@
-CREATE DATABASE ascent;
-
+CREATE DATABASE IF NOT EXISTS ascent;
 USE ascent;
 
-CREATE TABLE companhia (
-    idCompanhia INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    codCompanhia INT,
-    nomeCompanhia VARCHAR(45),
-    paisCompanhia VARCHAR(45)
+CREATE TABLE IF NOT EXISTS aeroporto(
+  idAeroporto INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  nomeAeroporto VARCHAR(45) NOT NULL,
+  municipio VARCHAR(45) NULL DEFAULT NULL,
+  uf VARCHAR(2) NULL DEFAULT NULL,
+  regiao VARCHAR(45) NULL DEFAULT NULL,
+  pais VARCHAR(45) NULL DEFAULT NULL
 );
 
-CREATE TABLE cargo (
-    idCargo INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    cargo VARCHAR(45)
+CREATE TABLE IF NOT EXISTS aviao(
+  idAviao INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  modelo VARCHAR(45) NOT NULL,
+  numAssentos INT NULL DEFAULT NULL
+);
+  
+CREATE TABLE IF NOT EXISTS empresa(
+  idEmpresa INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  codCompanhia VARCHAR(25) DEFAULT NULL,
+  nomeCompanhia VARCHAR(45) NOT NULL,
+  paisCompanhia VARCHAR(45) DEFAULT NULL
 );
 
-CREATE TABLE usuario (
-    idUsuario INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    nome VARCHAR(45),
-    cpf CHAR(14),
-    email VARCHAR(45),
-    senha VARCHAR(45),
-    fkCompanhia INT,
-    fkCargo INT,
-    CONSTRAINT fk_Companhia FOREIGN KEY (fkCompanhia) REFERENCES companhia (idCompanhia),
-    CONSTRAINT fk_Cargo FOREIGN KEY (fkCargo) REFERENCES cargo (idCargo)
+CREATE TABLE IF NOT EXISTS voo(
+  idVoo INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  numVoo INT NOT NULL,
+  combustivelGasto FLOAT NULL DEFAULT NULL,
+  numPassageiros INT NULL DEFAULT NULL,
+  fkEmpresa INT NOT NULL,
+  CONSTRAINT chkFkCompanhia FOREIGN KEY (fkEmpresa) REFERENCES empresa(idEmpresa),
+  fkAviao INT NOT NULL,
+  CONSTRAINT chkFkAviao FOREIGN KEY (fkAviao) REFERENCES aviao(idAviao)
 );
 
-CREATE TABLE aviao (
-    idAviao INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    modelo VARCHAR(45),
-    numAssentos INT
+
+CREATE TABLE IF NOT EXISTS aeroportoVoo(
+  idAeroportoVoo INT NOT NULL AUTO_INCREMENT,
+  fkAeroporto INT NOT NULL,
+  CONSTRAINT chkFkAeroporto FOREIGN KEY (fkAeroporto) REFERENCES aeroporto(idAeroporto),
+  fkVoo INT NOT NULL,
+  CONSTRAINT chkFkVoo FOREIGN KEY (fkVoo) REFERENCES voo(idVoo),
+  direcao VARCHAR(45) NULL DEFAULT NULL,
+  dia DATE NULL DEFAULT NULL,
+  hora TIME NULL DEFAULT NULL,
+  PRIMARY KEY(idAeroportoVoo, fkAeroporto, fkVoo)
 );
 
-CREATE TABLE voo (
-    idVoo INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    numVoo INT,
-    combustivelGasto FLOAT,
-    numPassageiros INT,
-    fkCompanhia INT NOT NULL,
-    fkAviao INT NOT NULL,
-    CONSTRAINT fk_Companhia1 FOREIGN KEY (fkCompanhia) REFERENCES companhia (idCompanhia),
-    CONSTRAINT fk_Aviao FOREIGN KEY (fkAviao) REFERENCES aviao (idAviao)
+CREATE TABLE IF NOT EXISTS companhia(
+  idCompanhia INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  razaoSocial VARCHAR(100) NOT NULL,
+  cnpj VARCHAR(18) NOT NULL,
+  dataInicio DATE NOT NULL,
+  dataFim DATE NULL DEFAULT NULL,
+  fkEmpresa INT NULL DEFAULT NULL,
+  CONSTRAINT chkFkEmpresa FOREIGN KEY (fkEmpresa) REFERENCES empresa(idEmpresa)
 );
 
-CREATE TABLE aeroporto (
-    idAeroporto INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    nomeAeroporto VARCHAR(45),
-    municipio VARCHAR(45),
-    uf VARCHAR(2),
-    regiao VARCHAR(45),
-    pais VARCHAR(45)
+CREATE TABLE IF NOT EXISTS cargo(
+  idCargo INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  fkCompanhia INT NULL DEFAULT NULL,
+  CONSTRAINT chkFkCompanhia_cargo FOREIGN KEY (fkCompanhia) REFERENCES companhia(idCompanhia),
+  cargo VARCHAR(45) NULL DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS aeroportoVoo (
-    fkAeroporto INT NOT NULL,
-    fkVoo INT NOT NULL,
-    direcao VARCHAR(45),
-    dia DATE,
-    hora TIME,
-    PRIMARY KEY (fkAeroporto, fkVoo),
-    CONSTRAINT fk_Aeroporto FOREIGN KEY (fkAeroporto) REFERENCES aeroporto (idAeroporto),
-    CONSTRAINT fk_Voo FOREIGN KEY (fkVoo) REFERENCES voo (idVoo)
+CREATE TABLE IF NOT EXISTS permissao(
+  idPermissao INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(45) NULL DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS logsServico(
-	logId INT PRIMARY KEY AUTO_INCREMENT,
-    categoria VARCHAR(50),
-	servico VARCHAR(50),
-    mensagem VARCHAR(100),
-    dataHora DATETIME,
-    origemCadastro VARCHAR(50)
-    
+CREATE TABLE IF NOT EXISTS cargoPermissao(
+  idCargoPermissao INT NOT NULL AUTO_INCREMENT,
+  fkPermissao INT NOT NULL,
+  CONSTRAINT chkFkPermissao_cp FOREIGN KEY (fkPermissao) REFERENCES permissao(idPermissao),
+  fkCargo INT NOT NULL,
+  CONSTRAINT chkFkCargo_cp FOREIGN KEY (fkCargo) REFERENCES cargo(idCargo),
+  PRIMARY KEY(idCargoPermissao, fkPermissao, fkCargo)
+);
+
+CREATE TABLE IF NOT EXISTS funcionalidade(
+  idFuncionalidade INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(45) NULL DEFAULT NULL,
+  fkPermissao INT NOT NULL,
+  CONSTRAINT chkFkPermissao_func FOREIGN KEY (fkPermissao) REFERENCES permissao(idPermissao)
+);
+
+CREATE TABLE IF NOT EXISTS usuario(
+  idUsuario INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(45) NOT NULL,
+  email VARCHAR(45) NOT NULL,
+  senha VARCHAR(45) NOT NULL,
+  fkCompanhia INT NOT NULL DEFAULT 1,
+  CONSTRAINT chkFkCompanhia_usuario FOREIGN KEY (fkCompanhia) REFERENCES companhia(idCompanhia),
+  fkCargo INT NOT NULL,
+  CONSTRAINT chkFkCargo_usuario FOREIGN KEY (fkCargo) REFERENCES cargo(idCargo)
+);
+
+CREATE TABLE IF NOT EXISTS logServico(
+  idLogServico INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  categoria VARCHAR(50) NULL DEFAULT NULL,
+  servico VARCHAR(50) NULL DEFAULT NULL,
+  mensagem VARCHAR(100) NULL DEFAULT NULL,
+  dataHora DATETIME NULL DEFAULT NULL,
+  origemCadastro VARCHAR(50) NULL DEFAULT NULL,
+  fkUsuario INT NULL DEFAULT NULL,
+  CONSTRAINT chkFkUsuario FOREIGN KEY (fkUsuario) REFERENCES usuario(idUsuario)
 );
