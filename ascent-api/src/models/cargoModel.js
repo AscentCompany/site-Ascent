@@ -21,7 +21,30 @@ function listarCargos(idCompanhia) {
     `;
     return database.executar(instrucaoSql);
 }
+
+function listarPermissoes() {
+    return database.executar(`SELECT * FROM permissao;`);
+}
+
+function cadastrarCargo(nomeCargo, idCompanhia) {
+    return database.executar(`INSERT INTO cargo (cargo, fkCompanhia) VALUES ('${nomeCargo}', ${idCompanhia});`);
+}
+
+function cadastrarCargoPermissao(idCargo, idPermissao) {
+    return database.executar(`INSERT INTO cargoPermissao (fkCargo, fkPermissao) VALUES (${idCargo}, ${idPermissao});`);
+}
+
+function buscarUltimoCargo(idCompanhia) {
+    var instrucaoSql = `SELECT MAX(idCargo) as idNovoCargo FROM cargo WHERE fkCompanhia = ${idCompanhia};`;
+    return database.executar(instrucaoSql);
+}
+
+
 module.exports = {
     verificarPermissaoAdmin,
-    listarCargos
+    listarCargos,
+    listarPermissoes,
+    cadastrarCargo,
+    cadastrarCargoPermissao,
+    buscarUltimoCargo
 };

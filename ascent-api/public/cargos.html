@@ -6,12 +6,11 @@
     <title>Ascent | Gerenciar Cargos</title>
     <link rel="stylesheet" href="css/home.css">
     <link rel="stylesheet" href="css/auth.css">
-    <link rel="stylesheet" href="css/users.css">
+    <link rel="stylesheet" href="css/cruds.css">
 
 </head>
 <body>
-
-<div class="modal-overlay" id="modalCadastro">
+<div class="modal-overlay" id="modalCadastro" style="display: none;">
     <div class="modal-content formulario">
         <span class="fechar-modal" onclick="fecharModal()">X</span>
         <h2 class="titulo-boas-vindas" style="font-size: 24px;">Novo Cargo</h2>
@@ -20,12 +19,21 @@
         <input type="text" id="modalNomeCargo" placeholder="Nome do Cargo">
 
         <label for="modalCargo">Permissões</label>
-        <select id="modalCargo">
-        </select>
+        <div class="modal-input-group">
+            <select id="modalCargo" class="modal-select-flex">
+                <option value="">Selecione uma permissão...</option>
+            </select>
+            <button class="btn-acao" onclick="adicionarPermissaoNaLista()" style="height: auto;">Add</button>
+        </div>
 
-        <button class="botao-enviar" onclick="criarNovoCargo()">Criar Cargo</button>
+        <div id="listaPermissoesModal" class="modal-tags-container">
+            <!-- preenchido pelo js -->
+        </div>
+
+        <button class="botao-enviar" onclick="criarNovoCargo()" style="margin-top: 25px;">Criar Cargo</button>
     </div>
 </div>
+
 
 <div class="page-wrapper">
 
@@ -38,7 +46,7 @@
         <nav class="sidebar-menu">
             <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
             <button class="menu-btn active" onclick="window.location.href='usuarios.html'">Gerenciar Cargos</button>
-            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Funcionalidades</button>
+            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Permissões</button>
         </nav>
     </div>
 
@@ -71,16 +79,19 @@
 <script>
 
     let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+    let permissoesEscolhidas = [];
 
     function abrirModal() {
         document.getElementById("modalCadastro").style.display = "flex";
+        carregarPermissoesDoSelect();
     }
 
     function fecharModal() {
         document.getElementById("modalCadastro").style.display = "none";
-        modalNome.value = "";
-        modalEmail.value = "";
-        modalSenha.value = "";
+        document.getElementById("modalNomeCargo").value = "";
+        document.getElementById("modalCargo").value = "";
+        permissoesEscolhidas = [];
+        atualizarTelaDePermissoes();
     }
 
     function listarCargos() {
@@ -113,7 +124,7 @@
                     }
 
                     let permissaoBloco = `
-                        <label style="display: flex; align-items: center; cursor: pointer; white-space: nowrap;">
+                        <label class="permissao-checkbox-label">
                             <input type="checkbox" ${estaMarcado} style="margin-right: 5px;">
                             <span>${linha.permissao}</span>
                         </label>
@@ -132,10 +143,10 @@
 
                     lista.innerHTML += `
                         <div class="linha-usuario" id="linha_cargo_${c.idCargo}">
-                            <div class="col-nome" style="color: var(--cinza-texto); font-weight: 600; font-size: 16px;">
+                            <div class="col-nome texto-nome-cargo">
                                 ${c.cargo}
                             </div>
-                            <div class="col-email" style="color: var(--cinza-texto); font-size: 14px;">
+                            <div class="col-email texto-permissoes-cargo">
                                 ${textoPermissoes}
                             </div>
                             <div class="col-acoes acoes-botoes">
@@ -151,7 +162,92 @@
             });
     }
 
+    function carregarPermissoesDoSelect() {
+        fetch("/cargos/permissoes")
+            .then(res => res.json())
+            .then(permissoes => {
+                let select = document.getElementById("modalCargo");
+                select.innerHTML = '<option value="">Selecione uma permissão...</option>';
 
+                for(let i = 0; i < permissoes.length; i++) {
+                    select.innerHTML += `<option value="${permissoes[i].idPermissao}">${permissoes[i].nome}</option>`;
+                }
+            });
+    }
+
+    function adicionarPermissaoNaLista() {
+        let select = document.getElementById("modalCargo");
+        let idPerm = select.value;
+        let nomePerm = select.options[select.selectedIndex].text;
+
+        if (idPerm === "") return;
+
+        let jaExiste = false;
+        for(let i = 0; i < permissoesEscolhidas.length; i++) {
+            if(permissoesEscolhidas[i].id === idPerm) jaExiste = true;
+        }
+
+        if(!jaExiste) {
+            permissoesEscolhidas.push({ id: idPerm, nome: nomePerm });
+            atualizarTelaDePermissoes();
+        }
+    }
+
+    function atualizarTelaDePermissoes() {
+        let div = document.getElementById("listaPermissoesModal");
+        div.innerHTML = "";
+
+        for(let i = 0; i < permissoesEscolhidas.length; i++) {
+            let p = permissoesEscolhidas[i];
+            div.innerHTML += `
+                <div class="tag-permissao">
+                    ${p.nome}
+                    <span class="tag-remover-btn" onclick="removerPermissaoDaLista('${p.id}')">X</span>
+                </div>
+            `;
+        }
+    }
+
+    function removerPermissaoDaLista(idRemover) {
+        let novaLista = [];
+        for(let i = 0; i < permissoesEscolhidas.length; i++) {
+            if(permissoesEscolhidas[i].id !== idRemover) {
+                novaLista.push(permissoesEscolhidas[i]);
+            }
+        }
+        permissoesEscolhidas = novaLista;
+        atualizarTelaDePermissoes();
+    }
+
+    function criarNovoCargo() {
+        let nomeCargo = document.getElementById("modalNomeCargo").value;
+
+        if (nomeCargo === "") {
+            alert("Digite o nome do cargo!");
+            return;
+        }
+
+        let idsParaEnviar = [];
+        for(let i = 0; i < permissoesEscolhidas.length; i++) {
+            idsParaEnviar.push(permissoesEscolhidas[i].id);
+        }
+
+        fetch("/cargos/cadastrar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nomeCargoServer: nomeCargo,
+                idCompanhiaServer: idCompanhia,
+                permissoesServer: idsParaEnviar
+            })
+        }).then(res => {
+            if(res.ok) {
+                alert("Cargo cadastrado com sucesso!");
+                fecharModal();
+                listarCargos();
+            }
+        });
+    }
         listarCargos();
 
 </script>

@@ -237,3 +237,55 @@
     text-align: center;
 }
 
+.modal-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.modal-select-flex {
+    margin-top: 0;
+    flex: 1;
+}
+
+.modal-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.tag-permissao {
+    background: var(--cinza-claro);
+    border: 1px solid var(--cor-borda);
+    padding: 5px 12px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.tag-remover-btn {
+    cursor: pointer;
+    color: red;
+    font-weight: 800;
+}
+
+.permissao-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.texto-nome-cargo {
+    color: var(--cinza-texto);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.texto-permissoes-cargo {
+    color: var(--cinza-texto);
+    font-size: 14px;
+}
