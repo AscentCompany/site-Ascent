@@ -1,50 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
-    <link rel="stylesheet" href="acessoRapido.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascent – Acesso Rápido</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="acessoRapido.css">
 </head>
 <body>
+  <div class="app">
+
     <!-- BOTÃO ABRIR/FECHAR MENU -->
-  <button class="btn-menu" id="btn-menu" aria-label="Abrir ou fechar menu">
-    <i class="fi fi-rr-menu-burger"></i>
-  </button>
-  <div class="overlay" id="overlay"></div>
+    <button class="btn-menu" id="btn-menu" aria-label="Abrir ou fechar menu">
+      <i class="fi fi-rr-menu-burger"></i>
+    </button>
+    <div class="overlay" id="overlay"></div>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="logo">
-      <a href="./acessoRapido.html"><img src="/ascent-api/public/assets/icon/logo2.png" alt="Ascent"></a>
-    </div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">
+        <a href="./acessoRapido.html"><img src="/ascent-api/public/assets/icon/logo2.png" alt="Ascent"></a>
+      </div>
 
-    <div class="profile">
-      <img src="/ascent-api/public/assets/icon/" alt="">
-      <span>Thamyres Batista</span>
-    </div>
+      <div class="profile">
+        <img src="/ascent-api/public/assets/icon/" alt="">
+        <span>Thamyres Batista</span>
+      </div>
 
-    <nav class="nav">
-      <span class="nav-indicador" id="nav-indicador"></span>
-      <div class="nav-item "><a href="/ascent-api/public/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
-      <div class="nav-item"><a href="/ascent-api/public/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
-      <div class="nav-item"><a href="#">Gestão</a></div>
-      <div class="nav-item"><a href="#">Ascent IA</a></div>
-      <div class="nav-item"><a href="#">Perfil</a></div>
-      <div class="nav-item"><a href="#">FAQ</a></div>
-    </nav>
+      <nav class="nav">
+        <span class="nav-indicador" id="nav-indicador"></span>
+        <div class="nav-item"><a href="/ascent-api/public/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
+        <div class="nav-item"><a href="/ascent-api/public/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
+        <div class="nav-item"><a href="#">Gestão</a></div>
+        <div class="nav-item"><a href="#">Ascent IA</a></div>
+        <div class="nav-item"><a href="#">Perfil</a></div>
+        <div class="nav-item"><a href="#">FAQ</a></div>
+      </nav>
 
-    <button class="logout" type="button">SAIR</button>
-  </aside>
-    
-</body>
-</html>
-<script>
- const btnMenu = document.getElementById('btn-menu');
+      <button class="logout" type="button">SAIR</button>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL - ACESSO RÁPIDO -->
+    <main class="main">
+      <div class="acesso-container">
+        
+        <header class="acesso-header">
+          <h1>ACESSO RÁPIDO</h1>
+          <img src="/ascent-api/public/assets/icon/logo3.png" alt="Ascent" class="logo-topo">
+        </header>
+
+        <section class="acesso-grid">
+          <a href="/ascent-api/public/dashboard/dashboardRotas.html" class="card-acesso laranja">
+            <span>Dashboard<br>Rotas</span>
+          </a>
+
+          <a href="/ascent-api/public/dashboard/dashboardOperacoes.html" class="card-acesso branco">
+            <span>Dashboard<br>Operações</span>
+          </a>
+
+          <a href="#" class="card-acesso laranja">
+            <span>Ascent IA</span>
+          </a>
+
+          <a href="#" class="card-acesso branco">
+            <span>Perfil</span>
+          </a>
+
+          <a href="#" class="card-acesso laranja">
+            <span>Gestão de<br>funcionários</span>
+          </a>
+
+          <a href="#" class="card-acesso branco">
+            <span>FAQ</span>
+          </a>
+        </section>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const btnMenu = document.getElementById('btn-menu');
     const overlay = document.getElementById('overlay');
     if(window.innerWidth <= 900) document.body.classList.add('menu-fechado');
     btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
@@ -54,27 +94,31 @@
     const indiceAtivo = () => itensNav.findIndex(i => i.classList.contains('ativo'));
     const topoDe = i => `translateY(${itensNav[i].offsetTop}px)`;
     function posicionarIndicador(){
-        const atual = indiceAtivo();
-        if(atual < 0) return;
-        const guardado = sessionStorage.getItem('navAnterior');
-        const ant = guardado === null ? atual : Number(guardado);
-        sessionStorage.removeItem('navAnterior');
-        indicador.style.transition = 'none';
-        indicador.style.transform = topoDe(itensNav[ant] ? ant : atual);
-        indicador.style.opacity = 1;
-        indicador.offsetHeight;
-        indicador.style.transition = '';
-        indicador.style.transform = topoDe(atual);
+      const atual = indiceAtivo();
+      if(atual < 0) return;
+      const guardado = sessionStorage.getItem('navAnterior');
+      const ant = guardado === null ? atual : Number(guardado);
+      sessionStorage.removeItem('navAnterior');
+      indicador.style.transition = 'none';
+      indicador.style.transform = topoDe(itensNav[ant] ? ant : atual);
+      indicador.style.opacity = 1;
+      indicador.offsetHeight;
+      indicador.style.transition = '';
+      indicador.style.transform = topoDe(atual);
     }
     window.addEventListener('load', posicionarIndicador);
     window.addEventListener('resize', () => {
-        indicador.style.transition = 'none';
-        indicador.style.transform = topoDe(indiceAtivo());
+      const atual = indiceAtivo();
+      if(atual < 0) return;
+      indicador.style.transition = 'none';
+      indicador.style.transform = topoDe(atual);
     });
     itensNav.forEach(item => {
-        item.addEventListener('click', () => {
+      item.addEventListener('click', () => {
         if(item.classList.contains('ativo')) return;
         if(item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
-        });
-  });
-</script>
+      });
+    });
+  </script>
+</body>
+</html>
