@@ -254,6 +254,4 @@ body.menu-fechado .main {
     flex-direction: column;
     gap: 14px;
     text-align: center;
-  }
-  .acesso-grid {
-    grid-template-columns
+  }}
