@@ -1,28 +1,28 @@
 package com.ascent;
 
-import org.springframework.cglib.core.Local;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import com.ascent.Conexao;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     static Scanner scnNumeros = new Scanner(System.in);
-    static Scanner scnTextos = new Scanner(System.in);
+    static Scanner scnTextos  = new Scanner(System.in);
     static Conexao bancoAscent;
     static JdbcTemplate bd;
-
 
     public static void main(String[] args) {
 
         bancoAscent = new Conexao();
         bd = new JdbcTemplate(bancoAscent.getConexao());
 
+        // Leitura do S3 roda automaticamente ao iniciar
+        // Comentado para testes locais — descomentar em produção
+        // importarDadosAnac();
+
+        // Após a importação, abre o menu normalmente
         Integer opcao;
         do {
             exibirMenu();
@@ -33,9 +33,9 @@ public class Main {
                     System.out.println("Encerrando o sistema. Até Breve!");
                     break;
                 case 1:
-                  cadastrarNovoUsuario();
-                  esperarUsuario();
-                  break;
+                    cadastrarNovoUsuario();
+                    esperarUsuario();
+                    break;
                 case 2:
                     trocarSenha();
                     esperarUsuario();
@@ -48,7 +48,82 @@ public class Main {
                     System.out.println("Opção inválida! Tente novamente.");
             }
         } while (opcao != 0);
+    }
 
+    // ---------------------------------------------------------------
+    // Importação automática da base ANAC via S3
+    // Roda ao iniciar — acionada pelo CRON no Docker
+    // Para a aplicação se qualquer linha tiver erro
+    // ---------------------------------------------------------------
+    public static void importarDadosAnac() {
+        System.out.println("\n=== Iniciando importacao da base ANAC do S3 ===");
+
+        try {
+            LeitorExcel leitorExcel = new LeitorExcel();
+            LeitorExcel.ResultadoLeitura dados = leitorExcel.extrairDados();
+
+            // Insere Companhias
+            System.out.println("\nInserindo companhias...");
+            for (Companhia c : dados.companhias) {
+                bd.update(
+                    "INSERT INTO companhia (codCompanhia, nomeCompanhia, paisCompanhia, razaoSocial, cnpj, fkCargo) VALUES (?, ?, ?, ?, ?, ?)",
+                    c.codCompanhia, c.nomeCompanhia, c.paisCompanhia,
+                    "",  // razaoSocial — não disponível no arquivo da ANAC
+                    "",  // cnpj        — não disponível no arquivo da ANAC
+                    1    // fkCargo     — cargo padrão; ajustar conforme necessidade
+                );
+            }
+
+            // Insere Aviões
+            System.out.println("Inserindo avioes...");
+            for (Aviao a : dados.avioes) {
+                bd.update(
+                    "INSERT INTO aviao (numAssentos, modelo) VALUES (?, ?)",
+                    a.numAssentos, a.modelo
+                );
+            }
+
+            // Insere Voos
+            System.out.println("Inserindo voos...");
+            for (Voo v : dados.voos) {
+                bd.update(
+                    "INSERT INTO voo (numVoo, tipoVoo, qtdPassageiros, fkCompanhia, fkAviao) VALUES (?, ?, ?, ?, ?)",
+                    v.numVoo, v.tipoVoo, v.qtdPassageiros,
+                    1,  // fkCompanhia — vinculação a ser implementada
+                    1   // fkAviao     — vinculação a ser implementada
+                );
+            }
+
+            // Insere Aeroportos
+            System.out.println("Inserindo aeroportos...");
+            for (Aeroporto a : dados.aeroportos) {
+                bd.update(
+                    "INSERT INTO aeroporto (nomeAeroporto, municipio, uf, regiao, pais) VALUES (?, ?, ?, ?, ?)",
+                    a.nomeAeroporto, a.municipio, a.uf, a.regiao, a.pais
+                );
+            }
+
+            // Insere AeroportoDirecao
+            System.out.println("Inserindo direcoes de aeroporto...");
+            for (AeroportoDirecao ad : dados.aeroportoDirecoes) {
+                bd.update(
+                    "INSERT INTO aeroportoDirecao (fkAeroporto, fkVoo, direcao, dia, hora) VALUES (?, ?, ?, ?, ?)",
+                    1,  // fkAeroporto — vinculação a ser implementada
+                    1,  // fkVoo       — vinculação a ser implementada
+                    ad.direcao, ad.dia, ad.hora
+                );
+            }
+
+            System.out.println("\n=== Importacao concluida com sucesso! ===");
+            novoLogBanco("INFO", "importacao", "Base ANAC importada com sucesso do S3.", LocalDateTime.now(), "Java");
+
+        } catch (Exception e) {
+            // Para a aplicação e exibe o erro completo para correção
+            System.err.println("\n=== ERRO NA IMPORTACAO — APLICACAO ENCERRADA ===");
+            System.err.println(e.getMessage());
+            novoLogBanco("ERROR", "importacao", "Falha na importacao da base ANAC: " + e.getMessage(), LocalDateTime.now(), "Java");
+            System.exit(1);
+        }
     }
 
     public static void exibirMenu() {
@@ -69,12 +144,12 @@ public class Main {
         scnTextos.nextLine();
     }
 
-    public static void novoLogBanco(String categoria, String servico, String mensagem, LocalDateTime dataHora, String origemCadastro){
+    public static void novoLogBanco(String categoria, String servico, String mensagem, LocalDateTime dataHora, String origemCadastro) {
         bd.update("INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro) VALUES (?, ?, ?, ?, ?);",
                 categoria, servico, mensagem, LocalDateTime.now(), origemCadastro);
     }
 
-    public static void cadastrarNovoUsuario(){
+    public static void cadastrarNovoUsuario() {
         System.out.print("Nome do Usuario: ");
         String nome = scnTextos.nextLine();
 
@@ -96,19 +171,17 @@ public class Main {
         System.out.println("Cargo do Usuario: ");
         Integer fkCargo = scnNumeros.nextInt();
 
-        if (senha.equals(confirmarSenha)){
+        if (senha.equals(confirmarSenha)) {
             bd.update("INSERT INTO usuario (nome, cpf, email, senha, fkCompanhia, fkCargo) VALUES (?, ?, ?, ?, ?, ?);",
                     nome, cpf, email, senha, fkCompanhia, fkCargo);
-
             novoLogBanco("INFO", "auth", "Usuario " + nome + " cadastrado", LocalDateTime.now(), "Java");
-        }else{
+        } else {
             System.out.println("Senhas Nao Coincidem!!!!!!!!");
             novoLogBanco("ERROR", "auth", "Usuario " + nome + " nao foi cadastrado", LocalDateTime.now(), "Java");
         }
-
     }
 
-    public static void trocarSenha(){
+    public static void trocarSenha() {
         System.out.println("CPF do usuario que deseja editar: ");
         String cpf = scnTextos.nextLine();
 
@@ -118,24 +191,17 @@ public class Main {
         System.out.println("Confirme a senha: ");
         String confirmarSenha = scnTextos.nextLine();
 
-        if (senha.equals(confirmarSenha)){
+        if (senha.equals(confirmarSenha)) {
             bd.update("UPDATE usuario SET senha = ? WHERE cpf = ?;", senha, cpf);
-
             novoLogBanco("INFO", "auth", "Usuario com cpf " + cpf + " alterou a senha!", LocalDateTime.now(), "Java");
-        }else{
+        } else {
             System.out.println("Senhas Nao Coincidem!!!!!!!!");
             novoLogBanco("ERROR", "auth", "Usuario com cpf " + cpf + " nao alterou a senha!", LocalDateTime.now(), "Java");
         }
-
     }
 
-    public static void exibirTodosOsLogs(){
-        List<Log> logs =  bd.query("SELECT * FROM logsServico", new BeanPropertyRowMapper<>(Log.class));
+    public static void exibirTodosOsLogs() {
+        List<Log> logs = bd.query("SELECT * FROM logsServico", new BeanPropertyRowMapper<>(Log.class));
         System.out.println(logs);
-
     }
-
-
-
-
 }
