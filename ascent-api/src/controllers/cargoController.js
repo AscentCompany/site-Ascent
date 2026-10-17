@@ -71,11 +71,41 @@ function deletar(req, res) {
         });
 }
 
+function atualizar(req, res) {
+    var idCargo = req.params.idCargo;
+    var permissoes = req.body.permissoesServer;
+
+    cargoModel.deletarCargoPermissoes(idCargo)
+        .then(() => {
+
+            if (permissoes.length === 0) {
+                res.json({ mensagem: "Todas as permissões foram removidas." });
+                return;
+            }
+
+            let salvos = 0;
+            for (let i = 0; i < permissoes.length; i++) {
+                cargoModel.cadastrarCargoPermissao(idCargo, permissoes[i])
+                    .then(() => {
+                        salvos++;
+                        if (salvos === permissoes.length) {
+                            res.json({ mensagem: "Permissões atualizadas!" });
+                        }
+                    })
+                    .catch(erro => {
+                        console.log("Erro ao salvar permissão:", erro);
+                    });
+            }
+        })
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
 module.exports = {
     verificarPermissaoAdmin,
     listarCargos,
     listarPermissoes,
     cadastrar,
-    deletar
+    deletar,
+    atualizar
 
 }

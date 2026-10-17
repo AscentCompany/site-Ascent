@@ -24,4 +24,8 @@ router.delete("/deletar/:idCargo", function (req, res) {
     cargoController.deletar(req, res);
 });
 
+router.put("/atualizar/:idCargo", function (req, res) {
+    cargoController.atualizar(req, res);
+});
+
 module.exports = router;
