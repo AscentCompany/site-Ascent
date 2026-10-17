@@ -9,9 +9,7 @@ function listarPermissoes() {
             f.nome AS funcionalidade,
             pf.idpermissaoFuncionalidade
         FROM permissao p
-                 -- Cruza TODAS as permissões com TODAS as funcionalidades
-                 CROSS JOIN funcionalidade f
-            -- Verifica se existe o vínculo na tabela associativa
+                 JOIN funcionalidade f
                  LEFT JOIN permissaoFuncionalidade pf
                            ON pf.fkPermissao = p.idPermissao AND pf.fkFuncionalidade = f.idFuncionalidade
         ORDER BY p.idPermissao ASC, f.idFuncionalidade ASC;
@@ -23,9 +21,22 @@ function listarFuncionalidades() {
     return database.executar(`SELECT * FROM funcionalidade;`);
 }
 
+function cadastrarPermissao(nomePermissao) {
+    return database.executar(`INSERT INTO permissao (nome) VALUES ('${nomePermissao}');`);
+}
 
+function cadastrarPermissaoFuncionalidade(idPermissao, idFuncionalidade) {
+    return database.executar(`INSERT INTO permissaoFuncionalidade (fkPermissao, fkFuncionalidade) VALUES (${idPermissao}, ${idFuncionalidade});`);
+}
+
+function buscarUltimaPermissao() {
+    return database.executar(`SELECT MAX(idPermissao) as idNovaPermissao FROM permissao;`);
+}
 
 module.exports = {
     listarPermissoes,
     listarFuncionalidades,
+    cadastrarPermissao,
+    cadastrarPermissaoFuncionalidade,
+    buscarUltimaPermissao
 };

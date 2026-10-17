@@ -23,14 +23,14 @@
             <select id="modalFuncionalidade" class="modal-select-flex">
                 <option value="">Selecione uma Funcionalidade...</option>
             </select>
-            <button class="btn-acao" onclick="" style="height: auto;">Add</button>
+            <button class="btn-acao" onclick="adicionarFuncionalidadeNaLista()" style="height: auto;">Add</button>
         </div>
 
         <div id="listaFuncionalidadesModal" class="modal-tags-container">
             <!-- preenchido pelo js -->
         </div>
 
-        <button class="botao-enviar" onclick="" style="margin-top: 25px;">Criar Permissão</button>
+        <button class="botao-enviar" onclick="criarNovaPermissao()" style="margin-top: 25px;">Criar Permissão</button>
     </div>
 </div>
 
@@ -78,6 +78,8 @@
 
 
 <script>
+
+    let funcionalidadesEscolhidas = [];
 
     function abrirModal() {
         document.getElementById("modalCadastro").style.display = "flex";
@@ -150,6 +152,92 @@
                 }
             })
             .catch(erro => console.error(erro));
+    }
+
+    function criarNovaPermissao() {
+        let nomePermissao = modalNomePermissao.value;
+
+        if (nomePermissao === "") {
+            alert("Digite o nome da permissão!");
+            return;
+        }
+
+        let idsParaEnviar = [];
+        for(let i = 0; i < funcionalidadesEscolhidas.length; i++) {
+            idsParaEnviar.push(funcionalidadesEscolhidas[i].id);
+        }
+
+        fetch("/permissoes/cadastrar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nomePermissaoServer: nomePermissao,
+                funcionalidadesServer: idsParaEnviar
+            })
+        }).then(res => {
+            if(res.ok) {
+                alert("Permissão cadastrada com sucesso!");
+                fecharModal();
+                listarPermissoes();
+            }
+        });
+    }
+
+    function carregarFuncionalidadesDoSelect() {
+        fetch("/permissoes/funcionalidades")
+            .then(res => res.json())
+            .then(funcionalidades => {
+                let select = document.getElementById("modalFuncionalidade");
+                select.innerHTML = '<option value="">Selecione uma funcionalidade...</option>';
+
+                for(let i = 0; i < funcionalidades.length; i++) {
+                    select.innerHTML += `<option value="${funcionalidades[i].idFuncionalidade}">${funcionalidades[i].nome}</option>`;
+                }
+            });
+    }
+
+    function adicionarFuncionalidadeNaLista() {
+        let select = document.getElementById("modalFuncionalidade");
+        let idFunc = select.value;
+        let nomeFunc = select.options[select.selectedIndex].text;
+
+        if (idFunc === "") return;
+
+        let jaExiste = false;
+        for(let i = 0; i < funcionalidadesEscolhidas.length; i++) {
+            if(funcionalidadesEscolhidas[i].id === idFunc) jaExiste = true;
+        }
+
+        if(!jaExiste) {
+            funcionalidadesEscolhidas.push({ id: idFunc, nome: nomeFunc });
+            atualizarTelaDeFuncionalidades();
+        }
+    }
+
+    function removerFuncionalidadeDaLista(idRemover) {
+        let novaLista = [];
+        for(let i = 0; i < funcionalidadesEscolhidas.length; i++) {
+            if(funcionalidadesEscolhidas[i].id !== idRemover) {
+                novaLista.push(funcionalidadesEscolhidas[i]);
+            }
+        }
+        funcionalidadesEscolhidas = novaLista;
+        atualizarTelaDeFuncionalidades();
+    }
+
+    function atualizarTelaDeFuncionalidades() {
+        let div = document.getElementById("listaFuncionalidadesModal");
+        div.innerHTML = "";
+
+        for(let i = 0; i < funcionalidadesEscolhidas.length; i++) {
+            let f = funcionalidadesEscolhidas[i];
+            div.innerHTML += `
+                <div class="tag-permissao">
+                    ${f.nome}
+                    <span class="tag-remover-btn" onclick="removerFuncionalidadeDaLista('${f.id}')">X</span>
+                </div>
+            `;
+        }
     }
 
     listarPermissoes();
