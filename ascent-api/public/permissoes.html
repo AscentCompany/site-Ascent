@@ -240,6 +240,38 @@
         }
     }
 
+    function excluirPermissao(idPermissao) {
+        fetch(`/permissoes/cargos-vinculados/${idPermissao}`)
+            .then(res => res.json())
+            .then(cargos => {
+                let mensagem = "Atenção! Tem certeza que deseja excluir esta permissão?\n";
+
+                if (cargos.length > 0) {
+                    mensagem += "\nEsta permissão está atualmente vinculada aos seguintes cargos:\n";
+                    for (let i = 0; i < cargos.length; i++) {
+                        mensagem += `- ${cargos[i].cargo}\n`;
+                    }
+                    mensagem += "\nAo excluir, esta permissão será REMOVIDA de todos esses cargos!";
+                }
+
+                if(confirm(mensagem)) {
+                    fetch(`/permissoes/deletar/${idPermissao}`, {
+                        method: "DELETE"
+                    }).then(res => {
+                        if(res.ok) {
+                            res.json().then(json => {
+                                alert(json.mensagem);
+                                listarPermissoes();
+                            });
+                        } else {
+                            alert("Erro ao tentar realizar a exclusão.");
+                        }
+                    }).catch(erro => console.error("Erro na deleção:", erro));
+                }
+            })
+            .catch(erro => console.error("Erro ao buscar cargos:", erro));
+    }
+
     listarPermissoes();
 </script>
 

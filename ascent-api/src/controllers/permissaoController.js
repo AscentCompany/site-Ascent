@@ -43,8 +43,48 @@ function cadastrar(req, res) {
         .catch(erro => res.status(500).json(erro.sqlMessage));
 }
 
+function buscarCargosVinculados(req, res) {
+    var idPermissao = req.params.idPermissao;
+    permissaoModel.buscarCargosDaPermissao(idPermissao)
+        .then(resultado => res.json(resultado))
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
+function deletar(req, res) {
+    var idPermissao = req.params.idPermissao;
+
+    permissaoModel.contarPermissoes()
+        .then(resultado => {
+            let qtdPermissoes = resultado[0].qtd;
+
+            if (qtdPermissoes <= 1) {
+                permissaoModel.deletarPermissaoFuncionalidades(idPermissao)
+                    .then(() => {
+                        res.json({ mensagem: "Como esta é a última permissão do sistema, ela não foi excluída, mas todas as suas funcionalidades foram removidas!" });
+                    })
+                    .catch(erro => res.status(500).json(erro.sqlMessage));
+            }
+            else {
+                permissaoModel.deletarCargoPermissoesPorPermissao(idPermissao)
+                    .then(() => {
+                        return permissaoModel.deletarPermissaoFuncionalidades(idPermissao);
+                    })
+                    .then(() => {
+                        return permissaoModel.deletarPermissao(idPermissao);
+                    })
+                    .then(() => {
+                        res.json({ mensagem: "Permissão excluída com sucesso!" });
+                    })
+                    .catch(erro => res.status(500).json(erro.sqlMessage));
+            }
+        })
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
 module.exports = {
     listarPermissoes,
     listarFuncionalidades,
-    cadastrar
+    cadastrar,
+    deletar,
+    buscarCargosVinculados
 }

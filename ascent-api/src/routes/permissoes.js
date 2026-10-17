@@ -23,4 +23,8 @@ router.put("/atualizar/:idPermissao", function (req, res) {
     permissaoController.atualizar(req, res);
 });
 
+router.get("/cargos-vinculados/:idPermissao", function (req, res) {
+    permissaoController.buscarCargosVinculados(req, res);
+});
+
 module.exports = router;

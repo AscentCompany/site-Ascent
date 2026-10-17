@@ -33,10 +33,42 @@ function buscarUltimaPermissao() {
     return database.executar(`SELECT MAX(idPermissao) as idNovaPermissao FROM permissao;`);
 }
 
+function deletarPermissaoFuncionalidades(idPermissao) {
+    return database.executar(`DELETE FROM permissaoFuncionalidade WHERE fkPermissao = ${idPermissao};`);
+}
+
+function deletarPermissao(idPermissao) {
+    return database.executar(`DELETE FROM permissao WHERE idPermissao = ${idPermissao};`);
+}
+
+function buscarCargosDaPermissao(idPermissao) {
+    var instrucaoSql = `
+        SELECT c.cargo
+        FROM cargo c
+        JOIN cargoPermissao cp ON c.idCargo = cp.fkCargo
+        WHERE cp.fkPermissao = ${idPermissao};
+    `;
+    return database.executar(instrucaoSql);
+}
+
+function deletarCargoPermissoesPorPermissao(idPermissao) {
+    return database.executar(`DELETE FROM cargoPermissao WHERE fkPermissao = ${idPermissao};`);
+}
+
+function contarPermissoes() {
+    var instrucaoSql = `SELECT COUNT(idPermissao) AS qtd FROM permissao;`;
+    return database.executar(instrucaoSql);
+}
+
 module.exports = {
     listarPermissoes,
     listarFuncionalidades,
     cadastrarPermissao,
     cadastrarPermissaoFuncionalidade,
-    buscarUltimaPermissao
+    buscarUltimaPermissao,
+    deletarPermissaoFuncionalidades,
+    deletarPermissao,
+    buscarCargosDaPermissao,
+    deletarCargoPermissoesPorPermissao,
+    contarPermissoes
 };

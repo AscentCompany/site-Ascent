@@ -80,9 +80,7 @@ CREATE TABLE IF NOT EXISTS cargoPermissao(
 
 CREATE TABLE IF NOT EXISTS funcionalidade(
   idFuncionalidade INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-  nome VARCHAR(45) NULL DEFAULT NULL,
-  fkPermissao INT NOT NULL,
-  CONSTRAINT chkFkPermissao_func FOREIGN KEY (fkPermissao) REFERENCES permissao(idPermissao)
+  nome VARCHAR(45) NULL DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS permissaoFuncionalidade(
