@@ -85,6 +85,15 @@ CREATE TABLE IF NOT EXISTS funcionalidade(
   CONSTRAINT chkFkPermissao_func FOREIGN KEY (fkPermissao) REFERENCES permissao(idPermissao)
 );
 
+CREATE TABLE IF NOT EXISTS permissaoFuncionalidade(
+  idpermissaoFuncionalidade INT NOT NULL AUTO_INCREMENT,
+  fkPermissao INT NOT NULL,
+  CONSTRAINT chkFkPermissao FOREIGN KEY (fkPermissao) REFERENCES permissao(idPermissao),
+  fkFuncionalidade INT NOT NULL,
+  CONSTRAINT chkFkFuncionalidade FOREIGN KEY (fkFuncionalidade) REFERENCES funcionalidade(idFuncionalidade),
+  PRIMARY KEY(idpermissaoFuncionalidade, fkPermissao, fkFuncionalidade)
+);
+
 CREATE TABLE IF NOT EXISTS usuario(
   idUsuario INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
   nome VARCHAR(45) NOT NULL,

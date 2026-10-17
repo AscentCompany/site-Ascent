@@ -68,13 +68,92 @@
                 <div class="col-acoes">Ações</div>
             </div>
 
-            <div id="listaCargos">
+            <div id="listaPermissoes">
                 <!--vazio aqui pq preenche com o js-->
             </div>
 
         </div>
     </main>
 </div>
+
+
+<script>
+
+    function abrirModal() {
+        document.getElementById("modalCadastro").style.display = "flex";
+        carregarFuncionalidadesDoSelect();
+    }
+
+    function fecharModal() {
+        document.getElementById("modalCadastro").style.display = "none";
+        document.getElementById("modalNomePermissao").value = "";
+        document.getElementById("modalFuncionalidade").value = "";
+        funcionalidadesEscolhidas = [];
+        atualizarTelaDeFuncionalidades();
+    }
+
+    function listarPermissoes() {
+        fetch(`/permissoes/listar`)
+            .then(res => res.json())
+            .then(linhasBd => {
+                let lista = document.getElementById("listaPermissoes");
+                lista.innerHTML = "";
+
+                let permissoesAgrupadas = [];
+                let ultimoIdVisto = -1;
+                let indexAtual = -1;
+
+                for (let i = 0; i < linhasBd.length; i++) {
+                    let linha = linhasBd[i];
+
+                    if (linha.idPermissao !== ultimoIdVisto) {
+                        indexAtual++;
+                        permissoesAgrupadas[indexAtual] = {
+                            idPermissao: linha.idPermissao,
+                            permissao: linha.permissao,
+                            funcionalidades: ""
+                        };
+                        ultimoIdVisto = linha.idPermissao;
+                    }
+
+                    let estaMarcado = "";
+                    if (linha.idpermissaoFuncionalidade !== null) {
+                        estaMarcado = "checked";
+                    }
+
+                    let funcionalidadeBloco = `
+                        <label class="permissao-checkbox-label">
+                            <input type="checkbox" value="${linha.idFuncionalidade}" class="checkbox-permissao-${linha.idPermissao}" ${estaMarcado} style="margin-right: 5px;">
+                            <span>${linha.funcionalidade}</span>
+                        </label>
+                    `;
+                    permissoesAgrupadas[indexAtual].funcionalidades += funcionalidadeBloco;
+                }
+
+                for (let i = 0; i < permissoesAgrupadas.length; i++) {
+                    let p = permissoesAgrupadas[i];
+
+                    lista.innerHTML += `
+                        <div class="linha-usuario" id="linha_permissao_${p.idPermissao}">
+                            <div class="col-nome texto-nome-cargo">
+                                ${p.permissao}
+                            </div>
+                            <div class="col-email texto-permissoes-cargo">
+                                ${p.funcionalidades}
+                            </div>
+                            <div class="col-acoes acoes-botoes">
+                                <button class="btn-acao" onclick="atualizarPermissao(${p.idPermissao})">Alterar</button>
+                                <button class="btn-acao" onclick="excluirPermissao(${p.idPermissao})">Excluir</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(erro => console.error(erro));
+    }
+
+    listarPermissoes();
+</script>
 
 </body>
 </html>
