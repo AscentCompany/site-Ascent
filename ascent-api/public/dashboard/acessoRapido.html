@@ -22,19 +22,19 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="logo">
-        <a href="./acessoRapido.html"><img src="/ascent-api/public/assets/icon/logo2.png" alt="Ascent"></a>
+        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>
       </div>
 
       <div class="profile">
         <img src="/ascent-api/public/assets/icon/" alt="">
-        <span>Thamyres Batista</span>
+        <span id="nomeUsuario"></span>
       </div>
 
       <nav class="nav">
         <span class="nav-indicador" id="nav-indicador"></span>
-        <div class="nav-item"><a href="/ascent-api/public/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
-        <div class="nav-item"><a href="/ascent-api/public/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
-        <div class="nav-item"><a href="#">Gestão</a></div>
+        <div class="nav-item"><a href="../dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
+        <div class="nav-item"><a href="../dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
+        <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
         <div class="nav-item"><a href="#">Ascent IA</a></div>
         <div class="nav-item"><a href="#">Perfil</a></div>
         <div class="nav-item"><a href="#">FAQ</a></div>
@@ -49,15 +49,15 @@
         
         <header class="acesso-header">
           <h1>ACESSO RÁPIDO</h1>
-          <img src="/ascent-api/public/assets/icon/logo3.png" alt="Ascent" class="logo-topo">
+          <img src="../assets/icon/logo3.png" alt="Ascent" class="logo-topo">
         </header>
 
         <section class="acesso-grid">
-          <a href="/ascent-api/public/dashboard/dashboardRotas.html" class="card-acesso laranja">
+          <a href="../dashboard/dashboardRotas.html" class="card-acesso laranja">
             <span>Dashboard<br>Rotas</span>
           </a>
 
-          <a href="/ascent-api/public/dashboard/dashboardOperacoes.html" class="card-acesso branco">
+          <a href="../dashboard/dashboardOperacoes.html" class="card-acesso branco">
             <span>Dashboard<br>Operações</span>
           </a>
 
@@ -69,7 +69,7 @@
             <span>Perfil</span>
           </a>
 
-          <a href="#" class="card-acesso laranja">
+          <a href="../usuarios.html" class="card-acesso laranja">
             <span>Gestão de<br>funcionários</span>
           </a>
 
@@ -84,6 +84,13 @@
   </div>
 
   <script>
+
+    if (sessionStorage.NOME_USUARIO != null){
+      nomeUsuario.textContent = sessionStorage.NOME_USUARIO;
+    }else{
+      nomeUsuario.textContent = "Bem Vindo!";
+    }
+
     const btnMenu = document.getElementById('btn-menu');
     const overlay = document.getElementById('overlay');
     if(window.innerWidth <= 900) document.body.classList.add('menu-fechado');
@@ -119,6 +126,7 @@
         if(item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
       });
     });
+
   </script>
 </body>
 </html>
