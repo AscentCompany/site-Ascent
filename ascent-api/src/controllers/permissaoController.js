@@ -81,10 +81,38 @@ function deletar(req, res) {
         .catch(erro => res.status(500).json(erro.sqlMessage));
 }
 
+function atualizar(req, res) {
+    var idPermissao = req.params.idPermissao;
+    var funcionalidades = req.body.funcionalidadesServer;
+
+    permissaoModel.deletarPermissaoFuncionalidades(idPermissao)
+        .then(() => {
+
+            if (funcionalidades.length === 0) {
+                res.json({ mensagem: "A permissão foi atualizada e não possui mais funcionalidades vinculadas." });
+                return;
+            }
+
+            let salvos = 0;
+            for (let i = 0; i < funcionalidades.length; i++) {
+                permissaoModel.cadastrarPermissaoFuncionalidade(idPermissao, funcionalidades[i])
+                    .then(() => {
+                        salvos++;
+                        if (salvos === funcionalidades.length) {
+                            res.json({ mensagem: "Permissão atualizada com sucesso!" });
+                        }
+                    })
+                    .catch(erro => console.log(erro));
+            }
+        })
+        .catch(erro => res.status(500).json(erro.sqlMessage));
+}
+
 module.exports = {
     listarPermissoes,
     listarFuncionalidades,
     cadastrar,
     deletar,
-    buscarCargosVinculados
+    buscarCargosVinculados,
+    atualizar
 }

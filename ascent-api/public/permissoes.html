@@ -272,6 +272,33 @@
             .catch(erro => console.error("Erro ao buscar cargos:", erro));
     }
 
+    function atualizarPermissao(idPermissao) {
+        if (confirm("Confirmar a alteração das funcionalidades?")) {
+
+            let checkboxes = document.querySelectorAll(`.checkbox-permissao-${idPermissao}:checked`);
+            let funcSelecionadas = [];
+
+            for (let i = 0; i < checkboxes.length; i++) {
+                funcSelecionadas.push(checkboxes[i].value);
+            }
+
+            fetch(`/permissoes/atualizar/${idPermissao}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    funcionalidadesServer: funcSelecionadas
+                })
+            }).then(res => {
+                if (res.ok) {
+                    alert("Funcionalidades atualizadas com sucesso!");
+                    listarPermissoes();
+                } else {
+                    alert("Erro ao atualizar funcionalidades.");
+                }
+            }).catch(erro => console.error("Erro ao alterar:", erro));
+        }
+    }
+
     listarPermissoes();
 </script>
 
