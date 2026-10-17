@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ascent | Gerenciar Cargos</title>
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/cruds.css">
+
+</head>
+<body>
+<div class="modal-overlay" id="modalCadastro" style="display: none;">
+    <div class="modal-content formulario">
+        <span class="fechar-modal" onclick="fecharModal()">X</span>
+        <h2 class="titulo-boas-vindas" style="font-size: 24px;">Nova Permissão</h2>
+
+        <label for="modalNomePermissao">Nome da Permissão</label>
+        <input type="text" id="modalNomePermissao" placeholder="Nome da Permissão">
+
+        <label for="modalFuncionalidade">Funcionalidades</label>
+        <div class="modal-input-group">
+            <select id="modalFuncionalidade" class="modal-select-flex">
+                <option value="">Selecione uma Funcionalidade...</option>
+            </select>
+            <button class="btn-acao" onclick="" style="height: auto;">Add</button>
+        </div>
+
+        <div id="listaFuncionalidadesModal" class="modal-tags-container">
+            <!-- preenchido pelo js -->
+        </div>
+
+        <button class="botao-enviar" onclick="" style="margin-top: 25px;">Criar Permissão</button>
+    </div>
+</div>
+
+
+<div class="page-wrapper">
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <a href="index.html">
+                <img src="assets/icon/logo.png" alt="Logo da Ascent" />
+            </a>
+        </div>
+        <nav class="sidebar-menu">
+            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
+            <button class="menu-btn" onclick="window.location.href='cargos.html'">Gerenciar Cargos</button>
+            <button class="menu-btn active" onclick="window.location.href='#'">Gerenciar Permissões</button>
+        </nav>
+    </div>
+
+    <main class="container-gerenciar">
+
+        <div class="header-gerenciar">
+            <div class="titulos">
+                <h1 class="titulo-boas-vindas">Gerenciar Permissões</h1>
+                <span class="subtitulo">*Gerenciar funcionalidades disponíveis por permissão. </span>
+            </div>
+            <button class="btn-novo-usuario" onclick="abrirModal()">+ Nova Permissão</button>
+        </div>
+
+        <div class="cartao-gerenciar">
+
+            <div class="tabela-cabecalho">
+                <div class="col-nome">Permissão</div>
+                <div class="col-email">Funcionalidades</div>
+                <div class="col-acoes">Ações</div>
+            </div>
+
+            <div id="listaCargos">
+                <!--vazio aqui pq preenche com o js-->
+            </div>
+
+        </div>
+    </main>
+</div>
+
+</body>
+</html>
