@@ -50,76 +50,164 @@
     </aside>
 
     <!-- CONTEÚDO -->
-    <main class="main">
-
+    <div class="header">
       <header class="page-header">
         <div class="page-titulo">
           <h1>Gestão de Operações</h1>
-          <p>Com base nos últimos 5 anos</p>
         </div>
         <button class="btn-filtrar" type="button" id="btn-filtrar">
           Filtrar <i class="fi fi-rr-settings-sliders"></i>
         </button>
       </header>
+    </div>
 
-      <section class="kpis">
-        <article class="card kpi-gradient kpi-region">
-          <h2>Taxa de Ocupação Média</h2>
-          <div class="kpi-text-icon">
-            <i class="fas fa-plane"></i>
-            <div class="big">78,4%</div>
-          </div>
-          <div class="sub">passageiros + 57,8 M assentos</div>
-        </article>
+    <section class="kpis">
+      <article class="card kpi-gradient kpi-region">
+        <h2>Taxa de Ocupação Média</h2>
+        <div class="kpi-text-icon">
+          <i class="fas fa-plane" style="transform: rotate(300deg);"></i>
+          <div class="big">78,4%</div>
+        </div>
+        <div class="sub">Passageiros + 57,8 M assentos</div>
+      </article>
 
-        <article class="card kpi-middle">
-          <div>
-            <h3>Cidade com mais<BR> baixa procura</h3>
-            <div class="kpi-box">
-              <div class="value">Vitória (ES)</div>
-              <div class="label">Queda de 15% na procura em relação
-                ao ano passado <br> (30 / 85)</div>
-            </div>
-          </div>
-          <div>
-            <h3>hub com maior <br> circulação</h3>
-            <div class="kpi-box">
-              <div class="value">GRU</div>
-              <div class="label">(Guarulhos)</div>
-              <div class="prev">77% dos Voos passaram por esse
-                aeroporto no período <br> (77 / 100)</div>
-            </div>
-          </div>
-        </article>
+      <article class="card kpi-gradient kpi-mes">
+        <h2>mês com maior procura</h2>
+        <div class="kpi-text-icon">
+          <i class="fas fa-calendar"></i>
+          <div class="big">Dezembro</div>
+        </div>
+        <div class="sub">Pico histórico de demanda</div>
+      </article>
 
-        <article class="card kpi-gradient kpi-variation">
-          <h2>Mês com maior <br> procura de voos</h2>
-          <div class="big">Junho</div>
-          <div class="sub">14% da procura geral no período
-            (14/100)</div>
-        </article>
-      </section>
+      <article class="card kpi-gradient kpi-mes">
+        <h2>Rota com menor ocupação</h2>
+        <div class="kpi-text-icon">
+          <i class="fas fa-map-marker-alt"></i>
+          <div class="big">Es - Mt</div>
+        </div>
+        <div class="sub">4% inferior às demais rotas ofertadas</div>
+      </article>
+
+      <article class="card kpi-gradient kpi-region">
+        <h2>Rotas Críticas</h2>
+        <div class="kpi-text-icon">
+          <i class="fas fa-triangle-exclamation"></i>
+          <div class="big">12,6%</div>
+        </div>
+        <div class="sub">18 rotas com ocupação abaixo do limite</div>
+      </article>
+    </section>
+
+    <main class="main">
 
       <section class="card card-evolucao">
-        <h2 class="chart-title">Evolução da ocupação</h2>
-        <div class="chart-placeholder" id="grafico-evolucao">Gráfico de linha – evolução da ocupação</div>
+        <h2 class="chart-title">Relação de ocupação de assentos</h2>
+
+        <div class="chart-placeholder">
+          <canvas id="grafico-evolucao" style="height: 200px;"></canvas>
+        </div>
       </section>
 
       <section class="card card-mensal">
-        <h2 class="chart-title">Ocupação assentos mensal</h2>
-        <div class="chart-placeholder" id="grafico-mensal">Gráfico de barras – assentos livres x ocupados</div>
+        <h2 class="chart-title">Análise Anual de Procura Histórica</h2>
+
+        <div class="grafico-container" style="height: 200px;">
+          <canvas id="grafico-mensal"></canvas>
+        </div>
       </section>
 
       <section class="card card-faixa">
-        <h2 class="chart-title">Quantidade de passageiros<br>por faixa horária</h2>
-        <div class="chart-placeholder" id="grafico-faixa">Gráfico de barras horizontais – passageiros por horário</div>
-      </section>
+        <h2 class="chart-title">Informativo rotas</h2>
 
+        <!-- Área com scroll -->
+        <div class="rotas-scroll">
+          <div class="tabela-rotas">
+            <div class="cabecalho-rotas">
+              <span>Rota</span>
+              <span>Voos</span>
+              <span>Ocupação</span>
+            </div>
+
+            <h3 class="titulo-maiores">Top 5 Maiores Ocupações</h3>
+
+            <div class="linha-rota">
+              <span>CGH - REC</span>
+              <span>248</span>
+              <span class="ocupacao alta">96,7%</span>
+            </div>
+            <div class="linha-rota">
+              <span>GRU - GIG</span>
+              <span>312</span>
+              <span class="ocupacao alta">96,0%</span>
+            </div>
+            <div class="linha-rota">
+              <span>SSA - GRU</span>
+              <span>276</span>
+              <span class="ocupacao alta">95,9%</span>
+            </div>
+            <div class="linha-rota">
+              <span>BSB - SDU</span>
+              <span>220</span>
+              <span class="ocupacao alta">94,6%</span>
+            </div>
+            <div class="linha-rota">
+              <span>CNF - GRU</span>
+              <span>198</span>
+              <span class="ocupacao alta">93,8%</span>
+            </div>
+
+            <h3 class="titulo-menores">Top 5 Menores Ocupações</h3>
+
+            <div class="linha-rota">
+              <span>ES - MT</span>
+              <span>248</span>
+              <span class="ocupacao baixa">74,0%</span>
+            </div>
+            <div class="linha-rota">
+              <span>PMW - CGH</span>
+              <span>312</span>
+              <span class="ocupacao baixa">78,2%</span>
+            </div>
+            <div class="linha-rota">
+              <span>RBR - VCP</span>
+              <span>276</span>
+              <span class="ocupacao baixa">80,5%</span>
+            </div>
+            <div class="linha-rota">
+              <span>THE - GRU</span>
+              <span>220</span>
+              <span class="ocupacao baixa">82,1%</span>
+            </div>
+            <div class="linha-rota">
+              <span>SBJ - CGH</span>
+              <span>198</span>
+              <span class="ocupacao baixa">83,4%</span>
+            </div>
+
+            <!-- Adicione as demais linhas aqui -->
+          </div>
+        </div>
+
+        <!-- Fica sempre visível -->
+        <div class="indicadores-rotas">
+          <div class="indicador-rota">
+            <span>⚠ SUBUTILIZAÇÃO</span>
+            <strong>18 rotas</strong>
+          </div>
+
+          <div class="indicador-rota">
+            <span>↗ GARGALO DE DEMANDA</span>
+            <strong>12 rotas</strong>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 </body>
 
 </html>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   const btnMenu = document.getElementById('btn-menu');
   const overlay = document.getElementById('overlay');
@@ -153,5 +241,140 @@
       if (item.classList.contains('ativo')) return;
       if (item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
     });
+  });
+
+  const meses = [
+    'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
+    'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'
+  ];
+
+  // GRÁFICO 1 — OCUPAÇÃO DE ASSENTOS
+  new Chart(document.getElementById('grafico-evolucao'), {
+    type: 'bar',
+
+    data: {
+      labels: meses,
+      datasets: [
+        {
+          label: 'Assentos Disponíveis',
+          data: [60, 55, 50, 35, 50, 66, 70, 50, 40, 50, 50, 100],
+          backgroundColor: '#ffadb4',
+          borderRadius: 1,
+          barPercentage: 0.85,
+          categoryPercentage: 0.75
+        },
+        {
+          label: 'Assentos Ocupados',
+          data: [50, 47, 30, 25, 50, 60, 66, 45, 40, 40, 44, 70],
+          backgroundColor: '#ff9b73',
+          borderRadius: 1,
+          barPercentage: 0.85,
+          categoryPercentage: 0.75
+        }
+      ]
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 6,
+            boxHeight: 6,
+            padding: 8,
+            font: { size: 8 }
+          }
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      },
+
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 8 } },
+          border: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            stepSize: 20,
+            font: { size: 8 },
+            callback: valor => `${valor} mil`
+          },
+          grid: {
+            color: '#eeeeee'
+          },
+          border: { display: false }
+        }
+      }
+    }
+  });
+
+  // GRÁFICO 2 — PROCURA HISTÓRICA
+  new Chart(document.getElementById('grafico-mensal'), {
+    type: 'bar',
+
+    data: {
+      labels: meses,
+      datasets: [{
+        label: 'Procura histórica',
+        data: [60, 50, 47, 20, 50, 60, 66, 45, 40, 43, 45, 70],
+
+        backgroundColor: [
+          '#5486ff', '#a487f6', '#f2b960', '#ffdc4d',
+          '#ed6981', '#d95cc2', '#56cccc', '#70c65c',
+          '#8caf32', '#b5a027', '#e4a126', '#ffb36f'
+        ],
+
+        borderRadius: 3,
+        borderSkipped: false,
+        categoryPercentage: 0.8,
+        barPercentage: 0.9
+      }]
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: contexto => `${contexto.raw} mil`
+          }
+        }
+      },
+
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 8 } },
+          border: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          max: 70,
+          ticks: {
+            stepSize: 10,
+            font: { size: 8 },
+            callback: valor => `${valor} mil`
+          },
+          grid: {
+            color: '#eeeeee'
+          },
+          border: { display: false }
+        }
+      }
+    }
   });
 </script>
