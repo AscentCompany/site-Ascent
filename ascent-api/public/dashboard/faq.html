@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascent – FAQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="faq.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- BOTÃO ABRIR/FECHAR MENU -->
+    <button class="btn-menu" id="btn-menu" aria-label="Abrir ou fechar menu">
+      <i class="fi fi-rr-menu-burger"></i>
+    </button>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- SIDEBAR PADRÃO -->
+    <aside class="sidebar">
+      <div class="logo">
+        <a href="./acessoRapido.html"><img src="/ascent-api/public/assets/icon/logo2.png" alt="Ascent"></a>
+      </div>
+
+      <div class="profile">
+        <img src="/ascent-api/public/assets/icon/" alt="">
+        <span>Thamyres Batista</span>
+      </div>
+
+      <nav class="nav">
+        <span class="nav-indicador" id="nav-indicador"></span>
+        <div class="nav-item"><a href="/ascent-api/public/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
+        <div class="nav-item"><a href="/ascent-api/public/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
+        <div class="nav-item"><a href="#">Gestão</a></div>
+        <div class="nav-item"><a href="#">Ascent IA</a></div>
+        <div class="nav-item"><a href="#">Perfil</a></div>
+        <div class="nav-item ativo"><a href="./faq.html">FAQ</a></div>
+      </nav>
+
+      <button class="logout" type="button">SAIR</button>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL - FAQ -->
+    <main class="main">
+      <div class="faq-container">
+
+        <header class="faq-header">
+          <h1>FAQ</h1>
+        </header>
+
+        <section class="faq-list">
+
+          <!-- Tópico 1 -->
+          <div class="faq-item">
+            <button class="faq-trigger" type="button" aria-expanded="false">
+              <span>Primeiros Passos e Acesso Rápido</span>
+              <span class="faq-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-content-inner">
+                <div class="qa-block">
+                  <h3>O que é o sistema Ascent?</h3>
+                  <p>O Ascent é uma plataforma de inteligência de dados e análise voltada para o setor de aviação. Ele centraliza indicadores de oferta e demanda de voos, auxiliando companhias aéreas a tomarem decisões estratégicas sobre rotas e operações.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Para que serve a tela de "Acesso Rápido"?</h3>
+                  <p>É o seu painel central de navegação. A partir dele, você pode acessar de forma ágil os dashboards de Rotas e Operações, módulos de IA, perfil, FAQ e a gestão de funcionários.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Como faço para alternar entre os dashboards?</h3>
+                  <p>Você pode usar o menu lateral (sidebar) fixo em qualquer página ou retornar à tela de Acesso Rápido através do ícone da logo no topo do menu.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tópico 2 -->
+          <div class="faq-item">
+            <button class="faq-trigger" type="button" aria-expanded="false">
+              <span>Dashboards de Rotas e Operações</span>
+              <span class="faq-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-content-inner">
+                <div class="qa-block">
+                  <h3>O que os dados dos dashboards representam?</h3>
+                  <p>Eles são baseados em análises históricas (como dados dos últimos 5 anos) e processamentos de planilhas de voos para monitorar taxas de ocupação, rotas mais buscadas e sazonalidade mensal.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Como interpreto o indicador de rotas com maior incidência?</h3>
+                  <p>Esse KPI mostra qual trecho (por exemplo, SP -> RJ) teve o maior volume de procura no período avaliado, ajudando a direcionar esforços de capacidade e preços.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>O que significa a queda ou aumento de procura em determinadas cidades?</h3>
+                  <p>Os gráficos apontam variações percentuais em relação ao ano anterior. Isso serve para identificar gargalos de demanda ou cidades com potencial de expansão de malha aérea.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tópico 3 -->
+          <div class="faq-item">
+            <button class="faq-trigger" type="button" aria-expanded="false">
+              <span>Sistema e Notificações (Slack e Alertas)</span>
+              <span class="faq-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-content-inner">
+                <div class="qa-block">
+                  <h3>Como funcionam os alertas e notificações do sistema?</h3>
+                  <p>O sistema conta com rotinas automatizadas (via Java e processamento de logs) que monitoram dados e geram mensagens automáticas de avisos importantes diretamente em canais integrados, como o Slack da equipe.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Quem tem acesso à Gestão de Funcionários?</h3>
+                  <p>Essa funcionalidade é restrita a usuários com perfil de Administrador, conforme as permissões de cargo configuradas no sistema. O perfil de Visualizador possui acesso apenas aos dashboards de leitura.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tópico 4 -->
+          <div class="faq-item">
+            <button class="faq-trigger" type="button" aria-expanded="false">
+              <span>Conta e Suporte</span>
+              <span class="faq-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-content-inner">
+                <div class="qa-block">
+                  <h3>Como posso alterar minha senha ou dados do perfil?</h3>
+                  <p>Basta acessar a opção Perfil no menu lateral ou na tela de Acesso Rápido para visualizar e atualizar suas informações cadastrais.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>O que devo fazer se encontrar algum erro nos dados ou gráficos?</h3>
+                  <p>Verifique se a sua conexão está ativa ou entre em contato com o Administrador do sistema da sua companhia para reportar inconsistências nas bases de dados carregadas.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // ---------- SCRIPT PADRÃO DA SIDEBAR ----------
+    const btnMenu = document.getElementById('btn-menu');
+    const overlay = document.getElementById('overlay');
+    if(window.innerWidth <= 900) document.body.classList.add('menu-fechado');
+    btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
+    overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
+
+    const itensNav = [...document.querySelectorAll('.sidebar .nav-item')];
+    const indicador = document.getElementById('nav-indicador');
+    const indiceAtivo = () => itensNav.findIndex(i => i.classList.contains('ativo'));
+    const topoDe = i => `translateY(${itensNav[i].offsetTop}px)`;
+
+    function posicionarIndicador(){
+      const atual = indiceAtivo();
+      if(atual < 0) return;
+      const guardado = sessionStorage.getItem('navAnterior');
+      const ant = guardado === null ? atual : Number(guardado);
+      sessionStorage.removeItem('navAnterior');
+      indicador.style.transition = 'none';
+      indicador.style.transform = topoDe(itensNav[ant] ? ant : atual);
+      indicador.style.opacity = 1;
+      indicador.offsetHeight;
+      indicador.style.transition = '';
+      indicador.style.transform = topoDe(atual);
+    }
+
+    window.addEventListener('load', posicionarIndicador);
+    window.addEventListener('resize', () => {
+      const atual = indiceAtivo();
+      if(atual < 0) return;
+      indicador.style.transition = 'none';
+      indicador.style.transform = topoDe(atual);
+    });
+
+    itensNav.forEach(item => {
+      item.addEventListener('click', () => {
+        if(item.classList.contains('ativo')) return;
+        if(item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
+      });
+    });
+
+    // ---------- SCRIPT DO ACCORDION (FAQ) ----------
+    const faqItems = document.querySelectorAll('.faq-item');
+
+    faqItems.forEach(item => {
+      const trigger = item.querySelector('.faq-trigger');
+      const content = item.querySelector('.faq-content');
+
+      trigger.addEventListener('click', () => {
+        const estaAberto = item.classList.contains('aberto');
+
+        // Fecha o item clicado se já estiver aberto, ou abre
+        if (estaAberto) {
+          item.classList.remove('aberto');
+          trigger.setAttribute('aria-expanded', 'false');
+          content.style.maxHeight = null;
+        } else {
+          item.classList.add('aberto');
+          trigger.setAttribute('aria-expanded', 'true');
+          content.style.maxHeight = content.scrollHeight + 'px';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
