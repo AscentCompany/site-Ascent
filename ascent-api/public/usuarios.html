@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ascent | Gerenciar Organização</title>
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/cruds.css">
+
+</head>
+<body>
+
+<div class="modal-overlay" id="modalCadastro">
+    <div class="modal-content formulario">
+        <span class="fechar-modal" onclick="fecharModal()">X</span>
+        <h2 class="titulo-boas-vindas" style="font-size: 24px;">Novo Usuário</h2>
+
+        <label for="modalNome">Nome</label>
+        <input type="text" id="modalNome" placeholder="Nome do funcionário">
+
+        <label for="modalEmail">E-mail</label>
+        <input type="email" id="modalEmail" placeholder="email@empresa.com">
+
+        <label for="modalSenha">Senha</label>
+        <input type="password" id="modalSenha" placeholder="Senha temporária">
+
+        <label for="modalCargo">Cargo</label>
+        <select id="modalCargo">
+        </select>
+
+        <button class="botao-enviar" onclick="cadastrarNovoUsuario()">Cadastrar Funcionário</button>
+    </div>
+</div>
+
+<div class="page-wrapper">
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <a href="index.html">
+                <img src="assets/icon/logo.png" alt="Logo da Ascent" />
+            </a>
+        </div>
+        <nav class="sidebar-menu">
+            <button class="menu-btn active" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
+            <button class="menu-btn" onclick="window.location.href='cargos.html'">Gerenciar Cargos</button>
+            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Permissões</button>
+        </nav>
+    </div>
+
+    <main class="container-gerenciar">
+
+        <div class="header-gerenciar">
+            <div class="titulos">
+                <h1 class="titulo-boas-vindas">Gerenciar Funcionários</h1>
+                <span class="subtitulo">*Gerenciar atributos da conta e cargos</span>
+            </div>
+            <button class="btn-novo-usuario" onclick="abrirModal()">+ Novo Usuário</button>
+        </div>
+
+        <div class="cartao-gerenciar">
+
+            <div class="tabela-cabecalho">
+                <div class="col-nome">Nome</div>
+                <div class="col-email">Email</div>
+                <div class="col-cargo">Cargo</div>
+                <div class="col-acoes">Ações</div>
+            </div>
+
+            <div id="listaUsuarios">
+                <!--vazio aqui pq preenche com o js-->
+            </div>
+
+        </div>
+    </main>
+</div>
+
+
+<script>
+    let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+    let idCargoUsuarioLogado = Number(sessionStorage.CARGO_USUARIO);
+    let cargosGlobais = [];
+
+    function verificarPermissao() {
+        if (!idCompanhia || !idCargoUsuarioLogado) {
+            console.warn("Usuário não está logado ou os dados do sessionStorage estão vazios.");
+            return;
+        }
+
+        fetch(`/usuarios/permissao/${idCompanhia}`)
+            .then(res => res.json())
+            .then(res => {
+                let menorCargo = res[0].adminCargo;
+                if(idCargoUsuarioLogado > menorCargo) {
+                    alert("Você não tem permissão para acessar esta tela.");
+                    window.location.href = "index.html";
+                } else {
+                    carregarCargos();
+                }
+            });
+    }
+
+    function carregarCargos() {
+        fetch(`/usuarios/cargos/${idCompanhia}`)
+            .then(res => res.json())
+            .then(cargos => {
+                cargosGlobais = cargos;
+
+                let modalSelect = document.getElementById("modalCargo");
+
+                let opcoesHtml = "";
+                for (let i = 0; i < cargos.length; i++) {
+                    let c = cargos[i];
+                    opcoesHtml += `<option value="${c.idCargo}">${c.cargo}</option>`;
+                }
+                modalSelect.innerHTML = opcoesHtml;
+
+                listarUsuarios();
+            });
+    }
+
+    function listarUsuarios() {
+        fetch(`/usuarios/listar/${idCompanhia}`)
+            .then(res => res.json())
+            .then(usuarios => {
+                let lista = document.getElementById("listaUsuarios");
+                lista.innerHTML = "";
+
+                for (let i = 0; i < usuarios.length; i++) {
+                    let u = usuarios[i];
+
+                    let opcoesCargos = "";
+                    for (let j = 0; j < cargosGlobais.length; j++) {
+                        let c = cargosGlobais[j];
+                        let selecionado = "";
+
+                        if (c.idCargo === u.idCargo) {
+                            selecionado = "selected";
+                        }
+
+                        opcoesCargos += `<option value="${c.idCargo}" ${selecionado}>${c.cargo}</option>`;
+                    }
+
+                    lista.innerHTML += `
+                        <div class="linha-usuario" id="linha_${u.idUsuario}">
+                          <div class="col-nome" style="color: var(--cinza-texto); font-weight: 600;">${u.nome}</div>
+                          <div class="col-email"><input type="email" id="email_${u.idUsuario}" value="${u.email}"></div>
+                          <div class="col-cargo"><select id="cargo_${u.idUsuario}">${opcoesCargos}</select></div>
+                          <div class="col-acoes acoes-botoes">
+                            <button class="btn-acao" onclick="editarUsuario(${u.idUsuario})">Editar</button>
+                            <button class="btn-acao" onclick="excluirUsuario(${u.idUsuario})">Excluir</button>
+                          </div>
+                        </div>
+                    `;
+                }
+            });
+    }
+
+    function editarUsuario(idUsuario) {
+        if(confirm("Tem certeza que deseja atualizar os dados deste usuário?")) {
+            let novoEmail = document.getElementById(`email_${idUsuario}`).value;
+            let novoCargo = document.getElementById(`cargo_${idUsuario}`).value;
+
+            fetch(`/usuarios/editar/${idUsuario}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: novoEmail, fkCargo: novoCargo })
+            }).then(res => {
+                if(res.ok) {
+                    alert("Usuário atualizado com sucesso!");
+                    listarUsuarios();
+                } else {
+                    alert("Erro ao atualizar usuário.");
+                }
+            });
+        }
+    }
+
+    function excluirUsuario(idUsuario) {
+        if(confirm("Atenção! Deseja realmente excluir este usuário da organização?")) {
+            fetch(`/usuarios/deletar/${idUsuario}`, {
+                method: "DELETE"
+            }).then(res => {
+                if(res.ok) {
+                    alert("Usuário excluído.");
+                    listarUsuarios();
+                } else {
+                    alert("Erro ao excluir usuário.");
+                }
+            });
+        }
+    }
+
+    function cadastrarNovoUsuario() {
+        let nomeVar = modalNome.value;
+        let emailVar = modalEmail.value;
+        let senhaVar = modalSenha.value;
+        let cargoVar = modalCargo.value;
+
+        if(!nomeVar || !emailVar || !senhaVar || !cargoVar) {
+            alert("Preencha todos os campos do modal!");
+            return;
+        }
+
+        fetch("/usuarios/cadastrarFuncionario", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nomeServer: nomeVar,
+                emailServer: emailVar,
+                senhaServer: senhaVar,
+                idCompanhiaServer: idCompanhia,
+                idCargoServer: cargoVar
+            })
+        }).then(res => {
+            if(res.ok) {
+                alert("Funcionário cadastrado com sucesso!");
+                fecharModal();
+                listarUsuarios();
+            }
+        });
+    }
+
+    function abrirModal() {
+        document.getElementById("modalCadastro").style.display = "flex";
+    }
+
+    function fecharModal() {
+        document.getElementById("modalCadastro").style.display = "none";
+        modalNome.value = "";
+        modalEmail.value = "";
+        modalSenha.value = "";
+    }
+
+    verificarPermissao();
+
+</script>
+
+</body>
+</html>
