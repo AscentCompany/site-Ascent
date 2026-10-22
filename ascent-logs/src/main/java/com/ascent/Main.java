@@ -71,7 +71,7 @@ public class Main {
 
     public static void novoLogBanco(String categoria, String servico, String mensagem, LocalDateTime dataHora, String origemCadastro){
         bd.update("INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro) VALUES (?, ?, ?, ?, ?);",
-                categoria, servico, mensagem, LocalDateTime.now(), origemCadastro);
+                categoria, servico, mensagem, dataHora, origemCadastro);
     }
 
     public static void cadastrarNovoUsuario(){
@@ -120,17 +120,29 @@ public class Main {
         if (senha.equals(confirmarSenha)){
             bd.update("UPDATE usuario SET senha = ? WHERE cpf = ?;", senha, cpf);
 
-            novoLogBanco("INFO", "auth", "Usuario com cpf " + cpf + " alterou a senha!", LocalDateTime.now(), "Java");
+            novoLogBanco("INFO", "auth", "Senha do usuario alterada", LocalDateTime.now(), "Java");
         }else{
             System.out.println("Senhas Nao Coincidem!!!!!!!!");
-            novoLogBanco("ERROR", "auth", "Usuario com cpf " + cpf + " nao alterou a senha!", LocalDateTime.now(), "Java");
+            novoLogBanco("ERROR", "auth", "Senha do usuario nao alterada", LocalDateTime.now(), "Java");
         }
 
     }
 
     public static void exibirTodosOsLogs(){
-        List<Log> logs =  bd.query("SELECT * FROM logsServico", new BeanPropertyRowMapper<>(Log.class));
-        System.out.println(logs);
+        List<Log> logs = bd.query("SELECT * FROM logsServico ORDER BY dataHora DESC", new BeanPropertyRowMapper<>(Log.class));
+
+        if (logs.isEmpty()){
+            System.out.println("Nenhum log encontrado.");
+            return;
+        }
+
+        for (Log log : logs){
+            System.out.println(log.getDataHora()
+                    + " " + log.getCategoria()
+                    + " [" + log.getServico() + "] - " + log.getMensagem()
+                    + " [id=" + log.getLogId()
+                    + ", origem=" + log.getOrigemCadastro() + "]");
+        }
 
     }
 
