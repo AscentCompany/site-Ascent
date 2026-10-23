@@ -52,14 +52,9 @@ public class LeitorExcel {
         System.out.printf("Bucket : %s%n", BUCKET);
         System.out.printf("Arquivo: %s%n", ARQUIVO);
 
-        S3Client s3 = S3Client.builder()
-                .region(REGIAO)
-                .build();
+        S3Client s3 = S3Client.builder().region(REGIAO).build();
 
-        GetObjectRequest pedido = GetObjectRequest.builder()
-                .bucket(BUCKET)
-                .key(ARQUIVO)
-                .build();
+        GetObjectRequest pedido = GetObjectRequest.builder().bucket(BUCKET).key(ARQUIVO).build();
 
         try (InputStream stream = s3.getObject(pedido)) {
             return extrairDeInputStream(stream);
@@ -120,7 +115,7 @@ public class LeitorExcel {
                 if (nrVoo != null) {
                     Voo voo = new Voo();
                     voo.numVoo = nrVoo;
-                    voo.tipoVoo = tipoVoo != null ? tipoVoo : 0;
+                     voo.tipoVoo = tipoVoo != null ? tipoVoo : 0;
                     voo.qtdPassageiros = qtdPassageiros;
                     resultado.voos.add(voo);
                 }
