@@ -8,7 +8,7 @@ router.get("/permissao/:idCompanhia", function (req, res) {
     cargoController.verificarPermissaoAdmin(req, res);
 });
 
-router.get("/cargos/:idCompanhia", function (req, res) {
+router.get("/listar/:idCompanhia", function (req, res) {
     cargoController.listarCargos(req, res);
 });
 

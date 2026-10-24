@@ -4,13 +4,13 @@ function listarPermissoes() {
     var instrucaoSql = `
         SELECT
             p.idPermissao,
-            p.nome AS permissao,
+            p.nomePermissao AS permissao,
             f.idFuncionalidade,
-            f.nome AS funcionalidade,
-            pf.idpermissaoFuncionalidade
+            f.nomeFuncionalidade AS funcionalidade,
+            pf.fkPermissao AS idpermissaoFuncionalidade
         FROM permissao p
                  JOIN funcionalidade f
-                 LEFT JOIN permissaoFuncionalidade pf
+                 LEFT JOIN funcPermissao pf
                            ON pf.fkPermissao = p.idPermissao AND pf.fkFuncionalidade = f.idFuncionalidade
         ORDER BY p.idPermissao ASC, f.idFuncionalidade ASC;
     `;
@@ -22,11 +22,11 @@ function listarFuncionalidades() {
 }
 
 function cadastrarPermissao(nomePermissao) {
-    return database.executar(`INSERT INTO permissao (nome) VALUES ('${nomePermissao}');`);
+    return database.executar(`INSERT INTO permissao (nomePermissao) VALUES ('${nomePermissao}');`);
 }
 
 function cadastrarPermissaoFuncionalidade(idPermissao, idFuncionalidade) {
-    return database.executar(`INSERT INTO permissaoFuncionalidade (fkPermissao, fkFuncionalidade) VALUES (${idPermissao}, ${idFuncionalidade});`);
+    return database.executar(`INSERT INTO funcPermissao (fkPermissao, fkFuncionalidade) VALUES (${idPermissao}, ${idFuncionalidade});`);
 }
 
 function buscarUltimaPermissao() {
@@ -34,7 +34,7 @@ function buscarUltimaPermissao() {
 }
 
 function deletarPermissaoFuncionalidades(idPermissao) {
-    return database.executar(`DELETE FROM permissaoFuncionalidade WHERE fkPermissao = ${idPermissao};`);
+    return database.executar(`DELETE FROM funcPermissao WHERE fkPermissao = ${idPermissao};`);
 }
 
 function deletarPermissao(idPermissao) {

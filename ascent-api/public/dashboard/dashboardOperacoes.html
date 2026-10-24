@@ -26,12 +26,12 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="logo">
-        <a href="./acessoRapido.html"><img src="/ascent-api/public/assets/icon/logo2.png" alt="Ascent"></a>
+        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>
       </div>
 
       <div class="profile">
         <img src="/ascent-api/public/assets/icon/" alt="">
-        <span>Thamyres Batista</span>
+        <span id="sNomeUsuario"></span>
       </div>
 
       <nav class="nav">
@@ -209,6 +209,13 @@
 </html>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+
+  if (sessionStorage.NOME_USUARIO != null){
+    sNomeUsuario.textContent = sessionStorage.NOME_USUARIO;
+  }else{
+    sNomeUsuario.textContent = "Bem Vindo!";
+  }
+
   const btnMenu = document.getElementById('btn-menu');
   const overlay = document.getElementById('overlay');
   if (window.innerWidth <= 900) document.body.classList.add('menu-fechado');

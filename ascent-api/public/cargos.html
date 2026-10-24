@@ -39,7 +39,7 @@
 
     <div class="sidebar">
         <div class="logo-container">
-            <a href="index.html">
+            <a href="dashboard/acessoRapido.html">
                 <img src="assets/icon/logo.png" alt="Logo da Ascent" />
             </a>
         </div>
@@ -95,7 +95,7 @@
     }
 
     function listarCargos() {
-        fetch(`/cargos/cargos/${idCompanhia}`)
+        fetch(`/cargos/listar/${idCompanhia}`)
             .then(res => res.json())
             .then(linhasBd => {
                 let lista = document.getElementById("listaCargos");
