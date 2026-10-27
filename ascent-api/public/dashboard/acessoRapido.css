@@ -183,7 +183,7 @@ body.menu-fechado .main {
   align-items: center;
   padding: 0 24px 20px;
   border-bottom: 3px solid #ffffff;
-  margin-bottom: 80px;
+  margin-bottom: 40px;
 }
 
 .acesso-header h1 {
@@ -201,7 +201,7 @@ body.menu-fechado .main {
   display: block;
 }
 
-/* Grid de 6 botões (3 colunas x 2 linhas) */
+/* Grid de 6 botões 3 colunas x 2 linhas */
 .acesso-grid {
   display: grid;
   grid-template-columns: repeat(3, 215px);
@@ -210,7 +210,7 @@ body.menu-fechado .main {
 }
 
 .card-acesso {
-  height: 145px;
+  height: 200px;
   border-radius: 16px;
   display: flex;
   align-items: center;
