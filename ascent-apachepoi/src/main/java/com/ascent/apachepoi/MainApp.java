@@ -26,10 +26,15 @@ public class MainApp {
 
         garantirCargoPadrao();
 
-        if ("true".equalsIgnoreCase(System.getenv("AUTO_IMPORT"))) {
+        boolean rodarS3 = "true".equalsIgnoreCase(System.getenv("AUTO_IMPORT"))
+                || (args.length > 0 && ("--s3".equalsIgnoreCase(args[0]) || "s3".equalsIgnoreCase(args[0])));
+
+        if (rodarS3) {
             importarDadosAnac();
+        } else {
+            System.out.println("Servico Apache POI pronto.");
+            System.out.println("Para importar os dados do S3, execute com AUTO_IMPORT=true ou passe o argumento '--s3'.");
         }
-        System.out.println("Servico Apache POI pronto. Use as funcoes de importacao conforme necessidade.");
     }
 
     private static void garantirCargoPadrao() {

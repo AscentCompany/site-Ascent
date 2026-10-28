@@ -24,7 +24,8 @@ public class LeitorExcel {
             System.getenv("AWS_BUCKET") : "ascent-database-318401088884-us-east-1-an";
     private static final String ARQUIVO = System.getenv("AWS_ARQUIVO_ANAC") != null ?
             System.getenv("AWS_ARQUIVO_ANAC") : "anac_brazil.xlsx";
-    private static final Region REGIAO  = Region.US_EAST_1;
+    private static final Region REGIAO  = System.getenv("AWS_REGION") != null ?
+            Region.of(System.getenv("AWS_REGION")) : Region.US_EAST_1;
 
     private static final DateTimeFormatter FMT_DATA    = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter FMT_DATA_BR = DateTimeFormatter.ofPattern("dd/MM/yyyy");
