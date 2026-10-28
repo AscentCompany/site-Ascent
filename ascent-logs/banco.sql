@@ -68,12 +68,14 @@ CREATE TABLE IF NOT EXISTS logsServico (
     mensagem          VARCHAR(255)  NOT NULL,
     dataHora          DATETIME      NOT NULL,
     origemCadastro    VARCHAR(50)   NOT NULL,
+    fkUsuario         INT           NULL DEFAULT NULL,
     nomeArquivo       VARCHAR(1024) NULL,
     statusLeitura     VARCHAR(30)   NULL,
     linhasEncontradas INT           NULL,
     linhasLidas       INT           NULL,
     linhasRejeitadas  INT           NULL,
     detalheErro       TEXT          NULL,
+    FOREIGN KEY (fkUsuario) REFERENCES usuario(idUsuario),
     CONSTRAINT chk_logsServico_statusLeitura
         CHECK (statusLeitura IS NULL OR statusLeitura IN ('LIDO', 'PARCIALMENTE_LIDO', 'ERRO_NA_LEITURA')),
     CONSTRAINT chk_logsServico_contagensLeitura

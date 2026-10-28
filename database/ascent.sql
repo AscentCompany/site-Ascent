@@ -66,15 +66,21 @@ CREATE TABLE IF NOT EXISTS usuario (
   CONSTRAINT chkFkCargo_usuario FOREIGN KEY (fkCargo) REFERENCES cargo(idCargo)
 );
 
-CREATE TABLE IF NOT EXISTS logServico (
+CREATE TABLE IF NOT EXISTS logsServico (
   idLogServico INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
   categoria VARCHAR(50) NULL DEFAULT NULL,
   servico VARCHAR(50) NULL DEFAULT NULL,
-  mensagem VARCHAR(100) NULL DEFAULT NULL,
+  mensagem VARCHAR(255) NULL DEFAULT NULL,
   dataHora DATETIME NULL DEFAULT NULL,
   origemCadastro VARCHAR(100) NULL DEFAULT NULL,
-  fkUsuario INT NOT NULL,
-  CONSTRAINT chkFkUsuario_log FOREIGN KEY (fkUsuario) REFERENCES usuario(idUsuario)
+  fkUsuario INT NULL DEFAULT NULL,
+  CONSTRAINT chkFkUsuario_log FOREIGN KEY (fkUsuario) REFERENCES usuario(idUsuario),
+  nomeArquivo VARCHAR(1024) NULL DEFAULT NULL,
+  statusLeitura VARCHAR(30) NULL DEFAULT NULL,
+  linhasEncontradas INT NULL DEFAULT NULL,
+  linhasLidas INT NULL DEFAULT NULL,
+  linhasRejeitadas INT NULL DEFAULT NULL,
+  detalheErro TEXT NULL DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS permissao (
