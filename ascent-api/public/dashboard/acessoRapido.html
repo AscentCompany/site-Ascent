@@ -26,7 +26,7 @@
       </div>
 
       <div class="profile">
-        <img src="/ascent-api/public/assets/icon/" alt="">
+        <img src="/assets/icon/" alt="">
         <span id="nomeUsuario"></span>
       </div>
 
@@ -35,12 +35,14 @@
         <div class="nav-item"><a href="../dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
         <div class="nav-item"><a href="../dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
         <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
+        <div class="nav-item"><a href="../dashboard/centralAlertas.html">Central de Alertas</a></div>
+        <div class="nav-item" id="nav-configurar-ar" style="display:none;"><a href="../dashboard/configurarAlertas.html">Configurar Alertas</a></div>
         <div class="nav-item"><a href="#">Ascent IA</a></div>
         <div class="nav-item"><a href="#">Perfil</a></div>
         <div class="nav-item"><a href="./faq.html">FAQ</a></div>
       </nav>
 
-      <button class="logout" type="button"><a class="logout" href="/ascent-api/public/index.html">SAIR</a></button>
+      <button class="logout" type="button"><a class="logout" href="/index.html">SAIR</a></button>
     </aside>
 
     <!-- CONTEÚDO PRINCIPAL - ACESSO RÁPIDO -->
@@ -73,7 +75,7 @@
             <span>Gestão de<br>funcionários</span>
           </a>
 
-          <a href="#" class="card-acesso branco">
+          <a href="./faq.html" class="card-acesso branco">
             <span>FAQ</span>
           </a>
         </section>
@@ -126,6 +128,14 @@
         if(item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
       });
     });
+
+    // Mostrar itens de gestor
+    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
+      var navConf = document.getElementById('nav-configurar-ar');
+      var cardConf = document.getElementById('card-configurar-ar');
+      if (navConf)  navConf.style.display  = '';
+      if (cardConf) cardConf.style.display = '';
+    }
 
   </script>
 </body>

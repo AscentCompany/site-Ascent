@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ascent – Central de Alertas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="dashboardOperacoes.css">
+  <link rel="stylesheet" href="../css/alertas.css">
+</head>
+<body>
+<div class="app">
+
+  <button class="btn-menu" id="btn-menu" onclick="document.body.classList.toggle('menu-fechado')">
+    <i class="fi fi-rr-menu-burger"></i>
+  </button>
+  <div class="overlay" id="overlay" onclick="document.body.classList.add('menu-fechado')"></div>
+
+  <aside class="sidebar">
+    <div class="logo">
+      <a href="./acessoRapido.html"><img src="/assets/icon/logo2.png" alt="Ascent"></a>
+    </div>
+
+    <div class="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      <span id="nome-usuario"></span>
+    </div>
+
+    <nav class="nav">
+      <span class="nav-indicador" id="nav-indicador"></span>
+      <div class="nav-item"><a href="/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
+      <div class="nav-item"><a href="/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
+      <div class="nav-item"><a href="#">Gestão</a></div>
+      <div class="nav-item ativo"><a href="/dashboard/centralAlertas.html">Central de Alertas</a></div>
+      <div class="nav-item" id="nav-configurar" style="display:none;"><a href="/dashboard/configurarAlertas.html">Configurar Alertas</a></div>
+      <div class="nav-item"><a href="#">Ascent IA</a></div>
+      <div class="nav-item"><a href="#">Perfil</a></div>
+      <div class="nav-item"><a href="./faq.html">FAQ</a></div>
+    </nav>
+
+    <a class="logout" href="/index.html">SAIR</a>
+  </aside>
+
+  <div style="margin-left: var(--sidebar-w); transition: margin-left .3s ease;">
+    <div class="central-wrapper">
+
+      <h1 class="central-titulo">Central de Alertas</h1>
+      <p class="central-subtitulo">*Histórico de alertas gerados pelo sistema</p>
+
+      <div class="central-toolbar">
+        <div class="central-abas">
+          <button class="aba-btn ativa" id="aba-todas" onclick="trocarAba('todas')">Todas</button>
+          <button class="aba-btn" id="aba-nao-lidas" onclick="trocarAba('nao-lidas')">Não lidas (<span id="qtd-nao-lidas">0</span>)</button>
+        </div>
+
+        <button class="btn-marcar-todas" onclick="marcarTodasLidas()">
+          <i class="fas fa-check-double"></i> Marcar todas como lidas
+        </button>
+      </div>
+
+      <div class="central-tabela">
+        <div class="central-thead">
+          <span></span>
+          <span>Severidade</span>
+          <span>Rota</span>
+          <span style="text-align:right;">Ocupação</span>
+        </div>
+        <div id="central-lista"><div class="central-vazio">Carregando...</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="modal-alerta-container"></div>
+
+</div>
+
+<script>
+  let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+  let ehGestor = Number(sessionStorage.CARGO_USUARIO) <= 2;
+  let abaAtiva = "todas";
+  let todosAlertas = [];
+
+  document.getElementById("nome-usuario").innerHTML = sessionStorage.NOME_USUARIO || "Usuário";
+
+  if (ehGestor) document.getElementById("nav-configurar").style.display = "";
+  if (window.innerWidth <= 900) document.body.classList.add("menu-fechado");
+
+  const itensNav = [...document.querySelectorAll(".sidebar .nav-item")];
+  const indicador = document.getElementById("nav-indicador");
+
+  function posicionarIndicador() {
+    const atual = itensNav.findIndex(i => i.classList.contains("ativo"));
+    if (atual < 0) return;
+    indicador.style.transition = "none";
+    indicador.style.transform = "translateY(" + itensNav[atual].offsetTop + "px)";
+    indicador.style.opacity = 1;
+    indicador.offsetHeight;
+    indicador.style.transition = "";
+  }
+
+  window.addEventListener("load", posicionarIndicador);
+  window.addEventListener("resize", posicionarIndicador);
+
+  function janelaTexto(janela, inicio, fim) {
+    if (janela === "personalizado" && inicio && fim) {
+      const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+      return meses[Number(inicio.slice(5,7)) - 1] + "/" + inicio.slice(0,4) + " → " + meses[Number(fim.slice(5,7)) - 1] + "/" + fim.slice(0,4);
+    }
+    return {"1_ano":"1 ano","3_anos":"3 anos","5_anos":"5 anos","10_anos":"10 anos","todo_historico":"Todo o histórico"}[janela] || janela;
+  }
+
+  function carregarAlertas() {
+    fetch("/alertas/listar/" + idCompanhia)
+      .then(r => r.json())
+      .then(alertas => {
+        todosAlertas = alertas;
+        atualizarContador();
+        renderLista();
+      });
+  }
+
+  function atualizarContador() {
+    let naoLidas = 0;
+    for (let i = 0; i < todosAlertas.length; i++) {
+      if (!todosAlertas[i].lida) naoLidas++;
+    }
+    document.getElementById("qtd-nao-lidas").innerHTML = naoLidas;
+  }
+
+  function renderLista() {
+    const lista = document.getElementById("central-lista");
+    let html = "";
+
+    for (let i = 0; i < todosAlertas.length; i++) {
+      const a = todosAlertas[i];
+      if (abaAtiva === "nao-lidas" && a.lida) continue;
+
+      html += '<div class="central-linha' + (!a.lida ? " nao-lida" : "") + '" onclick="abrirDetalhe(' + a.idAlerta + ')">';
+      html += '<div class="lida-dot' + (!a.lida ? " ativa" : "") + '"></div>';
+      html += '<span class="sev-badge ' + a.severidade + '">' + (a.severidade === "critico" ? "🔴 Crítico" : "🟡 Atenção") + '</span>';
+      html += '<span class="central-rota">' + a.rota + '</span>';
+      html += '<span class="central-ocup">' + Number(a.ocupacaoMedia).toFixed(1) + '%</span>';
+      html += '</div>';
+    }
+
+    lista.innerHTML = html || '<div class="central-vazio">Nenhum alerta encontrado.</div>';
+  }
+
+  function trocarAba(aba) {
+    abaAtiva = aba;
+    document.getElementById("aba-todas").classList.toggle("ativa", aba === "todas");
+    document.getElementById("aba-nao-lidas").classList.toggle("ativa", aba === "nao-lidas");
+    renderLista();
+  }
+
+  function marcarTodasLidas() {
+    fetch("/alertas/todas-lidas/" + idCompanhia, { method: "PUT" }).then(() => {
+      for (let i = 0; i < todosAlertas.length; i++) todosAlertas[i].lida = 1;
+      atualizarContador();
+      renderLista();
+    });
+  }
+
+  function fecharModal() {
+    document.getElementById("modal-alerta-container").innerHTML = "";
+  }
+
+  function abrirDetalhe(idAlerta) {
+    fetch("/alertas/detalhe/" + idAlerta + "/" + idCompanhia)
+      .then(r => r.json())
+      .then(data => {
+        const al = data.alerta;
+        const hist = data.historico || [];
+
+        let barras = "";
+        for (let i = 0; i < hist.length; i++) {
+          const h = hist[i];
+          barras += '<div class="hist-linha">';
+          barras += '<span class="hist-ano">' + h.ano + '</span>';
+          barras += '<div class="hist-barra-bg"><div class="hist-barra-fill" style="width:' + Math.min(h.ocupacaoMedia, 100) + '%"></div></div>';
+          barras += '<span class="hist-pct">' + Number(h.ocupacaoMedia).toFixed(1) + '%</span>';
+          barras += '</div>';
+        }
+
+        let html = '<div class="modal-overlay-alerta">';
+        html += '<div class="modal-alerta">';
+        html += '<div class="modal-alerta-header">';
+        html += '<h2>' + (al.severidade === "critico" ? "🔴" : "🟡") + ' ' + al.rota + ' — Ocupação ' + (al.severidade === "critico" ? "Crítica" : "em Atenção") + '</h2>';
+        html += '<button class="modal-fechar" onclick="fecharModal()"><i class="fas fa-xmark"></i></button>';
+        html += '</div><div class="modal-alerta-body"><div class="modal-meta">';
+        html += '<div class="modal-meta-item"><label>Ocupação média da rota</label><span class="' + al.severidade + '">' + Number(al.ocupacaoMedia).toFixed(1) + '%</span></div>';
+        html += '<div class="modal-meta-item"><label>Alerta dispara quando</label><span>ocupação abaixo de ' + Number(al.faixaOcupacao).toFixed(0) + '%</span></div>';
+        html += '<div class="modal-meta-item"><label>Período analisado</label><span>' + janelaTexto(al.janelaAnalise, al.janelaInicio, al.janelaFim) + '</span></div>';
+        html += '</div>';
+
+        if (hist.length) html += '<div class="modal-historico"><h4>Ocupação média por ano</h4>' + barras + '</div>';
+
+        html += '</div><div class="modal-alerta-footer">';
+        html += '<button class="btn-modal-sec" onclick="fecharModal()">Fechar</button>';
+        html += '<a class="btn-modal-prim" href="/dashboard/dashboardRotas.html">Ver no dashboard <i class="fas fa-arrow-right"></i></a>';
+        html += '</div></div></div>';
+
+        document.getElementById("modal-alerta-container").innerHTML = html;
+
+        for (let i = 0; i < todosAlertas.length; i++) {
+          if (todosAlertas[i].idAlerta === idAlerta) { todosAlertas[i].lida = 1; break; }
+        }
+        atualizarContador();
+        renderLista();
+
+        fetch("/alertas/lida/" + idAlerta + "/" + idCompanhia, { method: "PUT" });
+      });
+  }
+
+  carregarAlertas();
+</script>
+</body>
+</html>

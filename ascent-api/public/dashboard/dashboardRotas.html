@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
 <link rel="stylesheet" href="dashboardRotas.css">
+<link rel="stylesheet" href="../css/alertas.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
 <body>
 <div class="app">
@@ -26,21 +28,23 @@
     </div>
 
     <div class="profile">
-      <img src="/ascent-api/public/assets/icon/" alt="">
+      <img src="/assets/icon/" alt="">
       <span id="sNomeUsuario"></span>
     </div>
 
     <nav class="nav">
       <span class="nav-indicador" id="nav-indicador"></span>
-      <div class="nav-item ativo"><a href="/ascent-api/public/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
-      <div class="nav-item "><a href="/ascent-api/public/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
+      <div class="nav-item ativo"><a href="/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
+      <div class="nav-item"><a href="/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
       <div class="nav-item"><a href="#">Gestão</a></div>
+      <div class="nav-item"><a href="/dashboard/centralAlertas.html">Central de Alertas</a></div>
+      <div class="nav-item" id="nav-configurar-rot" style="display:none;"><a href="/dashboard/configurarAlertas.html">Configurar Alertas</a></div>
       <div class="nav-item"><a href="#">Ascent IA</a></div>
       <div class="nav-item"><a href="#">Perfil</a></div>
       <div class="nav-item"><a href="./faq.html">FAQ</a></div>
     </nav>
 
-      <button class="logout" type="button"><a class="logout" href="/ascent-api/public/index.html">SAIR</a></button>
+      <button class="logout" type="button"><a class="logout" href="/index.html">SAIR</a></button>
   </aside>
 
   <!-- CONTEÚDO -->
@@ -109,7 +113,16 @@
 
   </main>
 </div>
+
+<!-- container do modal de detalhe -->
+<div id="modal-alerta-container"></div>
+
+<script src="/js/alertas.js"></script>
 <script>
+  if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
+    var el = document.getElementById('nav-configurar-rot');
+    if (el) el.style.display = '';
+  }
 
   if (sessionStorage.NOME_USUARIO != null){
     sNomeUsuario.textContent = sessionStorage.NOME_USUARIO;

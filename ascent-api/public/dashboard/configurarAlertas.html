@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ascent – Configurar Alertas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="dashboardOperacoes.css">
+  <link rel="stylesheet" href="../css/alertas.css">
+</head>
+<body>
+<div class="app">
+
+  <button class="btn-menu" id="btn-menu" onclick="document.body.classList.toggle('menu-fechado')">
+    <i class="fi fi-rr-menu-burger"></i>
+  </button>
+  <div class="overlay" id="overlay" onclick="document.body.classList.add('menu-fechado')"></div>
+
+  <aside class="sidebar">
+    <div class="logo">
+      <a href="./acessoRapido.html"><img src="/assets/icon/logo2.png" alt="Ascent"></a>
+    </div>
+
+    <div class="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      <span id="nome-usuario"></span>
+    </div>
+
+    <nav class="nav">
+      <span class="nav-indicador" id="nav-indicador"></span>
+      <div class="nav-item"><a href="/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
+      <div class="nav-item"><a href="/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
+      <div class="nav-item"><a href="#">Gestão</a></div>
+      <div class="nav-item"><a href="/dashboard/centralAlertas.html">Central de Alertas</a></div>
+      <div class="nav-item ativo"><a href="/dashboard/configurarAlertas.html">Configurar Alertas</a></div>
+      <div class="nav-item"><a href="#">Ascent IA</a></div>
+      <div class="nav-item"><a href="#">Perfil</a></div>
+      <div class="nav-item"><a href="./faq.html">FAQ</a></div>
+    </nav>
+
+    <a class="logout" href="/index.html">SAIR</a>
+  </aside>
+
+  <div style="margin-left: var(--sidebar-w); transition: margin-left .3s ease;">
+    <div class="config-wrapper">
+
+      <div class="config-header">
+        <div>
+          <h1 class="config-titulo">Configurar Alertas</h1>
+          <p class="config-subtitulo">*Gerencie os parâmetros de alertas do sistema</p>
+        </div>
+        <button class="btn-criar-regra" onclick="abrirModal(null)">Criar Regra</button>
+      </div>
+
+      <div class="regras-tabela">
+        <div class="regras-thead">
+          <span>Regra</span>
+          <span>Janela</span>
+          <span>Status</span>
+          <span style="text-align:right;">Ações</span>
+        </div>
+        <div id="regras-lista"><div class="regras-vazio">Carregando...</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-overlay-alerta" id="modal-overlay" style="display:none;">
+    <div class="modal-regra">
+
+      <div class="modal-regra-header">
+        <h2 id="modal-titulo">Criar Regra de Alerta</h2>
+        <button class="modal-fechar" onclick="fecharModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-regra-body">
+
+        <div class="form-grupo">
+          <label>Faixa de ocupação (%)</label>
+          <div class="form-grupo-inline">
+            <input type="number" id="campo-faixa" min="1" max="99" placeholder="ex: 40">
+            <span>%</span>
+          </div>
+          <small style="color:#718096;font-size:11px;margin-top:4px;display:block;">Alertas serão gerados para rotas com ocupação abaixo deste valor</small>
+        </div>
+
+        <div class="form-grupo">
+          <label>Severidade</label>
+          <div class="sev-opcoes">
+            <label class="sev-opcao critico" id="sev-critico" onclick="selecionarSev('critico')">
+              <input type="radio" name="severidade"> 🔴 Crítico
+            </label>
+            <label class="sev-opcao atencao" id="sev-atencao" onclick="selecionarSev('atencao')">
+              <input type="radio" name="severidade"> 🟡 Atenção
+            </label>
+          </div>
+        </div>
+
+        <div class="form-grupo">
+          <label>Janela de análise</label>
+          <div class="janela-opcoes">
+            <label class="janela-opcao" data-val="1_ano"          onclick="selecionarJanela('1_ano')">1 ano</label>
+            <label class="janela-opcao" data-val="3_anos"         onclick="selecionarJanela('3_anos')">3 anos</label>
+            <label class="janela-opcao" data-val="5_anos"         onclick="selecionarJanela('5_anos')">5 anos</label>
+            <label class="janela-opcao" data-val="10_anos"        onclick="selecionarJanela('10_anos')">10 anos</label>
+            <label class="janela-opcao" data-val="todo_historico" onclick="selecionarJanela('todo_historico')">Todo o histórico</label>
+            <label class="janela-opcao" data-val="personalizado"  onclick="selecionarJanela('personalizado')">Personalizado</label>
+          </div>
+
+          <div class="personalizado-campos" id="personalizado-campos">
+            <label>De</label>
+            <select id="campo-mes-inicio">
+              <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+              <option value="03">Março</option><option value="04">Abril</option>
+              <option value="05">Maio</option><option value="06">Junho</option>
+              <option value="07">Julho</option><option value="08">Agosto</option>
+              <option value="09">Setembro</option><option value="10">Outubro</option>
+              <option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+            <select id="campo-ano-inicio"></select>
+            <label>Até</label>
+            <select id="campo-mes-fim">
+              <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+              <option value="03">Março</option><option value="04">Abril</option>
+              <option value="05">Maio</option><option value="06">Junho</option>
+              <option value="07">Julho</option><option value="08">Agosto</option>
+              <option value="09">Setembro</option><option value="10">Outubro</option>
+              <option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+            <select id="campo-ano-fim"></select>
+          </div>
+        </div>
+
+        <div class="form-grupo">
+          <label>Status</label>
+          <div class="toggle-status">
+            <label class="toggle-label">
+              <input type="checkbox" id="campo-ativo" checked
+                onchange="document.getElementById('toggle-texto').innerHTML = this.checked ? 'Ativa' : 'Inativa'">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-status-texto" id="toggle-texto">Ativa</span>
+          </div>
+        </div>
+
+        <div class="msg-erro-modal" id="msg-erro"></div>
+
+      </div>
+
+      <div class="modal-regra-footer">
+        <button class="btn-modal-sec" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-modal-prim" onclick="salvarRegra()">Salvar Regra</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+  let idUsuario = Number(sessionStorage.ID_USUARIO) || 1;
+  let editandoId = null;
+  let sevAtiva = "";
+  let janelaAtiva = "";
+
+  document.getElementById("nome-usuario").innerHTML = sessionStorage.NOME_USUARIO || "Usuário";
+  if (window.innerWidth <= 900) document.body.classList.add("menu-fechado");
+
+  if (Number(sessionStorage.CARGO_USUARIO) > 2) {
+    alert("Você não tem permissão para acessar esta página.");
+    window.location.href = "/dashboard/dashboardOperacoes.html";
+  }
+
+  const itensNav = [...document.querySelectorAll(".sidebar .nav-item")];
+  const indicador = document.getElementById("nav-indicador");
+
+  function posicionarIndicador() {
+    const atual = itensNav.findIndex(i => i.classList.contains("ativo"));
+    if (atual < 0) return;
+    indicador.style.transition = "none";
+    indicador.style.transform = "translateY(" + itensNav[atual].offsetTop + "px)";
+    indicador.style.opacity = 1;
+    indicador.offsetHeight;
+    indicador.style.transition = "";
+
+  }
+
+  window.addEventListener("load", posicionarIndicador);
+  window.addEventListener("resize", posicionarIndicador);
+
+  function preencherAnos() {
+    const ano = new Date().getFullYear();
+    let opts = "";
+    for (let a = ano; a >= 2000; a--) opts += "<option value='" + a + "'>" + a + "</option>";
+    document.getElementById("campo-ano-inicio").innerHTML = opts;
+    document.getElementById("campo-ano-fim").innerHTML = opts;
+    document.getElementById("campo-ano-inicio").value = ano - 5;
+    document.getElementById("campo-ano-fim").value = ano;
+  }
+  preencherAnos();
+
+  function janelaTexto(janela, inicio, fim) {
+    if (janela === "personalizado" && inicio && fim) {
+      const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+      return meses[Number(inicio.slice(5,7)) - 1] + "/" + inicio.slice(0,4) + " → " + meses[Number(fim.slice(5,7)) - 1] + "/" + fim.slice(0,4);
+    }
+    return {"1_ano":"1 ano","3_anos":"3 anos","5_anos":"5 anos","10_anos":"10 anos","todo_historico":"Todo o histórico"}[janela] || janela;
+  }
+
+  function selecionarSev(val) {
+    sevAtiva = val;
+    document.getElementById("sev-critico").classList.toggle("selecionada", val === "critico");
+    document.getElementById("sev-atencao").classList.toggle("selecionada", val === "atencao");
+  }
+
+  function selecionarJanela(val) {
+    janelaAtiva = val;
+    document.querySelectorAll(".janela-opcao").forEach(el => el.classList.toggle("selecionada", el.dataset.val === val));
+    document.getElementById("personalizado-campos").classList.toggle("visivel", val === "personalizado");
+  }
+
+  function abrirModal(regra) {
+    editandoId = regra ? regra.idRegraAlerta : null;
+
+    document.getElementById("modal-titulo").innerHTML = editandoId ? "Editar Regra de Alerta" : "Criar Regra de Alerta";
+    document.getElementById("campo-faixa").value = regra ? regra.faixaOcupacao : "";
+    document.getElementById("campo-ativo").checked = regra ? !!regra.ativo : true;
+    document.getElementById("toggle-texto").innerHTML = (regra ? !!regra.ativo : true) ? "Ativa" : "Inativa";
+    document.getElementById("msg-erro").classList.remove("visivel");
+    document.getElementById("msg-erro").innerHTML = "";
+
+    selecionarSev(regra ? regra.severidade : "");
+    selecionarJanela(regra ? regra.janelaAnalise : "");
+
+    if (regra && regra.janelaAnalise === "personalizado" && regra.janelaInicio) {
+      document.getElementById("campo-mes-inicio").value = regra.janelaInicio.slice(5,7);
+      document.getElementById("campo-ano-inicio").value = regra.janelaInicio.slice(0,4);
+      document.getElementById("campo-mes-fim").value = regra.janelaFim.slice(5,7);
+      document.getElementById("campo-ano-fim").value = regra.janelaFim.slice(0,4);
+    }
+
+    document.getElementById("modal-overlay").style.display = "flex";
+  }
+
+  function fecharModal() {
+    document.getElementById("modal-overlay").style.display = "none";
+    editandoId = null;
+  }
+
+  function mostrarErro(msg) {
+    const el = document.getElementById("msg-erro");
+    el.innerHTML = msg;
+    el.classList.add("visivel");
+  }
+
+  function salvarRegra() {
+    const faixa = Number(document.getElementById("campo-faixa").value);
+    const ativo = document.getElementById("campo-ativo").checked;
+
+    if (!faixa || faixa <= 0 || faixa >= 100) return mostrarErro("Informe uma faixa entre 1 e 99%.");
+    if (!sevAtiva) return mostrarErro("Selecione a severidade.");
+    if (!janelaAtiva) return mostrarErro("Selecione a janela de análise.");
+
+    let janelaInicio = null;
+    let janelaFim = null;
+
+    if (janelaAtiva === "personalizado") {
+      janelaInicio = document.getElementById("campo-ano-inicio").value + "-" + document.getElementById("campo-mes-inicio").value + "-01";
+      janelaFim = document.getElementById("campo-ano-fim").value + "-" + document.getElementById("campo-mes-fim").value + "-28";
+      if (janelaInicio >= janelaFim) return mostrarErro("A data de início deve ser anterior à data de fim.");
+    }
+
+    const url = editandoId ? "/alertas/regras/" + editandoId : "/alertas/regras";
+    const method = editandoId ? "PUT" : "POST";
+
+    fetch(url, {
+      method: method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ faixaOcupacao: faixa, severidade: sevAtiva, janelaAnalise: janelaAtiva, janelaInicio: janelaInicio, janelaFim: janelaFim, ativo: ativo ? 1 : 0, idCompanhia: idCompanhia, idUsuario: idUsuario })
+    })
+    .then(r => r.status === 409 ? r.json().then(d => { mostrarErro(d.mensagem); throw new Error("dup"); }) : r.json())
+    .then(() => { fecharModal(); carregarRegras(); })
+    .catch(err => { if (err.message !== "dup") mostrarErro("Erro ao salvar a regra."); });
+  }
+
+  function excluirRegra(idRegra) {
+    if (!confirm("Deseja excluir esta regra? Os alertas gerados também serão removidos.")) return;
+    fetch("/alertas/regras/" + idRegra + "/" + idCompanhia, { method: "DELETE" }).then(carregarRegras);
+  }
+
+  function carregarRegras() {
+    fetch("/alertas/regras/" + idCompanhia)
+      .then(r => r.json())
+      .then(regras => {
+        const lista = document.getElementById("regras-lista");
+
+        if (!regras.length) {
+          lista.innerHTML = '<div class="regras-vazio">Nenhuma regra cadastrada. Clique em "Criar Regra" para começar.</div>';
+          return;
+        }
+
+        let html = "";
+        for (let i = 0; i < regras.length; i++) {
+          const r = regras[i];
+          html += '<div class="regra-linha">';
+          html += '<div class="regra-desc">' + (r.severidade === "critico" ? "🔴" : "🟡") + ' Ocupação abaixo de ' + Number(r.faixaOcupacao).toFixed(0) + '%</div>';
+          html += '<div class="regra-janela">' + janelaTexto(r.janelaAnalise, r.janelaInicio, r.janelaFim) + '</div>';
+          html += '<span class="status-pill ' + (r.ativo ? "ativo" : "inativo") + '">' + (r.ativo ? "● Ativa" : "○ Inativa") + '</span>';
+          html += '<div class="regra-acoes">';
+          html += '<button class="btn-acao-tabela" onclick=\'abrirModal(' + JSON.stringify(r) + ')\'>Editar</button>';
+          html += '<button class="btn-acao-tabela excluir" onclick="excluirRegra(' + r.idRegraAlerta + ')">Excluir</button>';
+          html += '</div></div>';
+        }
+
+        lista.innerHTML = html;
+      });
+  }
+
+  carregarRegras();
+</script>
+</body>
+</html>
