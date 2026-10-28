@@ -21,12 +21,14 @@ public class MainApp {
     private static JdbcTemplate bd;
 
     public static void main(String[] args) {
+        carregarEnv();
+
         bancoAscent = new Conexao();
         bd = new JdbcTemplate(bancoAscent.getConexao());
 
         garantirCargoPadrao();
 
-        boolean rodarS3 = "true".equalsIgnoreCase(System.getenv("AUTO_IMPORT"))
+        boolean rodarS3 = "true".equalsIgnoreCase(LeitorExcel.getEnvOrProp("AUTO_IMPORT", "false"))
                 || (args.length > 0 && ("--s3".equalsIgnoreCase(args[0]) || "s3".equalsIgnoreCase(args[0])));
 
         if (rodarS3) {
@@ -35,6 +37,49 @@ public class MainApp {
             System.out.println("Servico Apache POI pronto.");
             System.out.println("Para importar os dados do S3, execute com AUTO_IMPORT=true ou passe o argumento '--s3'.");
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Carrega variáveis de arquivo .env local caso exista
+    // ---------------------------------------------------------------
+    private static void carregarEnv() {
+        java.io.File envFile = new java.io.File(".env");
+        if (!envFile.exists()) {
+            envFile = new java.io.File("../.env");
+        }
+        if (!envFile.exists()) {
+            return;
+        }
+
+        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(envFile))) {
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                linha = linha.trim();
+                if (linha.isEmpty() || linha.startsWith("#") || !linha.contains("=")) {
+                    continue;
+                }
+                int idx = linha.indexOf('=');
+                String chave = linha.substring(0, idx).trim();
+                String valor = linha.substring(idx + 1).trim();
+                if ((valor.startsWith("\"") && valor.endsWith("\"")) || (valor.startsWith("'") && valor.endsWith("'"))) {
+                    valor = valor.substring(1, valor.length() - 1);
+                }
+                if (System.getProperty(chave) == null) {
+                    System.setProperty(chave, valor);
+                }
+
+                // Sincroniza com as propriedades padrão de autenticação do AWS SDK v2
+                if ("AWS_ACCESS_KEY_ID".equalsIgnoreCase(chave)) {
+                    System.setProperty("aws.accessKeyId", valor);
+                } else if ("AWS_SECRET_ACCESS_KEY".equalsIgnoreCase(chave)) {
+                    System.setProperty("aws.secretAccessKey", valor);
+                } else if ("AWS_SESSION_TOKEN".equalsIgnoreCase(chave)) {
+                    System.setProperty("aws.sessionToken", valor);
+                } else if ("AWS_REGION".equalsIgnoreCase(chave)) {
+                    System.setProperty("aws.region", valor);
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     private static void garantirCargoPadrao() {
@@ -55,10 +100,29 @@ public class MainApp {
         System.out.println("\n=== Iniciando importacao da base ANAC do S3 ===");
         try {
             LeitorExcel leitorExcel = new LeitorExcel();
-            LeitorExcel.ResultadoLeitura dados = leitorExcel.extrairDados();
-            inserirDadosNoBanco(dados);
+            List<String> arquivos = leitorExcel.obterListaDeArquivos();
+
+            System.out.printf("Total de arquivos identificados para leitura: %d%n", arquivos.size());
+            int totalSucesso = 0;
+
+            for (int i = 0; i < arquivos.size(); i++) {
+                String arquivo = arquivos.get(i);
+                System.out.printf("%n>>> Processando [%d/%d]: %s%n", (i + 1), arquivos.size(), arquivo);
+                try {
+                    LeitorExcel.ResultadoLeitura dados = leitorExcel.extrairDadosDoArquivo(arquivo);
+                    inserirDadosNoBanco(dados);
+                    totalSucesso++;
+                } catch (Exception eArq) {
+                    System.err.printf("Erro ao processar arquivo %s: %s%n", arquivo, eArq.getMessage());
+                    eArq.printStackTrace();
+                    novoLogBanco("ERROR", "importacao", "Falha na importacao do arquivo " + arquivo + ": " + eArq.getMessage(), LocalDateTime.now(), "Java");
+                }
+            }
+
+            System.out.printf("%n=== Importacao concluida: %d/%d arquivos processados com sucesso! ===%n",
+                    totalSucesso, arquivos.size());
         } catch (Exception e) {
-            System.err.println("\n=== ERRO NA IMPORTACAO DO S3 ===");
+            System.err.println("\n=== ERRO GERAL NA IMPORTACAO DO S3 ===");
             System.err.println(e.getMessage());
             e.printStackTrace();
             novoLogBanco("ERROR", "importacao", "Falha na importacao S3: " + e.getMessage(), LocalDateTime.now(), "Java");

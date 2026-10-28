@@ -20,12 +20,26 @@ import java.util.List;
 
 public class LeitorExcel {
 
-    private static final String BUCKET  = System.getenv("AWS_BUCKET") != null ?
-            System.getenv("AWS_BUCKET") : "ascent-database-318401088884-us-east-1-an";
-    private static final String ARQUIVO = System.getenv("AWS_ARQUIVO_ANAC") != null ?
-            System.getenv("AWS_ARQUIVO_ANAC") : "anac_brazil.xlsx";
-    private static final Region REGIAO  = System.getenv("AWS_REGION") != null ?
-            Region.of(System.getenv("AWS_REGION")) : Region.US_EAST_1;
+    public static String getEnvOrProp(String chave, String padrao) {
+        String val = System.getenv(chave);
+        if (val != null && !val.trim().isEmpty()) {
+            return val.trim();
+        }
+        val = System.getProperty(chave);
+        if (val != null && !val.trim().isEmpty()) {
+            return val.trim();
+        }
+        return padrao;
+    }
+
+    private static String obterBucket() {
+        return getEnvOrProp("AWS_BUCKET", "ascent-base-de-dados");
+    }
+
+    private static Region obterRegiao() {
+        String reg = getEnvOrProp("AWS_REGION", "us-east-1");
+        return Region.of(reg);
+    }
 
     private static final DateTimeFormatter FMT_DATA    = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter FMT_DATA_BR = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -51,24 +65,57 @@ public class LeitorExcel {
     }
 
     // ---------------------------------------------------------------
-    // Ponto de entrada: conecta ao S3 e extrai os dados da planilha
-    // Autenticação via variáveis de ambiente:
-    //   AWS_ACCESS_KEY_ID  /  AWS_SECRET_ACCESS_KEY
+    // Retorna a lista de arquivos para importação
+    // ---------------------------------------------------------------
+    public List<String> obterListaDeArquivos() {
+        List<String> arquivos = new ArrayList<>();
+        String prefixo = getEnvOrProp("AWS_PREFIXO_ARQUIVOS", "anac_part_");
+        String totalPartesStr = getEnvOrProp("AWS_TOTAL_PARTES", "23");
+
+        if (totalPartesStr != null && !totalPartesStr.isEmpty()) {
+            try {
+                int total = Integer.parseInt(totalPartesStr);
+                for (int i = 1; i <= total; i++) {
+                    arquivos.add(String.format("%s%03d.xlsx", prefixo, i));
+                }
+                return arquivos;
+            } catch (NumberFormatException ignored) {}
+        }
+
+        String unicoArquivo = getEnvOrProp("AWS_ARQUIVO_ANAC", "anac_part_001.xlsx");
+        arquivos.add(unicoArquivo);
+        return arquivos;
+    }
+
+    // ---------------------------------------------------------------
+    // Ponto de entrada: conecta ao S3 e extrai os dados da planilha padrão
     // ---------------------------------------------------------------
     public ResultadoLeitura extrairDados() {
-        System.out.println("Conectando ao S3...");
-        System.out.printf("Bucket : %s%n", BUCKET);
-        System.out.printf("Arquivo: %s%n", ARQUIVO);
+        String arquivo = getEnvOrProp("AWS_ARQUIVO_ANAC", "anac_part_001.xlsx");
+        return extrairDadosDoArquivo(arquivo);
+    }
 
-        S3Client s3 = S3Client.builder().region(REGIAO).build();
-        GetObjectRequest pedido = GetObjectRequest.builder().bucket(BUCKET).key(ARQUIVO).build();
+    // ---------------------------------------------------------------
+    // Conecta ao S3 e extrai os dados de um arquivo específico
+    // ---------------------------------------------------------------
+    public ResultadoLeitura extrairDadosDoArquivo(String nomeArquivo) {
+        String bucket = obterBucket();
+        Region regiao = obterRegiao();
+
+        System.out.println("Conectando ao S3...");
+        System.out.printf("Bucket : %s%n", bucket);
+        System.out.printf("Arquivo: %s%n", nomeArquivo);
+        System.out.printf("Regiao : %s%n", regiao.id());
+
+        S3Client s3 = S3Client.builder().region(regiao).build();
+        GetObjectRequest pedido = GetObjectRequest.builder().bucket(bucket).key(nomeArquivo).build();
 
         try (InputStream stream = s3.getObject(pedido)) {
             ResultadoLeitura resultado = extrairDeInputStream(stream);
-            resultado.nomeArquivo = ARQUIVO;
+            resultado.nomeArquivo = nomeArquivo;
             return resultado;
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao obter planilha do S3: " + e.getMessage(), e);
+            throw new RuntimeException("Erro ao obter planilha do S3 (" + nomeArquivo + "): " + e.getMessage(), e);
         }
     }
 
