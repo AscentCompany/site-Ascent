@@ -62,12 +62,26 @@ CREATE TABLE IF NOT EXISTS usuario (
 
 -- Tabela: LogsServico
 CREATE TABLE IF NOT EXISTS logsServico (
-    idLog          INT AUTO_INCREMENT PRIMARY KEY,
-    categoria      VARCHAR(45)  NOT NULL,
-    servico        VARCHAR(50)  NOT NULL,
-    mensagem       VARCHAR(100) NOT NULL,
-    dataHora       DATETIME     NOT NULL,
-    origemCadastro VARCHAR(50)  NOT NULL
+    idLog             INT AUTO_INCREMENT PRIMARY KEY,
+    categoria         VARCHAR(45)   NOT NULL,
+    servico           VARCHAR(50)   NOT NULL,
+    mensagem          VARCHAR(255)  NOT NULL,
+    dataHora          DATETIME      NOT NULL,
+    origemCadastro    VARCHAR(50)   NOT NULL,
+    nomeArquivo       VARCHAR(1024) NULL,
+    statusLeitura     VARCHAR(30)   NULL,
+    linhasEncontradas INT           NULL,
+    linhasLidas       INT           NULL,
+    linhasRejeitadas  INT           NULL,
+    detalheErro       TEXT          NULL,
+    CONSTRAINT chk_logsServico_statusLeitura
+        CHECK (statusLeitura IS NULL OR statusLeitura IN ('LIDO', 'PARCIALMENTE_LIDO', 'ERRO_NA_LEITURA')),
+    CONSTRAINT chk_logsServico_contagensLeitura
+        CHECK (
+            (linhasEncontradas IS NULL OR linhasEncontradas >= 0)
+            AND (linhasLidas IS NULL OR linhasLidas >= 0)
+            AND (linhasRejeitadas IS NULL OR linhasRejeitadas >= 0)
+        )
 );
 
 -- Tabela: Aviao
