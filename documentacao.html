@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentação — Ascent Apache POI</title>
+  <style>
+    :root {
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --border:   #2e3145;
+      --accent:   #6c8fff;
+      --accent2:  #a78bfa;
+      --green:    #4ade80;
+      --yellow:   #facc15;
+      --red:      #f87171;
+      --text:     #e2e8f0;
+      --muted:    #8b95a9;
+      --code-bg:  #12151f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 2rem 2.5rem;
+      text-align: center;
+    }
+    header .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .25rem .75rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      margin-top: .75rem;
+      color: var(--muted);
+      max-width: 640px;
+      margin-inline: auto;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    /* ── SECTION ── */
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 2.2rem;
+    }
+    section h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    section h2 .icon { font-size: 1.1rem; }
+    section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent2);
+      margin: 1.5rem 0 .5rem;
+    }
+    section p { color: var(--text); margin-bottom: .75rem; }
+    section p:last-child { margin-bottom: 0; }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      align-items: center;
+      margin: 1.25rem 0;
+    }
+    .flow-step {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .5rem 1rem;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .flow-arrow { color: var(--muted); font-size: 1.2rem; }
+
+    /* ── CODE BLOCK ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      margin: .75rem 0 1.25rem;
+      position: relative;
+    }
+    pre .label {
+      position: absolute;
+      top: .5rem;
+      right: .75rem;
+      font-size: .7rem;
+      color: var(--muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: .82rem;
+      line-height: 1.6;
+      color: #c9d1d9;
+    }
+    /* syntax highlight helpers */
+    .kw  { color: #ff7b72; }   /* keyword      */
+    .cl  { color: #79c0ff; }   /* class/type   */
+    .fn  { color: #d2a8ff; }   /* function     */
+    .st  { color: #a5d6ff; }   /* string       */
+    .cm  { color: #6e7681; }   /* comment      */
+    .nb  { color: #f0883e; }   /* number/bool  */
+
+    /* ── CALLOUT ── */
+    .callout {
+      display: flex;
+      gap: .75rem;
+      background: rgba(108,143,255,.08);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: .9rem 1.1rem;
+      margin: 1rem 0;
+      font-size: .9rem;
+    }
+    .callout.warn  { background: rgba(250,204,21,.07); border-color: var(--yellow); }
+    .callout.ok    { background: rgba(74,222,128,.07); border-color: var(--green); }
+    .callout .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+
+    /* ── TABLE ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .87rem;
+      margin: .75rem 0 1.25rem;
+    }
+    th {
+      background: var(--code-bg);
+      color: var(--muted);
+      font-weight: 600;
+      text-align: left;
+      padding: .6rem .9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: .55rem .9rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    td code { background: var(--code-bg); padding: .1rem .35rem; border-radius: 4px; }
+
+    /* ── PILL TAG ── */
+    .tag {
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: .15rem .55rem;
+      border-radius: 999px;
+      letter-spacing: .04em;
+    }
+    .tag.blue   { background: rgba(108,143,255,.15); color: var(--accent);  }
+    .tag.purple { background: rgba(167,139,250,.15); color: var(--accent2); }
+    .tag.green  { background: rgba(74,222,128,.15);  color: var(--green);   }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+      font-size: .82rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Documentação Técnica</div>
+  <h1>Ascent — Apache POI &amp; AWS S3</h1>
+  <p>Como o projeto lê planilhas .xlsx do Amazon S3, extrai dados estruturados e os persiste no MySQL via Spring JDBC.</p>
+</header>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════════
+       1. VISÃO GERAL
+  ═══════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="icon">🗺️</span> Visão Geral do Fluxo</h2>
+    <p>
+      O sistema importa automaticamente a base de voos da ANAC. Os arquivos <code>.xlsx</code> ficam particionados
+      em um bucket no <strong>Amazon S3</strong>. A aplicação baixa cada parte, lê célula a célula usando
+      <strong>Apache POI no modo StAX streaming</strong> (sem carregar o arquivo inteiro na memória) e
+      insere os dados no banco <strong>MySQL</strong> via <strong>Spring JDBC</strong>.
+    </p>
+
+    <div class="flow">
+      <div class="flow-step">☁️ Amazon S3</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">⬇️ baixarDoS3()</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">📄 arquivo .xlsx temp</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">🔍 extrairDeArquivo() <span class="tag blue">StAX</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">🏗️ ResultadoLeitura</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">🗄️ inserirDadosNoBanco() <span class="tag purple">JDBC</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">✅ MySQL</div>
+    </div>
+
+    <div class="callout ok">
+      <span class="icon">💡</span>
+      <span>
+        O processo de download <strong>não precisa rodar toda vez</strong>. Ele só é acionado quando
+        <code>AUTO_IMPORT=true</code> no <code>.env</code> ou quando você passa o argumento
+        <code>--s3</code> na execução. Caso contrário, a aplicação sobe normalmente sem importar nada.
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       2. O QUE É O APACHE POI
+  ═══════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="icon">📚</span> O que é o Apache POI?</h2>
+    <p>
+      O <strong>Apache POI</strong> é uma biblioteca Java da Apache Software Foundation que permite ler e
+      escrever arquivos no formato Microsoft Office — como <code>.xlsx</code>, <code>.xls</code>,
+      <code>.docx</code>, entre outros — sem precisar instalar o Office na máquina.
+    </p>
+    <p>
+      Neste projeto usamos dois artefatos Maven:
+    </p>
+    <table>
+      <thead>
+        <tr><th>Artefato</th><th>Para quê serve</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>poi</code></td>
+          <td>Suporte ao formato binário antigo <code>.xls</code> (HSSFWorkbook)</td>
+        </tr>
+        <tr>
+          <td><code>poi-ooxml</code></td>
+          <td>Suporte ao formato moderno <code>.xlsx</code> (XSSFWorkbook / streaming)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <pre><code><span class="cm">&lt;!-- pom.xml --&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+    <span class="kw">&lt;groupId&gt;</span>org.apache.poi<span class="kw">&lt;/groupId&gt;</span>
+    <span class="kw">&lt;artifactId&gt;</span>poi<span class="kw">&lt;/artifactId&gt;</span>
+    <span class="kw">&lt;version&gt;</span>5.3.0<span class="kw">&lt;/version&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+    <span class="kw">&lt;groupId&gt;</span>org.apache.poi<span class="kw">&lt;/groupId&gt;</span>
+    <span class="kw">&lt;artifactId&gt;</span>poi-ooxml<span class="kw">&lt;/artifactId&gt;</span>
+    <span class="kw">&lt;version&gt;</span>5.3.0<span class="kw">&lt;/version&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span></code></pre>
+
+    <h3>Modo padrão vs. Streaming (StAX)</h3>
+    <p>
+      A forma mais simples de usar o POI é instanciar um <code>XSSFWorkbook</code> — ele carrega a planilha
+      inteira na memória. Para arquivos grandes (como as partes ANAC com centenas de milhares de linhas),
+      isso causaria estouro de memória.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Abordagem</th><th>Memória</th><th>Quando usar</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>XSSFWorkbook</code> (padrão)</td>
+          <td>Alta — carrega tudo</td>
+          <td>Arquivos pequenos, leitura simples</td>
+        </tr>
+        <tr>
+          <td><code>XSSFReader + StAX</code> (streaming)</td>
+          <td>Baixa — lê linha a linha</td>
+          <td>Arquivos grandes em produção ✅</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <span class="icon">ℹ️</span>
+      <span>
+        O projeto usa o modo <strong>StAX streaming</strong> via <code>XSSFReader</code> +
+        <code>XMLStreamReader</code>. O arquivo nunca fica inteiro na RAM — cada evento XML
+        (abertura de tag, texto, fechamento) é processado e descartado imediatamente.
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       3. LEITURA COM STAX — LeitorExcel.java
+  ═══════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="icon">🔍</span> Leitura StAX — <code>LeitorExcel.java</code></h2>
+    <p>
+      O método <code>extrairDeArquivo(File)</code> é o coração da leitura. Ele abre o <code>.xlsx</code>
+      como um pacote OPC, obtém um iterador de sheets e percorre o XML da primeira sheet evento a evento.
+    </p>
+
+    <h3>1. Abrir o pacote e obter o leitor de sheet</h3>
+    <pre><code><span class="kw">try</span> (<span class="cl">OPCPackage</span> pkg = <span class="cl">OPCPackage</span>.<span class="fn">open</span>(arquivo, <span class="cl">PackageAccess</span>.READ)) {
+
+    <span class="cl">XSSFReader</span>    xssfReader    = <span class="kw">new</span> <span class="cl">XSSFReader</span>(pkg);
+    <span class="cl">SharedStrings</span> sharedStrings = <span class="kw">new</span> <span class="cl">ReadOnlySharedStringsTable</span>(pkg);
+
+    <span class="cl">SheetIterator</span> sheetIterator = (<span class="cl">SheetIterator</span>) xssfReader.<span class="fn">getSheetsData</span>();
+    <span class="cl">InputStream</span>   sheetStream   = sheetIterator.<span class="fn">next</span>();
+}</code><div class="label">LeitorExcel.java</div></pre>
+
+    <p>
+      O <code>SharedStrings</code> é a tabela de strings compartilhadas do <code>.xlsx</code>: células do
+      tipo <code>s</code> armazenam apenas um índice inteiro que aponta para essa tabela, economizando
+      espaço no arquivo.
+    </p>
+
+    <h3>2. Loop StAX — evento a evento</h3>
+    <pre><code><span class="cl">XMLStreamReader</span> xml = xmlFactory.<span class="fn">createXMLStreamReader</span>(sheetStream);
+
+<span class="kw">while</span> (xml.<span class="fn">hasNext</span>()) {
+    <span class="kw">int</span> event = xml.<span class="fn">next</span>();
+
+    <span class="kw">switch</span> (event) {
+
+        <span class="kw">case</span> XMLStreamReader.START_ELEMENT:
+            <span class="cm">// início de &lt;row&gt;, &lt;c&gt; (célula) ou &lt;v&gt; (valor)</span>
+            <span class="kw">break</span>;
+
+        <span class="kw">case</span> XMLStreamReader.CHARACTERS:
+            <span class="cm">// texto dentro de &lt;v&gt; — acumula no StringBuilder</span>
+            <span class="kw">if</span> (inV) currentVal.<span class="fn">append</span>(xml.<span class="fn">getText</span>());
+            <span class="kw">break</span>;
+
+        <span class="kw">case</span> XMLStreamReader.END_ELEMENT:
+            <span class="cm">// fim de &lt;v&gt;: resolve shared string se necessário</span>
+            <span class="cm">// fim de &lt;row&gt;: processa a linha completa</span>
+            <span class="kw">break</span>;
+    }
+}</code><div class="label">LeitorExcel.java</div></pre>
+
+    <h3>3. Resolver Shared Strings</h3>
+    <pre><code><span class="kw">if</span> (<span class="st">"s"</span>.<span class="fn">equals</span>(currentType) &amp;&amp; !val.<span class="fn">isEmpty</span>()) {
+    <span class="kw">int</span> sstIdx = <span class="cl">Integer</span>.<span class="fn">parseInt</span>(val);
+    val = sharedStrings.<span class="fn">getItemAt</span>(sstIdx).<span class="fn">getString</span>();
+}</code><div class="label">LeitorExcel.java</div></pre>
+
+    <h3>4. Converter referência de célula em índice de coluna</h3>
+    <p>
+      O atributo <code>r</code> de cada célula é algo como <code>"AB12"</code>. O método
+      <code>refToColIndex()</code> extrai apenas as letras e converte para índice base-0:
+    </p>
+    <pre><code><span class="kw">private int</span> <span class="fn">refToColIndex</span>(<span class="cl">String</span> ref) {
+    <span class="kw">int</span> col = <span class="nb">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nb">0</span>; i &lt; ref.<span class="fn">length</span>(); i++) {
+        <span class="kw">char</span> c = ref.<span class="fn">charAt</span>(i);
+        <span class="kw">if</span> (c &gt;= <span class="st">'A'</span> &amp;&amp; c &lt;= <span class="st">'Z'</span>)
+            col = col * <span class="nb">26</span> + (c - <span class="st">'A'</span> + <span class="nb">1</span>);
+        <span class="kw">else break</span>;
+    }
+    <span class="kw">return</span> col - <span class="nb">1</span>;
+}</code><div class="label">LeitorExcel.java</div></pre>
+
+    <h3>5. Converter datas e horas seriais do Excel</h3>
+    <p>
+      O Excel armazena datas como número de dias desde <code>1899-12-30</code> e horas como fração do dia.
+      O projeto faz a conversão manualmente:
+    </p>
+    <pre><code><span class="cm">// Data: dias desde 1899-12-30</span>
+<span class="kw">double</span> d = <span class="cl">Double</span>.<span class="fn">parseDouble</span>(val);
+<span class="cl">LocalDate</span> data = <span class="cl">LocalDate</span>.<span class="fn">of</span>(<span class="nb">1899</span>, <span class="nb">12</span>, <span class="nb">30</span>).<span class="fn">plusDays</span>((<span class="kw">long</span>) d);
+
+<span class="cm">// Hora: fração do dia (0.5 = 12:00:00)</span>
+<span class="kw">double</span> fraction = d - (<span class="kw">long</span>) d;
+<span class="kw">int</span>    seconds  = (<span class="kw">int</span>) (fraction * <span class="nb">24</span> * <span class="nb">60</span> * <span class="nb">60</span>);
+<span class="cl">LocalTime</span> hora = <span class="cl">LocalTime</span>.<span class="fn">ofSecondOfDay</span>(seconds);</code><div class="label">LeitorExcel.java</div></pre>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       4. DOWNLOAD DO S3
+  ═══════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="icon">☁️</span> Integração com Amazon S3</h2>
+    <p>
+      O SDK da AWS v2 é usado para baixar os arquivos do bucket. As credenciais são lidas do
+      <code>.env</code> via <code>getEnvOrProp()</code> e injetadas como <code>StaticCredentialsProvider</code>.
+      Se não houver credenciais explícitas, o SDK usa o <em>Instance Profile</em> da EC2 automaticamente.
+    </p>
+
+    <pre><code><span class="kw">public</span> <span class="cl">S3Client</span> <span class="fn">criarClienteS3</span>(<span class="cl">Region</span> regiao) {
+    <span class="cl">String</span> accessKey    = <span class="fn">getEnvOrProp</span>(<span class="st">"AWS_ACCESS_KEY_ID"</span>, <span class="kw">null</span>);
+    <span class="cl">String</span> secretKey    = <span class="fn">getEnvOrProp</span>(<span class="st">"AWS_SECRET_ACCESS_KEY"</span>, <span class="kw">null</span>);
+    <span class="cl">String</span> sessionToken = <span class="fn">getEnvOrProp</span>(<span class="st">"AWS_SESSION_TOKEN"</span>, <span class="kw">null</span>);
+
+    <span class="kw">if</span> (accessKey != <span class="kw">null</span> &amp;&amp; secretKey != <span class="kw">null</span>) {
+        <span class="kw">return</span> <span class="cl">S3Client</span>.<span class="fn">builder</span>()
+            .<span class="fn">region</span>(regiao)
+            .<span class="fn">credentialsProvider</span>(<span class="cl">StaticCredentialsProvider</span>.<span class="fn">create</span>(
+                <span class="cl">AwsSessionCredentials</span>.<span class="fn">create</span>(accessKey, secretKey, sessionToken)))
+            .<span class="fn">build</span>();
+    }
+
+    <span class="cm">// fallback: IAM Role da EC2</span>
+    <span class="kw">return</span> <span class="cl">S3Client</span>.<span class="fn">builder</span>().<span class="fn">region</span>(regiao).<span class="fn">build</span>();
+}</code><div class="label">LeitorExcel.java</div></pre>
+
+    <h3>Download com prefetch paralelo</h3>
+    <p>
+      Para otimizar a importação de múltiplos arquivos, enquanto o arquivo atual é <strong>lido e inserido</strong>
+      no banco, o próximo arquivo já está sendo <strong>baixado em background</strong> por uma thread dedicada
+      (<code>ExecutorService</code> com uma thread daemon chamada <code>s3-prefetch</code>):
+    </p>
+
+    <pre><code><span class="cl">Future</span>&lt;<span class="cl">File</span>&gt; proximoDownload = downloader.<span class="fn">submit</span>(
+    () -&gt; leitorExcel.<span class="fn">baixarDoS3</span>(arquivos.<span class="fn">get</span>(<span class="nb">0</span>))
+);
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nb">0</span>; i &lt; arquivos.<span class="fn">size</span>(); i++) {
+
+    <span class="cl">File</span> tempFile = proximoDownload.<span class="fn">get</span>(); <span class="cm">// aguarda o atual</span>
+
+    <span class="kw">if</span> (i + <span class="nb">1</span> &lt; arquivos.<span class="fn">size</span>()) {
+        <span class="kw">final</span> <span class="cl">String</span> proximo = arquivos.<span class="fn">get</span>(i + <span class="nb">1</span>);
+        proximoDownload = downloader.<span class="fn">submit</span>(
+            () -&gt; leitorExcel.<span class="fn">baixarDoS3</span>(proximo) <span class="cm">// baixa em paralelo</span>
+        );
+    }
+
+    <span class="cm">// lê e insere enquanto o próximo baixa</span>
+    <span class="cl">ResultadoLeitura</span> dados = leitorExcel.<span class="fn">extrairDeArquivo</span>(tempFile);
+    <span class="fn">inserirDadosNoBanco</span>(dados);
+    tempFile.<span class="fn">delete</span>();
+}</code><div class="label">MainApp.java</div></pre>
+
+    <div class="callout warn">
+      <span class="icon">⚠️</span>
+      <span>
+        O <code>.env</code> define <code>AWS_TOTAL_PARTES=2</code>, então o sistema baixará e processará
+        <strong>2 arquivos</strong> (<code>anac_part_001.xlsx</code> e <code>anac_part_002.xlsx</code>).
+        Para importar apenas um, set <code>AWS_TOTAL_PARTES=1</code>.
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       5. CONEXÃO COM O BANCO — Spring JDBC
+  ═══════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="icon">🗄️</span> Conexão com MySQL — Spring JDBC</h2>
+    <p>
+      O <strong>Spring JDBC</strong> simplifica o uso do JDBC puro. Em vez de gerenciar
+      <code>Connection</code>, <code>PreparedStatement</code> e <code>ResultSet</code> manualmente a
+      cada operação, o <code>JdbcTemplate</code> faz isso automaticamente.
+    </p>
+
+    <h3>Configurando a conexão — <code>Conexao.java</code></h3>
+    <pre><code><span class="cl">DriverManagerDataSource</span> driver = <span class="kw">new</span> <span class="cl">DriverManagerDataSource</span>();
+driver.<span class="fn">setDriverClassName</span>(<span class="st">"com.mysql.cj.jdbc.Driver"</span>);
+driver.<span class="fn">setUrl</span>(<span class="cl">String</span>.<span class="fn">format</span>(
+    <span class="st">"jdbc:mysql://%s:%s/%s?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC"</span>,
+    host, port, database
+));
+driver.<span class="fn">setUsername</span>(user);
+driver.<span class="fn">setPassword</span>(password);</code><div class="label">Conexao.java</div></pre>
+
+    <h3>Inserindo com chave gerada — <code>KeyHolder</code></h3>
+    <p>
+      Para recuperar o <code>id</code> gerado pelo banco após um <code>INSERT</code>, o projeto usa
+      <code>GeneratedKeyHolder</code> junto com <code>PreparedStatementCreator</code>:
+    </p>
+    <pre><code><span class="cl">KeyHolder</span> keyHolder = <span class="kw">new</span> <span class="cl">GeneratedKeyHolder</span>();
+
+bd.<span class="fn">update</span>(con -&gt; {
+    <span class="cl">PreparedStatement</span> ps = con.<span class="fn">prepareStatement</span>(
+        <span class="st">"INSERT INTO companhia (codCompanhia, nomeCompanhia) VALUES (?, ?)"</span>,
+        <span class="cl">Statement</span>.RETURN_GENERATED_KEYS
+    );
+    ps.<span class="fn">setInt</span>(<span class="nb">1</span>, c.codCompanhia);
+    ps.<span class="fn">setString</span>(<span class="nb">2</span>, c.nomeCompanhia);
+    <span class="kw">return</span> ps;
+}, keyHolder);
+
+<span class="kw">int</span> idGerado = keyHolder.<span class="fn">getKey</span>().<span class="fn">intValue</span>();</code><div class="label">MainApp.java</div></pre>
+
+    <h3>Cache em memória para evitar duplicatas</h3>
+    <p>
+      Para não consultar o banco a cada linha, o projeto mantém listas paralelas em memória
+      (<em>chave → id</em>) para companhias, aviões e aeroportos. Antes de inserir, verifica na lista;
+      só consulta o banco se não encontrar:
+    </p>
+    <pre><code><span class="cm">// verifica no cache local primeiro</span>
+<span class="kw">if</span> (<span class="fn">buscarNaLista</span>(cacheCompanhiasChave, c.codCompanhia) != -<span class="nb">1</span>) <span class="kw">continue</span>;
+
+<span class="cm">// só vai ao banco se não estiver no cache</span>
+<span class="cl">Integer</span> idExistente = <span class="fn">buscarId</span>(
+    <span class="st">"SELECT idCompanhia FROM companhia WHERE codCompanhia = ? LIMIT 1"</span>,
+    c.codCompanhia
+);</code><div class="label">MainApp.java</div></pre>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       6. VARIÁVEIS DE AMBIENTE
+  ═══════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="icon">⚙️</span> Variáveis de Ambiente — <code>.env</code></h2>
+    <p>
+      O método <code>getEnvOrProp(chave, padrão)</code> em <code>LeitorExcel.java</code> lê primeiro
+      as <em>System Properties</em> (carregadas do <code>.env</code> pelo <code>carregarEnv()</code>
+      no startup) e, na ausência, as variáveis de ambiente do shell.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Variável</th><th>Descrição</th><th>Padrão</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>DB_HOST</code></td><td>Host do MySQL</td><td><code>localhost</code></td></tr>
+        <tr><td><code>DB_PORT</code></td><td>Porta do MySQL</td><td><code>3306</code></td></tr>
+        <tr><td><code>DB_DATABASE</code></td><td>Nome do banco</td><td><code>ascent</code></td></tr>
+        <tr><td><code>DB_USER</code></td><td>Usuário do banco</td><td><code>admin</code></td></tr>
+        <tr><td><code>DB_PASSWORD</code></td><td>Senha do banco</td><td><code>admin</code></td></tr>
+        <tr><td><code>AWS_BUCKET</code></td><td>Nome do bucket S3</td><td><code>ascent-base-de-dados</code></td></tr>
+        <tr><td><code>AWS_REGION</code></td><td>Região da AWS</td><td><code>us-east-1</code></td></tr>
+        <tr><td><code>AWS_PREFIXO_ARQUIVOS</code></td><td>Prefixo dos arquivos no bucket</td><td><code>anac_part_</code></td></tr>
+        <tr><td><code>AWS_TOTAL_PARTES</code></td><td>Quantidade de arquivos a baixar</td><td><code>23</code></td></tr>
+        <tr><td><code>AUTO_IMPORT</code></td><td>Inicia importação automática ao subir</td><td><code>false</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <span class="icon">💡</span>
+      <span>
+        Para <strong>não rodar o download</strong> ao iniciar, mantenha <code>AUTO_IMPORT=false</code>
+        (ou remova a variável). A importação só ocorre se <code>AUTO_IMPORT=true</code> ou se você
+        executar com o argumento <code>--s3</code>.
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       7. ENTIDADES
+  ═══════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="icon">🏗️</span> Entidades Extraídas da Planilha</h2>
+    <p>
+      Cada linha da planilha ANAC origina até <strong>5 entidades</strong> que são acumuladas no
+      objeto <code>ResultadoLeitura</code> e depois inseridas em 5 tabelas diferentes, na ordem
+      correta para respeitar as chaves estrangeiras:
+    </p>
+
+    <div class="flow" style="flex-direction:column; align-items:flex-start; gap:.4rem;">
+      <div><span class="tag blue">[1/5]</span> &nbsp;<code>Companhia</code> — id_empresa, nm_empresa, nm_pais</div>
+      <div><span class="tag blue">[2/5]</span> &nbsp;<code>Aviao</code> — ds_modelo, nr_assentos_ofertados</div>
+      <div><span class="tag blue">[3/5]</span> &nbsp;<code>Aeroporto</code> — origem e destino por linha</div>
+      <div><span class="tag blue">[4/5]</span> &nbsp;<code>Voo</code> — nr_voo, cd_di, passageiros pagos + grátis</div>
+      <div><span class="tag blue">[5/5]</span> &nbsp;<code>AeroportoDirecao</code> — partida e chegada com data e hora</div>
+    </div>
+
+    <div class="callout warn">
+      <span class="icon">⚠️</span>
+      <span>
+        A inserção de <code>AeroportoDirecao</code> usa <code>ON DUPLICATE KEY UPDATE</code> para
+        evitar erro caso a mesma combinação voo + aeroporto + direção já exista no banco.
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       8. REFERÊNCIAS
+  ═══════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="icon">🔗</span> Referências</h2>
+    <table>
+      <thead>
+        <tr><th>Recurso</th><th>Link</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Exemplo Spring JDBC (SPTECH)</td>
+          <td><a href="https://github.com/SPTECH-LP/conexao-banco-de-dados" target="_blank" style="color:var(--accent)">github.com/SPTECH-LP/conexao-banco-de-dados</a></td>
+        </tr>
+        <tr>
+          <td>Exemplo Apache POI (SPTECH)</td>
+          <td><a href="https://github.com/SPTECH-LP/leitura-arquivos-excel" target="_blank" style="color:var(--accent)">github.com/SPTECH-LP/leitura-arquivos-excel</a></td>
+        </tr>
+        <tr>
+          <td>Exemplo AWS S3 SDK v2 (SPTECH)</td>
+          <td><a href="https://github.com/SPTECH-LP/bucket-s3-exemplo-v2" target="_blank" style="color:var(--accent)">github.com/SPTECH-LP/bucket-s3-exemplo-v2</a></td>
+        </tr>
+        <tr>
+          <td>Apache POI — documentação oficial</td>
+          <td><a href="https://poi.apache.org/" target="_blank" style="color:var(--accent)">poi.apache.org</a></td>
+        </tr>
+        <tr>
+          <td>AWS SDK for Java v2 — S3</td>
+          <td><a href="https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/java_s3_code_examples.html" target="_blank" style="color:var(--accent)">docs.aws.amazon.com</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<footer>
+  Gerado para o projeto Ascent — SPTECH &nbsp;·&nbsp; Apache POI 5.3.0 &nbsp;·&nbsp; Spring JDBC 6.1 &nbsp;·&nbsp; AWS SDK v2
+</footer>
+
+</body>
+</html>
