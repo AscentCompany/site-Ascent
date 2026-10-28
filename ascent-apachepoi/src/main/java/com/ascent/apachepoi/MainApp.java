@@ -76,8 +76,8 @@ public class MainApp {
 
     // ---------------------------------------------------------------
     // Inserção no banco de dados via JDBC
-    // Caches implementados como dois arrays paralelos (chave + id),
-    // sem uso de Map. A busca é feita por iteração linear.
+    // Caches implementados como duas listas paralelas (chave + id).
+    // A busca é realizada por iteração linear.
     // ---------------------------------------------------------------
     public static void inserirDadosNoBanco(LeitorExcel.ResultadoLeitura dados) {
         System.out.println("\n=== Gravando registros no Banco de Dados via JDBC ===");
