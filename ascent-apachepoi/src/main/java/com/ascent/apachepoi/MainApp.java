@@ -64,19 +64,21 @@ public class MainApp {
                 if ((valor.startsWith("\"") && valor.endsWith("\"")) || (valor.startsWith("'") && valor.endsWith("'"))) {
                     valor = valor.substring(1, valor.length() - 1);
                 }
-                if (System.getProperty(chave) == null) {
-                    System.setProperty(chave, valor);
-                }
+                if (!valor.isEmpty()) {
+                    if (System.getProperty(chave) == null) {
+                        System.setProperty(chave, valor);
+                    }
 
-                // Sincroniza com as propriedades padrão de autenticação do AWS SDK v2
-                if ("AWS_ACCESS_KEY_ID".equalsIgnoreCase(chave)) {
-                    System.setProperty("aws.accessKeyId", valor);
-                } else if ("AWS_SECRET_ACCESS_KEY".equalsIgnoreCase(chave)) {
-                    System.setProperty("aws.secretAccessKey", valor);
-                } else if ("AWS_SESSION_TOKEN".equalsIgnoreCase(chave)) {
-                    System.setProperty("aws.sessionToken", valor);
-                } else if ("AWS_REGION".equalsIgnoreCase(chave)) {
-                    System.setProperty("aws.region", valor);
+                    // Sincroniza com as propriedades padrão de autenticação do AWS SDK v2 apenas se houver valor
+                    if ("AWS_ACCESS_KEY_ID".equalsIgnoreCase(chave)) {
+                        System.setProperty("aws.accessKeyId", valor);
+                    } else if ("AWS_SECRET_ACCESS_KEY".equalsIgnoreCase(chave)) {
+                        System.setProperty("aws.secretAccessKey", valor);
+                    } else if ("AWS_SESSION_TOKEN".equalsIgnoreCase(chave)) {
+                        System.setProperty("aws.sessionToken", valor);
+                    } else if ("AWS_REGION".equalsIgnoreCase(chave)) {
+                        System.setProperty("aws.region", valor);
+                    }
                 }
             }
         } catch (Exception ignored) {}

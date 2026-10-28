@@ -64,6 +64,34 @@ public class LeitorExcel {
         public String detalheErro       = null;
     }
 
+    public static S3Client criarClienteS3(Region regiao) {
+        String accessKey = getEnvOrProp("AWS_ACCESS_KEY_ID", null);
+        String secretKey = getEnvOrProp("AWS_SECRET_ACCESS_KEY", null);
+        String sessionToken = getEnvOrProp("AWS_SESSION_TOKEN", null);
+
+        if (accessKey != null && !accessKey.isEmpty() && secretKey != null && !secretKey.isEmpty()) {
+            System.out.println("Autenticacao S3: utilizando credenciais explicitas informadas.");
+            if (sessionToken != null && !sessionToken.isEmpty()) {
+                return S3Client.builder()
+                        .region(regiao)
+                        .credentialsProvider(software.amazon.awssdk.auth.credentials.StaticCredentialsProvider.create(
+                                software.amazon.awssdk.auth.credentials.AwsSessionCredentials.create(accessKey, secretKey, sessionToken)))
+                        .build();
+            } else {
+                return S3Client.builder()
+                        .region(regiao)
+                        .credentialsProvider(software.amazon.awssdk.auth.credentials.StaticCredentialsProvider.create(
+                                software.amazon.awssdk.auth.credentials.AwsBasicCredentials.create(accessKey, secretKey)))
+                        .build();
+            }
+        }
+
+        System.out.println("Autenticacao S3: utilizando IAM Role da instancia EC2 (Instance Profile)...");
+        return S3Client.builder()
+                .region(regiao)
+                .build();
+    }
+
     // ---------------------------------------------------------------
     // Retorna a lista de arquivos para importação
     // ---------------------------------------------------------------
@@ -107,13 +135,13 @@ public class LeitorExcel {
         System.out.printf("Arquivo: %s%n", nomeArquivo);
         System.out.printf("Regiao : %s%n", regiao.id());
 
-        S3Client s3 = S3Client.builder().region(regiao).build();
-        GetObjectRequest pedido = GetObjectRequest.builder().bucket(bucket).key(nomeArquivo).build();
-
-        try (InputStream stream = s3.getObject(pedido)) {
-            ResultadoLeitura resultado = extrairDeInputStream(stream);
-            resultado.nomeArquivo = nomeArquivo;
-            return resultado;
+        try (S3Client s3 = criarClienteS3(regiao)) {
+            GetObjectRequest pedido = GetObjectRequest.builder().bucket(bucket).key(nomeArquivo).build();
+            try (InputStream stream = s3.getObject(pedido)) {
+                ResultadoLeitura resultado = extrairDeInputStream(stream);
+                resultado.nomeArquivo = nomeArquivo;
+                return resultado;
+            }
         } catch (Exception e) {
             throw new RuntimeException("Erro ao obter planilha do S3 (" + nomeArquivo + "): " + e.getMessage(), e);
         }
