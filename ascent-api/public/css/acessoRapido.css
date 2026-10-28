@@ -2,16 +2,15 @@
   --sidebar-w: 152px;
   --orange: #ff6a00;
   --orange-sidebar-top: #ff6f12;
-  --orange-sidebar-bottom: #ff8a2b;
+  --orange-sidebar-bottom: #ff6200;
   --orange-active: #e8470c;
-  --red-card: #e84a4a;
-  --orange-card: #f29a5c;
-  --bg: #f1f2f7;
+  --orange-card-strong: #ff6200;
+  --bg: #f3f2f0;
   --card: #ffffff;
   --border: #dcdde3;
   --text: #2b2b2b;
   --muted: #555;
-  --heading-font: "Lilita One", "Fredoka One", Impact, sans-serif;
+  --heading-font: "Bebas Neue", "Lilita One", Impact, sans-serif;
   --body-font: "Nunito Sans", "Segoe UI", Arial, sans-serif;
 }
 
@@ -121,34 +120,15 @@ body.menu-fechado .sidebar { transform: translateX(-100%); }
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
-}
+    text-decoration: none;
 
-/* ---------- MAIN ---------- */
-.main {
-  margin-left: var(--sidebar-w);
-  min-height: 100vh;
-  transition: margin-left .3s ease, padding-left .3s ease;
-  padding: 18px 14px 14px;
-  display: grid;
-  grid-template-columns: 1.02fr 1fr;
-  grid-template-rows: auto auto 1fr 1fr;
-  gap: 10px 12px;
 }
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 18px;
-}
-
-body.menu-fechado .main { margin-left: 0; padding-left: 54px; }
 
 /* ---------- BOTÃO DO MENU ---------- */
 .btn-menu {
   position: fixed;
   top: 14px;
-  left: calc(var(--sidebar-w) - 14px); /* Igual ao da dashboard (na borda da sidebar) */
+  left: calc(var(--sidebar-w) - 14px);
   z-index: 20;
   width: 28px;
   height: 28px;
@@ -175,9 +155,105 @@ body.menu-fechado .btn-menu { left: 12px; }
   z-index: 25;
 }
 
-/* ---------- RESPONSIVO (PARTE DA NAVBAR) ---------- */
+/* ---------- CONTEÚDO: ACESSO RÁPIDO ---------- */
+.main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  transition: margin-left .3s ease, padding-left .3s ease;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+body.menu-fechado .main {
+  margin-left: 0;
+  padding-left: 60px;
+}
+
+.acesso-container {
+  width: 100%;
+  max-width: 920px;
+}
+
+/* Cabeçalho com título e logo3 */
+.acesso-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px 20px;
+  border-bottom: 3px solid #ffffff;
+  margin-bottom: 40px;
+}
+
+.acesso-header h1 {
+  font-family: var(--heading-font);
+  font-size: 54px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--orange-card-strong);
+  line-height: 1;
+}
+
+.logo-topo {
+  max-width: 210px;
+  height: auto;
+  display: block;
+}
+
+/* Grid de 6 botões 3 colunas x 2 linhas */
+.acesso-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 215px);
+  justify-content: center;
+  gap: 28px 32px;
+}
+
+.card-acesso {
+  height: 200px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  padding: 16px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
+  transition: transform .2s ease, box-shadow .2s ease;
+  box-shadow: 0 10px 18px rgba(235, 73, 0, 0.18);
+}
+
+.card-acesso.laranja {
+  background-color: var(--orange-card-strong);
+  color: #ffffff;
+  border: 2px solid var(--orange-card-strong);
+}
+
+.card-acesso.branco {
+  background-color: #ffffff;
+  color: var(--orange-card-strong);
+  border: 2px solid #e2e2e2;
+}
+
+.card-acesso:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 24px rgba(235, 73, 0, 0.28);
+}
+
+/* ---------- RESPONSIVO ---------- */
 @media (max-width: 900px) {
   .sidebar { z-index: 30; }
+  .main, body.menu-fechado .main {
+    margin-left: 0;
+    padding: 56px 20px 30px;
+  }
   .btn-menu, body.menu-fechado .btn-menu { left: 10px; top: 10px; }
   body:not(.menu-fechado) .overlay { display: block; }
-}
+
+  .acesso-header {
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }}

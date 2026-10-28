@@ -131,9 +131,11 @@
             console.log("Login funcionou antes do setTimeout")
 
             setTimeout(function () {
-              window.location = "./dashboard/dashboard.html";
+              window.location = "./dashboard/acessoRapido.html";
             }, 1000); // apenas para exibir o loading
             console.log("Login funcionou depois do setTimeout")
+            console.log(JSON.stringify(json));
+
 
           });
 

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ascent | Perfil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    <link rel="stylesheet" href="../css/perfil.css">
+</head>
+<body>
+
+<div class="app">
+
+    <!-- BOTÃO ABRIR/FECHAR MENU MOBILE -->
+    <button class="btn-menu" id="btn-menu" aria-label="Abrir ou fechar menu">
+      <i class="fi fi-rr-menu-burger"></i>
+    </button>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- SIDEBAR PADRÃO ASCENT -->
+    <aside class="sidebar">
+      <div class="logo">
+        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>      
+      </div>
+
+      <div class="profile">
+        <img src="assets/icon/" alt="">
+        <span id="sNomeUsuario">Thamyres Batista</span>
+      </div>
+
+      <nav class="nav">
+        <span class="nav-indicador" id="nav-indicador"></span>
+        <div class="nav-item"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
+        <div class="nav-item "><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
+        <div class="nav-item"><a href="#">Gestão</a></div>
+        <div class="nav-item ativo"><a href="./perfil.html">Perfil</a></div>
+        <div class="nav-item"><a href="./faq.html">FAQ</a></div>
+      </nav>
+
+      <button class="logout" type="button"><a href="../index.html" style="color: inherit; text-decoration: none;">SAIR</a></button>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL - PERFIL -->
+    <main class="main-content">
+      <div class="perfil-container">
+
+        <!-- Banner Superior do Perfil -->
+        <div class="perfil-banner">
+          <div class="perfil-avatar-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+            </svg>
+          </div>
+          <div class="perfil-info-user">
+            <h2 id="nomeUsuarioBanner">Thamyres Batista</h2>
+            <span>GERENTE</span>
+          </div>
+        </div>
+
+        <!-- Caixa de Alterar Perfil -->
+        <div class="perfil-card-form">
+          <h1 class="titulo-alterar">ALTERAR PERFIL</h1>
+
+          <form class="form-grid" onsubmit="event.preventDefault();">
+            
+            <div class="input-group full-width">
+              <label for="nomeCompleto">Nome completo</label>
+              <input type="text" id="nomeCompleto" placeholder="Nome completo">
+            </div>
+
+
+            <div class="input-group full-width">
+              <label for="email">Email</label>
+              <input type="email" id="email" placeholder="Email">
+            </div>
+
+            <div class="input-group full-width">
+              <label for="senhaAtual">Senha atual</label>
+              <input type="password" id="senhaAtual" placeholder="Senha atual">
+            </div>
+
+            <div class="input-group half-width">
+              <label for="novaSenha">Nova senha</label>
+              <input type="password" id="novaSenha" placeholder="Nova senha">
+            </div>
+
+            <div class="input-group half-width">
+              <label for="confirmaSenha">Confirmar nova senha</label>
+              <input type="password" id="confirmaSenha" placeholder="Confirmar nova senha">
+            </div>
+
+            <div class="btn-container">
+              <button type="submit" class="btn-confirmar">Confirmar alteração</button>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+    </main>
+
+</div>
+
+<script>
+  // ---------- SCRIPT DA SIDEBAR E NOME DO USUÁRIO ----------
+  if (sessionStorage.NOME_USUARIO != null) {
+    document.getElementById('sNomeUsuario').textContent = sessionStorage.NOME_USUARIO;
+    document.getElementById('nomeUsuarioBanner').textContent = sessionStorage.NOME_USUARIO;
+  }
+
+  const btnMenu = document.getElementById('btn-menu');
+  const overlay = document.getElementById('overlay');
+  if (window.innerWidth <= 900) document.body.classList.add('menu-fechado');
+  
+  if (btnMenu && overlay) {
+    btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
+    overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
+  }
+
+  const itensNav = [...document.querySelectorAll('.sidebar .nav-item')];
+  const indicador = document.getElementById('nav-indicador');
+  const indiceAtivo = () => itensNav.findIndex(i => i.classList.contains('ativo'));
+  const topoDe = i => `translateY(${itensNav[i].offsetTop}px)`;
+
+  function posicionarIndicador() {
+    const atual = indiceAtivo();
+    if (atual < 0 || !indicador) return;
+    const guardado = sessionStorage.getItem('navAnterior');
+    const ant = guardado === null ? atual : Number(guardado);
+    sessionStorage.removeItem('navAnterior');
+    
+    indicador.style.transition = 'none';
+    indicador.style.transform = topoDe(itensNav[ant] ? ant : atual);
+    indicador.style.opacity = 1;
+    indicador.offsetHeight;
+    indicador.style.transition = '';
+    indicador.style.transform = topoDe(atual);
+  }
+
+  window.addEventListener('load', posicionarIndicador);
+  window.addEventListener('resize', () => {
+    const atual = indiceAtivo();
+    if (atual < 0 || !indicador) return;
+    indicador.style.transition = 'none';
+    indicador.style.transform = topoDe(atual);
+  });
+
+  itensNav.forEach(item => {
+    item.addEventListener('click', () => {
+      if (item.classList.contains('ativo')) return;
+      if (item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
+    });
+  });
+</script>
+
+</body>
+</html>

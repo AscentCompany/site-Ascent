@@ -11,8 +11,8 @@ function listarCargos(idCompanhia) {
             c.idCargo,
             c.cargo,
             p.idPermissao,
-            p.nome AS permissao,
-            cp.idCargoPermissao
+            p.nomePermissao AS permissao,
+            cp.fkCargo AS idCargoPermissao
         FROM cargo c
                  JOIN permissao p
                  LEFT JOIN cargoPermissao cp ON cp.fkCargo = c.idCargo AND cp.fkPermissao = p.idPermissao
@@ -23,7 +23,7 @@ function listarCargos(idCompanhia) {
 }
 
 function listarPermissoes() {
-    return database.executar(`SELECT * FROM permissao;`);
+    return database.executar(`SELECT idPermissao, nomePermissao AS nome FROM permissao;`);
 }
 
 function cadastrarCargo(nomeCargo, idCompanhia) {

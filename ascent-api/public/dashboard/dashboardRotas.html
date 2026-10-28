@@ -1,127 +1,152 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ascent – Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
-<link rel="stylesheet" href="dashboardRotas.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ascent – Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="../css/dashboardRotas.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 </head>
 <body>
-<div class="app">
+  <div class="app">
 
-  <!-- BOTÃO ABRIR/FECHAR MENU -->
-  <button class="btn-menu" id="btn-menu" aria-label="Abrir ou fechar menu">
-    <i class="fi fi-rr-menu-burger"></i>
-  </button>
-  <div class="overlay" id="overlay"></div>
+    <!-- BOTÃO ABRIR/FECHAR MENU -->
+    <button class="btn-menu" id="btn-menu" aria-label="Abrir ou fechar menu">
+      <i class="fi fi-rr-menu-burger"></i>
+    </button>
+    <div class="overlay" id="overlay"></div>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="logo">
-      <a href="./acessoRapido.html"><img src="/ascent-api/public/assets/icon/logo2.png" alt="Ascent"></a>
-    </div>
-
-    <div class="profile">
-      <img src="/ascent-api/public/assets/icon/" alt="">
-      <span>Thamyres Batista</span>
-    </div>
-
-    <nav class="nav">
-      <span class="nav-indicador" id="nav-indicador"></span>
-      <div class="nav-item ativo"><a href="/ascent-api/public/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
-      <div class="nav-item "><a href="/ascent-api/public/dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
-      <div class="nav-item"><a href="#">Gestão</a></div>
-      <div class="nav-item"><a href="#">Ascent IA</a></div>
-      <div class="nav-item"><a href="#">Perfil</a></div>
-      <div class="nav-item"><a href="#">FAQ</a></div>
-    </nav>
-
-    <button class="logout" type="button">SAIR</button>
-  </aside>
-
-  <!-- CONTEÚDO -->
-  <main class="main">
-
-    <header class="page-header">
-      <div class="page-titulo">
-        <h1>Análise de Voos</h1>
-        <p>Com base nos últimos 5 anos</p>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">
+        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>
       </div>
-      <button class="btn-filtrar" type="button" id="btn-filtrar">
-        Filtrar <i class="fi fi-rr-settings-sliders"></i>
-      </button>
-    </header>
+
+      <div class="profile">
+        <img src="/ascent-api/public/assets/icon/" alt="">
+        <span id="sNomeUsuario"></span>
+      </div>
+
+      <nav class="nav">
+        <span class="nav-indicador" id="nav-indicador"></span>
+        <div class="nav-item ativo"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
+        <div class="nav-item "><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
+        <div class="nav-item"><a href="#">Gestão</a></div>
+        <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
+        <div class="nav-item"><a href="./faq.html">FAQ</a></div>
+      </nav>
+
+      <button class="logout" type="button"><a href="../index.html" style="color: inherit; text-decoration: none;">SAIR</a></button>
+    </aside>
+
+    <!-- CONTEÚDO -->
+    <div class="header">
+      <header class="page-header">
+        <div class="page-titulo">
+          <h1>Análise de Rotas</h1>
+          <p>Com base nos últimos 5 anos</p>
+        </div>
+        <button class="btn-filtrar" type="button" id="btn-filtrar">
+          Filtrar <i class="fi fi-rr-settings-sliders"></i>
+        </button>
+      </header>
+    </div>
 
     <section class="kpis">
       <article class="card kpi-gradient kpi-region">
-        <h2>Rotas com maior incidencia</h2>
-        <div class="big">SP -> RJ</div>
-        <div class="sub">75% da procura geral no período</div>
-        <div class="year"> (75/100)</div>
-      </article>
-
-      <article class="card kpi-middle">
-        <div>
-          <h3>Cidade com mais<BR> baixa procura</h3>
-          <div class="kpi-box">
-            <div class="value">Vitória (ES)</div>
-            <div class="label">Queda de 15% na procura em relação
-            ao ano passado <br> (30 / 85)</div>
-          </div>
+        <h2>Rota com maior incidência</h2>
+        <div class="kpi-text-icon">
+          <i class="fas fa-plane" style="transform: rotate(300deg);"></i>
+          <div class="big">SP -> RJ</div>
         </div>
-        <div>
-          <h3>hub com maior <br> circulação</h3>
-          <div class="kpi-box">
-            <div class="value">GRU</div>
-            <div class="label">(Guarulhos)</div>
-            <div class="prev">77% dos Voos passaram por esse
-              aeroporto no período <br> (77 / 100)</div>
-          </div>
+        <div class="sub">75% da procura geral no período (75/100)</div>
+      </article>
+
+      <article class="card kpi-gradient kpi-mes">
+        <h2>Cidade com mais baixa procura</h2>
+        <div class="kpi-text-icon">
+          <i class="fas fa-map-marker-alt"></i>
+          <div class="big">Vitória(ES)</div>
         </div>
+        <div class="sub">Queda de 15% na procura em relação ao ano passado (30 / 85)</div>
       </article>
 
-      <article class="card kpi-gradient kpi-variation">
-        <h2>Mês com maior <br> procura de voos</h2>
-        <div class="big">Junho</div>
-        <div class="sub">14% da procura geral no período
- (14/100)</div>
+      <article class="card kpi-gradient kpi-mes">
+        <h2>hub com maior circulação</h2>
+        <div class="kpi-text-icon">
+          <i class="fas fa-map-marker-alt"></i>
+          <div class="big">GRU (Guarulhos)</div>
+        </div>
+        <div class="sub">77% dos Voos passaram por esse aeroporto no período (77 / 100) </div>
+      </article>
+
+      <article class="card kpi-gradient kpi-region">
+        <h2>Mês com maior procura de voos</h2>
+        <div class="kpi-text-icon">
+          <i class="fas fa-calendar-alt"></i>
+          <div class="big">Junho</div>
+        </div>
+        <div class="sub">14% da procura geral no período (14/100)</div>
       </article>
     </section>
 
-    <section class="card card-evolucao">
-      <h2 class="chart-title">Evolução da ocupação</h2>
-      <div class="chart-placeholder" id="grafico-evolucao">Gráfico de linha – evolução da ocupação</div>
-    </section>
+    <main class="main">
 
-    <section class="card card-mensal">
-      <h2 class="chart-title">Ocupação assentos mensal</h2>
-      <div class="chart-placeholder" id="grafico-mensal">Gráfico de barras – assentos livres x ocupados</div>
-    </section>
+      <section class="card card-evolucao">
+        <h2 class="chart-title">DEMANDA POR TIPO DE VOOS</h2>
 
-    <section class="card card-faixa">
-      <h2 class="chart-title">Quantidade de passageiros<br>por faixa horária</h2>
-      <div class="chart-placeholder" id="grafico-faixa">Gráfico de barras horizontais – passageiros por horário</div>
-    </section>
+        <div class="chart-placeholder" style="position: relative; height: 200px;">
+          <canvas id="grafico-linhas"></canvas>
+        </div>
+      </section>
 
-  </main>
-</div>
+      <section class="card card-mensal">
+        <h2 class="chart-title">QUANTIDADE DE VOOS POR MÊS</h2>
+
+        <div class="grafico-container" style="position: relative; height: 200px;">
+          <canvas id="grafico-mensal"></canvas>
+        </div>
+      </section>
+
+      <section class="card card-faixa">
+        <h2 class="chart-title">DEMANDA POR ROTA</h2>
+
+        <div class="grafico-div" style="position: relative; height: 380px;">
+          <canvas id="grafico-barras"></canvas>
+        </div>
+      </section>
+      
+    </main>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+
+  if (sessionStorage.NOME_USUARIO != null){
+    sNomeUsuario.textContent = sessionStorage.NOME_USUARIO;
+  }else{
+    sNomeUsuario.textContent = "Bem Vindo!";
+  }
+
   const btnMenu = document.getElementById('btn-menu');
   const overlay = document.getElementById('overlay');
-  if(window.innerWidth <= 900) document.body.classList.add('menu-fechado');
+  if (window.innerWidth <= 900) document.body.classList.add('menu-fechado');
   btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
   overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
   const itensNav = [...document.querySelectorAll('.sidebar .nav-item')];
   const indicador = document.getElementById('nav-indicador');
   const indiceAtivo = () => itensNav.findIndex(i => i.classList.contains('ativo'));
   const topoDe = i => `translateY(${itensNav[i].offsetTop}px)`;
-  function posicionarIndicador(){
+  function posicionarIndicador() {
     const atual = indiceAtivo();
-    if(atual < 0) return;
+    if (atual < 0) return;
     const guardado = sessionStorage.getItem('navAnterior');
     const ant = guardado === null ? atual : Number(guardado);
     sessionStorage.removeItem('navAnterior');
@@ -139,10 +164,143 @@
   });
   itensNav.forEach(item => {
     item.addEventListener('click', () => {
-      if(item.classList.contains('ativo')) return;
-      if(item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
+      if (item.classList.contains('ativo')) return;
+      if (item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
     });
+  });
+
+  /*GRAFICOS*/
+  Chart.defaults.font.family = '"Nunito Sans", "Segoe UI", Arial, sans-serif';
+  Chart.defaults.color = '#2b2b2b';
+
+  const meses = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+  /*1) Demanda por tipo de voos (linhas)*/
+  new Chart(document.getElementById('grafico-linhas'), {
+    type: 'line',
+    data: {
+      labels: meses,
+      datasets: [
+        {
+          label: 'Comerciais',
+          data: [4200, 3000, 4800, 3900, 3300, 3500, 3600, 3700, 3500, 4100, 4200, 2800],
+          borderColor: '#b5b5b5',
+          backgroundColor: '#b5b5b5',
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 2
+        },
+        {
+          label: 'Turísticos',
+          data: [5000, 5100, 2600, 2000, 2200, 4800, 6200, 3300, 1800, 1000, 1400, 6800],
+          borderColor: '#ff6a00',
+          backgroundColor: '#ff6a00',
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, font: { size: 9 } }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 9 } },
+          title: { display: true, text: 'Meses do Ano', font: { size: 10, weight: '700' } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#ececec' },
+          ticks: { font: { size: 9 } },
+          title: { display: true, text: 'Passageiros Transportados', font: { size: 10, weight: '700' } }
+        }
+      }
+    }
+  });
+
+  /*2) Quantidade de voos por mês (colunas coloridas)*/
+  new Chart(document.getElementById('grafico-mensal'), {
+    type: 'bar',
+    data: {
+      labels: meses,
+      datasets: [{
+        label: 'Voos',
+        data: [60, 45, 78, 30, 40, 60, 80, 78, 80, 60, 30, 78],
+        backgroundColor: [
+          '#4f7df3', '#7f9cf5', '#f5b861', '#ffd84d', '#ec6b7c', '#ec7fc4',
+          '#4fd1c5', '#5cc97f', '#4fbf6a', '#8f9a14', '#f5a742', '#ffad6b'
+        ],
+        borderRadius: 4,
+        maxBarThickness: 45
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: {
+          beginAtZero: true,
+          max: 80,
+          ticks: { stepSize: 20, font: { size: 10 } },
+          grid: { color: '#ececec' }
+        }
+      }
+    }
+  });
+
+  /*3) Demanda por rota (barras horizontais)*/
+  new Chart(document.getElementById('grafico-barras'), {
+    type: 'bar',
+    data: {
+      labels: ['SP - BA', 'CE - RJ', 'SP - RJ', 'AM - MT', 'SP - RE', 'PR - SP', 'SP - DF', 'ES - MT', 'RS - SP'],
+      datasets: [{
+        label: 'Demanda',
+        data: [10000, 4500, 12000, 3000, 5000, 2000, 2000, 2000, 7000],
+        backgroundColor: [
+          '#f5df7a', '#e9ec6a', '#78e05b', '#ff8a1f', '#ea4a0c',
+          '#4fd8cf', '#ffb866', '#dca8ee', '#ffa87a'
+        ],
+        borderRadius: 4,
+        barThickness: 30
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ' ' + ctx.parsed.x.toLocaleString('pt-BR') + ' voos' }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: { color: '#ececec' },
+          ticks: {
+            stepSize: 2000,
+            font: { size: 10 },
+            callback: v => (v === 0 ? '0' : (v / 1000) + 'mil')
+          }
+        },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
   });
 </script>
 </body>
+
 </html>

@@ -7,14 +7,13 @@
   <title>Ascent – Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap"
     rel="stylesheet">
   <link rel="stylesheet"
     href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
-  <link rel="stylesheet" href="dashboardOperacoes.css">
+  <link rel="stylesheet" href="../css/dashboardOperacoes.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 </head>
-
 <body>
   <div class="app">
 
@@ -27,33 +26,32 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="logo">
-        <a href="./acessoRapido.html"><img src="/ascent-api/public/assets/icon/logo2.png" alt="Ascent"></a>
+        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>
       </div>
 
       <div class="profile">
         <img src="/ascent-api/public/assets/icon/" alt="">
-        <span>Thamyres Batista</span>
+        <span id="sNomeUsuario"></span>
       </div>
 
       <nav class="nav">
         <span class="nav-indicador" id="nav-indicador"></span>
-        <div class="nav-item "><a href="/ascent-api/public/dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
-        <div class="nav-item ativo"><a href="/ascent-api/public/dashboard/dashboardOperacoes.html">Dashboard -
-            operações</a></div>
+        <div class="nav-item"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
+        <div class="nav-item ativo"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
         <div class="nav-item"><a href="#">Gestão</a></div>
-        <div class="nav-item"><a href="#">Ascent IA</a></div>
-        <div class="nav-item"><a href="#">Perfil</a></div>
-        <div class="nav-item"><a href="#">FAQ</a></div>
+        <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
+        <div class="nav-item"><a href="./faq.html">FAQ</a></div>
       </nav>
 
-      <button class="logout" type="button">SAIR</button>
+      <button class="logout" type="button"><a href="../index.html" style="color: inherit; text-decoration: none;">SAIR</a></button>
     </aside>
 
     <!-- CONTEÚDO -->
     <div class="header">
       <header class="page-header">
         <div class="page-titulo">
-          <h1>Gestão de Operações</h1>
+          <h1>Análise de Operações</h1>
+          <p>Com base nos últimos 5 anos</p>
         </div>
         <button class="btn-filtrar" type="button" id="btn-filtrar">
           Filtrar <i class="fi fi-rr-settings-sliders"></i>
@@ -209,6 +207,13 @@
 </html>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+
+  if (sessionStorage.NOME_USUARIO != null){
+    sNomeUsuario.textContent = sessionStorage.NOME_USUARIO;
+  }else{
+    sNomeUsuario.textContent = "Bem Vindo!";
+  }
+
   const btnMenu = document.getElementById('btn-menu');
   const overlay = document.getElementById('overlay');
   if (window.innerWidth <= 900) document.body.classList.add('menu-fechado');

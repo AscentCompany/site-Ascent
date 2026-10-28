@@ -8,7 +8,7 @@ router.get("/permissao/:idCompanhia", function (req, res) {
     cargoController.verificarPermissaoAdmin(req, res);
 });
 
-router.get("/cargos/:idCompanhia", function (req, res) {
+router.get("/listar/:idCompanhia", function (req, res) {
     cargoController.listarCargos(req, res);
 });
 
@@ -22,6 +22,10 @@ router.post("/cadastrar", function (req, res) {
 
 router.delete("/deletar/:idCargo", function (req, res) {
     cargoController.deletar(req, res);
+});
+
+router.put("/atualizar/:idCargo", function (req, res) {
+    cargoController.atualizar(req, res);
 });
 
 module.exports = router;

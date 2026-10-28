@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public class Log {
 
-    private Integer logId;
+    private Integer idLog;
     private String categoria;
     private String servico;
     private String mensagem;
@@ -13,8 +13,8 @@ public class Log {
 
     public Log() {}
 
-    public Log(Integer logId, String categoria, String servico, String mensagem, LocalDateTime dataHora, String origemCadastro) {
-        this.logId = logId;
+    public Log(Integer idLog, String categoria, String servico, String mensagem, LocalDateTime dataHora, String origemCadastro) {
+        this.idLog = idLog;
         this.categoria = categoria;
         this.servico = servico;
         this.mensagem = mensagem;
@@ -30,12 +30,12 @@ public class Log {
         this.origemCadastro = origemCadastro;
     }
 
-    public Integer getLogId() {
-        return logId;
+    public Integer getIdLog() {
+        return idLog;
     }
 
-    public void setLogId(Integer logId) {
-        this.logId = logId;
+    public void setIdLog(Integer idLog) {
+        this.idLog = idLog;
     }
 
     public String getCategoria() {
@@ -81,7 +81,7 @@ public class Log {
     @Override
     public String toString() {
         return "\nLog{" +
-                "logId=" + logId +
+                "idLog=" + idLog +
                 ", categoria='" + categoria + '\'' +
                 ", servico='" + servico + '\'' +
                 ", mensagem='" + mensagem + '\'' +

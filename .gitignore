@@ -2,3 +2,6 @@ ascent-api/node_modules
 ascent-api/.env
 ascent-api/package-lock.json
 .dockerignore
+
+.idea/
+*.iml

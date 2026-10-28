@@ -39,14 +39,14 @@
 
     <div class="sidebar">
         <div class="logo-container">
-            <a href="index.html">
+            <a href="dashboard/acessoRapido.html">
                 <img src="assets/icon/logo.png" alt="Logo da Ascent" />
             </a>
         </div>
         <nav class="sidebar-menu">
             <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
             <button class="menu-btn active" onclick="window.location.href='usuarios.html'">Gerenciar Cargos</button>
-            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Permissões</button>
+            <button class="menu-btn" onclick="window.location.href='permissoes.html'">Gerenciar Permissões</button>
         </nav>
     </div>
 
@@ -95,7 +95,7 @@
     }
 
     function listarCargos() {
-        fetch(`/cargos/cargos/${idCompanhia}`)
+        fetch(`/cargos/listar/${idCompanhia}`)
             .then(res => res.json())
             .then(linhasBd => {
                 let lista = document.getElementById("listaCargos");
@@ -125,7 +125,7 @@
 
                     let permissaoBloco = `
                         <label class="permissao-checkbox-label">
-                            <input type="checkbox" ${estaMarcado} style="margin-right: 5px;">
+                            <input type="checkbox" value="${linha.idPermissao}" class="checkbox-cargo-${linha.idCargo}" ${estaMarcado} style="margin-right: 5px;">
                             <span>${linha.permissao}</span>
                         </label>
                     `;
@@ -150,7 +150,7 @@
                                 ${textoPermissoes}
                             </div>
                             <div class="col-acoes acoes-botoes">
-                                <button class="btn-acao" onclick="abrirModalEdicao(${c.idCargo})">Editar</button>
+                                <button class="btn-acao" onclick="atualizarCargo(${c.idCargo})">Alterar</button>
                                 <button class="btn-acao" onclick="excluirCargo(${c.idCargo})">Excluir</button>
                             </div>
                         </div>
@@ -262,6 +262,33 @@
                 }
             }).catch(erro => {
                 console.error("Erro na exclusão:", erro);
+            });
+        }
+    }
+
+    function atualizarCargo(idCargo) {
+        if (confirm("Deseja confirmar a alteração das permissões deste cargo?")) {
+
+            let checkboxes = document.querySelectorAll(`.checkbox-cargo-${idCargo}:checked`);
+            let permissoesSelecionadas = [];
+
+            for (let i = 0; i < checkboxes.length; i++) {
+                permissoesSelecionadas.push(checkboxes[i].value);
+            }
+
+            fetch(`/cargos/atualizar/${idCargo}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    permissoesServer: permissoesSelecionadas
+                })
+            }).then(res => {
+                if (res.ok) {
+                    alert("Permissões atualizadas com sucesso!");
+                    listarCargos();
+                } else {
+                    alert("Erro ao atualizar permissões.");
+                }
             });
         }
     }

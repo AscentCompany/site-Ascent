@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ascent | Gerenciar Cargos</title>
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/cruds.css">
+
+</head>
+<body>
+<div class="modal-overlay" id="modalCadastro" style="display: none;">
+    <div class="modal-content formulario">
+        <span class="fechar-modal" onclick="fecharModal()">X</span>
+        <h2 class="titulo-boas-vindas" style="font-size: 24px;">Nova Permissão</h2>
+
+        <label for="modalNomePermissao">Nome da Permissão</label>
+        <input type="text" id="modalNomePermissao" placeholder="Nome da Permissão">
+
+        <label for="modalFuncionalidade">Funcionalidades</label>
+        <div class="modal-input-group">
+            <select id="modalFuncionalidade" class="modal-select-flex">
+                <option value="">Selecione uma Funcionalidade...</option>
+            </select>
+            <button class="btn-acao" onclick="adicionarFuncionalidadeNaLista()" style="height: auto;">Add</button>
+        </div>
+
+        <div id="listaFuncionalidadesModal" class="modal-tags-container">
+            <!-- preenchido pelo js -->
+        </div>
+
+        <button class="botao-enviar" onclick="criarNovaPermissao()" style="margin-top: 25px;">Criar Permissão</button>
+    </div>
+</div>
+
+
+<div class="page-wrapper">
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <a href="dashboard/acessoRapido.html">
+                <img src="assets/icon/logo.png" alt="Logo da Ascent" />
+            </a>
+        </div>
+        <nav class="sidebar-menu">
+            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
+            <button class="menu-btn" onclick="window.location.href='cargos.html'">Gerenciar Cargos</button>
+            <button class="menu-btn active" onclick="window.location.href='#'">Gerenciar Permissões</button>
+        </nav>
+    </div>
+
+    <main class="container-gerenciar">
+
+        <div class="header-gerenciar">
+            <div class="titulos">
+                <h1 class="titulo-boas-vindas">Gerenciar Permissões</h1>
+                <span class="subtitulo">*Gerenciar funcionalidades disponíveis por permissão. </span>
+            </div>
+            <button class="btn-novo-usuario" onclick="abrirModal()">+ Nova Permissão</button>
+        </div>
+
+        <div class="cartao-gerenciar">
+
+            <div class="tabela-cabecalho">
+                <div class="col-nome">Permissão</div>
+                <div class="col-email">Funcionalidades</div>
+                <div class="col-acoes">Ações</div>
+            </div>
+
+            <div id="listaPermissoes">
+                <!--vazio aqui pq preenche com o js-->
+            </div>
+
+        </div>
+    </main>
+</div>
+
+
+<script>
+
+    let funcionalidadesEscolhidas = [];
+
+    function abrirModal() {
+        document.getElementById("modalCadastro").style.display = "flex";
+        carregarFuncionalidadesDoSelect();
+    }
+
+    function fecharModal() {
+        document.getElementById("modalCadastro").style.display = "none";
+        document.getElementById("modalNomePermissao").value = "";
+        document.getElementById("modalFuncionalidade").value = "";
+        funcionalidadesEscolhidas = [];
+        atualizarTelaDeFuncionalidades();
+    }
+
+    function listarPermissoes() {
+        fetch(`/permissoes/listar`)
+            .then(res => res.json())
+            .then(linhasBd => {
+                let lista = document.getElementById("listaPermissoes");
+                lista.innerHTML = "";
+
+                let permissoesAgrupadas = [];
+                let ultimoIdVisto = -1;
+                let indexAtual = -1;
+
+                for (let i = 0; i < linhasBd.length; i++) {
+                    let linha = linhasBd[i];
+
+                    if (linha.idPermissao !== ultimoIdVisto) {
+                        indexAtual++;
+                        permissoesAgrupadas[indexAtual] = {
+                            idPermissao: linha.idPermissao,
+                            permissao: linha.permissao,
+                            funcionalidades: ""
+                        };
+                        ultimoIdVisto = linha.idPermissao;
+                    }
+
+                    let estaMarcado = "";
+                    if (linha.idpermissaoFuncionalidade !== null) {
+                        estaMarcado = "checked";
+                    }
+
+                    let funcionalidadeBloco = `
+                        <label class="permissao-checkbox-label">
+                            <input type="checkbox" value="${linha.idFuncionalidade}" class="checkbox-permissao-${linha.idPermissao}" ${estaMarcado} style="margin-right: 5px;">
+                            <span>${linha.funcionalidade}</span>
+                        </label>
+                    `;
+                    permissoesAgrupadas[indexAtual].funcionalidades += funcionalidadeBloco;
+                }
+
+                for (let i = 0; i < permissoesAgrupadas.length; i++) {
+                    let p = permissoesAgrupadas[i];
+
+                    lista.innerHTML += `
+                        <div class="linha-usuario" id="linha_permissao_${p.idPermissao}">
+                            <div class="col-nome texto-nome-cargo">
+                                ${p.permissao}
+                            </div>
+                            <div class="col-email texto-permissoes-cargo">
+                                ${p.funcionalidades}
+                            </div>
+                            <div class="col-acoes acoes-botoes">
+                                <button class="btn-acao" onclick="atualizarPermissao(${p.idPermissao})">Alterar</button>
+                                <button class="btn-acao" onclick="excluirPermissao(${p.idPermissao})">Excluir</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(erro => console.error(erro));
+    }
+
+    function criarNovaPermissao() {
+        let nomePermissao = modalNomePermissao.value;
+
+        if (nomePermissao === "") {
+            alert("Digite o nome da permissão!");
+            return;
+        }
+
+        let idsParaEnviar = [];
+        for(let i = 0; i < funcionalidadesEscolhidas.length; i++) {
+            idsParaEnviar.push(funcionalidadesEscolhidas[i].id);
+        }
+
+        fetch("/permissoes/cadastrar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nomePermissaoServer: nomePermissao,
+                funcionalidadesServer: idsParaEnviar
+            })
+        }).then(res => {
+            if(res.ok) {
+                alert("Permissão cadastrada com sucesso!");
+                fecharModal();
+                listarPermissoes();
+            }
+        });
+    }
+
+    function carregarFuncionalidadesDoSelect() {
+        fetch("/permissoes/funcionalidades")
+            .then(res => res.json())
+            .then(funcionalidades => {
+                let select = document.getElementById("modalFuncionalidade");
+                select.innerHTML = '<option value="">Selecione uma funcionalidade...</option>';
+
+                for(let i = 0; i < funcionalidades.length; i++) {
+                    select.innerHTML += `<option value="${funcionalidades[i].idFuncionalidade}">${funcionalidades[i].nome}</option>`;
+                }
+            });
+    }
+
+    function adicionarFuncionalidadeNaLista() {
+        let select = document.getElementById("modalFuncionalidade");
+        let idFunc = select.value;
+        let nomeFunc = select.options[select.selectedIndex].text;
+
+        if (idFunc === "") return;
+
+        let jaExiste = false;
+        for(let i = 0; i < funcionalidadesEscolhidas.length; i++) {
+            if(funcionalidadesEscolhidas[i].id === idFunc) jaExiste = true;
+        }
+
+        if(!jaExiste) {
+            funcionalidadesEscolhidas.push({ id: idFunc, nome: nomeFunc });
+            atualizarTelaDeFuncionalidades();
+        }
+    }
+
+    function removerFuncionalidadeDaLista(idRemover) {
+        let novaLista = [];
+        for(let i = 0; i < funcionalidadesEscolhidas.length; i++) {
+            if(funcionalidadesEscolhidas[i].id !== idRemover) {
+                novaLista.push(funcionalidadesEscolhidas[i]);
+            }
+        }
+        funcionalidadesEscolhidas = novaLista;
+        atualizarTelaDeFuncionalidades();
+    }
+
+    function atualizarTelaDeFuncionalidades() {
+        let div = document.getElementById("listaFuncionalidadesModal");
+        div.innerHTML = "";
+
+        for(let i = 0; i < funcionalidadesEscolhidas.length; i++) {
+            let f = funcionalidadesEscolhidas[i];
+            div.innerHTML += `
+                <div class="tag-permissao">
+                    ${f.nome}
+                    <span class="tag-remover-btn" onclick="removerFuncionalidadeDaLista('${f.id}')">X</span>
+                </div>
+            `;
+        }
+    }
+
+    function excluirPermissao(idPermissao) {
+        fetch(`/permissoes/cargos-vinculados/${idPermissao}`)
+            .then(res => res.json())
+            .then(cargos => {
+                let mensagem = "Atenção! Tem certeza que deseja excluir esta permissão?\n";
+
+                if (cargos.length > 0) {
+                    mensagem += "\nEsta permissão está atualmente vinculada aos seguintes cargos:\n";
+                    for (let i = 0; i < cargos.length; i++) {
+                        mensagem += `- ${cargos[i].cargo}\n`;
+                    }
+                    mensagem += "\nAo excluir, esta permissão será REMOVIDA de todos esses cargos!";
+                }
+
+                if(confirm(mensagem)) {
+                    fetch(`/permissoes/deletar/${idPermissao}`, {
+                        method: "DELETE"
+                    }).then(res => {
+                        if(res.ok) {
+                            res.json().then(json => {
+                                alert(json.mensagem);
+                                listarPermissoes();
+                            });
+                        } else {
+                            alert("Erro ao tentar realizar a exclusão.");
+                        }
+                    }).catch(erro => console.error("Erro na deleção:", erro));
+                }
+            })
+            .catch(erro => console.error("Erro ao buscar cargos:", erro));
+    }
+
+    function atualizarPermissao(idPermissao) {
+        if (confirm("Confirmar a alteração das funcionalidades?")) {
+
+            let checkboxes = document.querySelectorAll(`.checkbox-permissao-${idPermissao}:checked`);
+            let funcSelecionadas = [];
+
+            for (let i = 0; i < checkboxes.length; i++) {
+                funcSelecionadas.push(checkboxes[i].value);
+            }
+
+            fetch(`/permissoes/atualizar/${idPermissao}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    funcionalidadesServer: funcSelecionadas
+                })
+            }).then(res => {
+                if (res.ok) {
+                    alert("Funcionalidades atualizadas com sucesso!");
+                    listarPermissoes();
+                } else {
+                    alert("Erro ao atualizar funcionalidades.");
+                }
+            }).catch(erro => console.error("Erro ao alterar:", erro));
+        }
+    }
+
+    listarPermissoes();
+</script>
+
+</body>
+</html>
