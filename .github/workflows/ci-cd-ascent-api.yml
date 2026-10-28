@@ -1,0 +1,71 @@
+name: CI/CD ascent-api
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'ascent-api/**'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    if: github.head_ref == 'develop'
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        working-directory: ./ascent-api
+        run: npm ci
+
+      - name: Construir imagem Docker
+        working-directory: ./ascent-api
+        run: docker build -t ascent-api .
+
+      - name: Subir container
+        run: |
+          docker run -d --name ascent-api \
+            -p 3333:3333 \
+            -e APP_PORT=3333 \
+            -e APP_HOST=localhost \
+            -e AMBIENTE_PROCESSO=desenvolvimento \
+            -e DB_HOST=localhost \
+            -e DB_PORT=3306 \
+            -e DB_DATABASE=ascent \
+            -e DB_USER=admin \
+            -e DB_PASSWORD=admin \
+            ascent-api
+
+      - name: Verificar se o container está rodando
+        run: |
+          sleep 10
+          docker ps | grep ascent-api
+
+  cd:
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.head_ref == 'develop'
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Publicar imagem no Docker Hub
+        working-directory: ./ascent-api
+        run: |
+          docker build -t lucasveneroso/ascent:ascent-api .
+          docker push lucasveneroso/ascent:ascent-api
+
+      - name: Aceitar o Pull Request
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash

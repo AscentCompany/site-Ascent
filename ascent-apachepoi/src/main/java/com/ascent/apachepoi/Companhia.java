@@ -7,5 +7,4 @@ public class Companhia {
     public String paisCompanhia;
     public String razaoSocial;
     public String cnpj;
-    public Integer fkCargo;
 }

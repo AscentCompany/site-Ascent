@@ -6,7 +6,7 @@ COPY pom.xml .
 
 RUN mvn dependency:go-offline
 
-COPY src /app
+COPY src ./src
 
 RUN mvn clean package -DskipTests
 
@@ -14,11 +14,11 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/target/*.jar ./app.jar
+COPY --from=builder /app/target/ascent-apachepoi-1.0-SNAPSHOT-jar-with-dependencies.jar ./app.jar
 
-CMD ["java","-jar","app.jar"]
+CMD ["java", "-jar", "app.jar"]
 
 # Build the image:
 #   docker build -t ascent-apachepoi .
 # Run the container (with env variables from .env):
-#   docker run --env-file .env -p 8081:8080 ascent-apachepoi
+#   docker run --env-file .env -p 8081:8080 --name ascent-apachepoi --network ascent ascent-apachepoi
