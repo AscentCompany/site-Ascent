@@ -2,6 +2,10 @@
 .idea/
 *.iml
 
+# Java / Maven
+target/
+**/target/
+
 # Node
 ascent-api/node_modules
 ascent-api/.env
