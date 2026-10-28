@@ -16,7 +16,7 @@ WORKDIR /app
 
 COPY --from=builder /app/target/ascent-apachepoi-1.0-SNAPSHOT-jar-with-dependencies.jar ./app.jar
 
-CMD ["java", "-jar", "app.jar"]
+CMD ["java", "-Xmx2g", "-jar", "app.jar"]
 
 # Build the image:
 #   docker build -t ascent-apachepoi .

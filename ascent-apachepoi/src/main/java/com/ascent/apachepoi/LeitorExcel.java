@@ -1,31 +1,41 @@
 package com.ascent.apachepoi;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackageAccess;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.util.IOUtils;
+import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
+import org.apache.poi.xssf.eventusermodel.XSSFReader;
+import org.apache.poi.xssf.eventusermodel.XSSFReader.SheetIterator;
+import org.apache.poi.xssf.model.SharedStrings;
+import org.apache.poi.xssf.model.StylesTable;
+import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
 
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LeitorExcel {
 
     public static String getEnvOrProp(String chave, String padrao) {
-        String val = System.getenv(chave);
+        // Prioriza system properties (carregadas do .env local) sobre env vars do shell
+        String val = System.getProperty(chave);
         if (val != null && !val.trim().isEmpty()) {
             return val.trim();
         }
-        val = System.getProperty(chave);
+        val = System.getenv(chave);
         if (val != null && !val.trim().isEmpty()) {
             return val.trim();
         }
@@ -46,7 +56,7 @@ public class LeitorExcel {
     private static final DateTimeFormatter FMT_HORA    = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     // ---------------------------------------------------------------
-    // Resultado da leitura — todas as entidades extraídas + métricas
+    // Resultado da leitura
     // ---------------------------------------------------------------
     public static class ResultadoLeitura {
         public List<Companhia>        companhias        = new ArrayList<>();
@@ -55,12 +65,11 @@ public class LeitorExcel {
         public List<Aeroporto>        aeroportos        = new ArrayList<>();
         public List<AeroportoDirecao> aeroportoDirecoes = new ArrayList<>();
 
-        // Métricas — populadas durante a leitura e gravadas no logsServico
         public String nomeArquivo       = null;
         public int    linhasEncontradas = 0;
         public int    linhasLidas       = 0;
         public int    linhasRejeitadas  = 0;
-        public String statusLeitura     = "LIDO"; // LIDO | PARCIALMENTE_LIDO | ERRO_NA_LEITURA
+        public String statusLeitura     = "LIDO";
         public String detalheErro       = null;
     }
 
@@ -93,7 +102,7 @@ public class LeitorExcel {
     }
 
     // ---------------------------------------------------------------
-    // Retorna a lista de arquivos para importação
+    // Lista de arquivos para importação
     // ---------------------------------------------------------------
     public List<String> obterListaDeArquivos() {
         List<String> arquivos = new ArrayList<>();
@@ -115,16 +124,13 @@ public class LeitorExcel {
         return arquivos;
     }
 
-    // ---------------------------------------------------------------
-    // Ponto de entrada: conecta ao S3 e extrai os dados da planilha padrão
-    // ---------------------------------------------------------------
     public ResultadoLeitura extrairDados() {
         String arquivo = getEnvOrProp("AWS_ARQUIVO_ANAC", "anac_part_001.xlsx");
         return extrairDadosDoArquivo(arquivo);
     }
 
     // ---------------------------------------------------------------
-    // Conecta ao S3 e extrai os dados de um arquivo específico
+    // Baixa arquivo do S3 para disco e extrai dados
     // ---------------------------------------------------------------
     public ResultadoLeitura extrairDadosDoArquivo(String nomeArquivo) {
         String bucket = obterBucket();
@@ -135,148 +141,166 @@ public class LeitorExcel {
         System.out.printf("Arquivo: %s%n", nomeArquivo);
         System.out.printf("Regiao : %s%n", regiao.id());
 
+        java.io.File tempFile = null;
         try (S3Client s3 = criarClienteS3(regiao)) {
             GetObjectRequest pedido = GetObjectRequest.builder().bucket(bucket).key(nomeArquivo).build();
-            try (InputStream stream = s3.getObject(pedido)) {
-                ResultadoLeitura resultado = extrairDeInputStream(stream);
-                resultado.nomeArquivo = nomeArquivo;
-                return resultado;
+
+            tempFile = java.io.File.createTempFile("anac_", ".xlsx");
+            tempFile.deleteOnExit();
+            System.out.println("Baixando arquivo do S3 para disco temporario: " + tempFile.getAbsolutePath());
+            try (InputStream stream = s3.getObject(pedido);
+                 java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile)) {
+                stream.transferTo(fos);
             }
+            System.out.printf("Download concluido: %d bytes%n", tempFile.length());
+
+            ResultadoLeitura resultado = extrairDeArquivo(tempFile);
+            resultado.nomeArquivo = nomeArquivo;
+            return resultado;
+
         } catch (Exception e) {
             throw new RuntimeException("Erro ao obter planilha do S3 (" + nomeArquivo + "): " + e.getMessage(), e);
+        } finally {
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 
     // ---------------------------------------------------------------
-    // Leitura principal — recebe qualquer InputStream (S3 ou local)
+    // Leitura via StAX streaming (baixíssimo uso de memória)
+    // Lê a sheet XML célula por célula sem carregar o documento inteiro.
     // ---------------------------------------------------------------
-    public ResultadoLeitura extrairDeInputStream(InputStream stream) {
+    public ResultadoLeitura extrairDeArquivo(java.io.File arquivo) {
         ResultadoLeitura resultado = new ResultadoLeitura();
         IOUtils.setByteArrayMaxOverride(1_000_000_000);
 
-        try (Workbook workbook = new XSSFWorkbook(stream)) {
-            System.out.println("Iniciando leitura do workbook...");
+        ZipSecureFile.setMaxEntrySize(Long.MAX_VALUE);
+        ZipSecureFile.setMaxTextSize(Long.MAX_VALUE);
+        ZipSecureFile.setMinInflateRatio(0.0);
 
-            Sheet sheet = workbook.getSheetAt(0);
+        try (OPCPackage pkg = OPCPackage.open(arquivo, PackageAccess.READ)) {
+            System.out.println("Iniciando leitura do workbook (StAX streaming)...");
 
-            // Cabeçalho começa nulo — preenchido na linha 0
-            String[] cabecalho = new String[0];
+            XSSFReader xssfReader = new XSSFReader(pkg);
+            SharedStrings sharedStrings = new ReadOnlySharedStringsTable(pkg);
 
-            for (Row row : sheet) {
-
-                // Linha 0: lê e armazena o cabeçalho como array de String
-                if (row.getRowNum() == 0) {
-                    cabecalho = lerCabecalho(row);
-                    continue;
-                }
-
-                resultado.linhasEncontradas++;
-                boolean linhaValida = false;
-
-                // --- Companhia ---
-                Integer codEmpresa = getInt(row, cabecalho, "id_empresa");
-                String  nmEmpresa  = getString(row, cabecalho, "nm_empresa");
-                String  paisEmpresa = getString(row, cabecalho, "nm_pais");
-                if (paisEmpresa == null || paisEmpresa.isEmpty()) {
-                    paisEmpresa = getString(row, cabecalho, "nm_pais_origem");
-                }
-                if (codEmpresa != null && nmEmpresa != null && !nmEmpresa.isEmpty()) {
-                    Companhia companhia = new Companhia();
-                    companhia.codCompanhia  = codEmpresa;
-                    companhia.nomeCompanhia = nmEmpresa;
-                    companhia.paisCompanhia = (paisEmpresa != null && !paisEmpresa.isEmpty()) ? paisEmpresa : "BRASIL";
-                    resultado.companhias.add(companhia);
-                    linhaValida = true;
-                }
-
-                // --- Aviao ---
-                String  modelo   = getString(row, cabecalho, "ds_modelo");
-                Integer assentos = getInt(row, cabecalho, "nr_assentos_ofertados");
-                if (modelo != null && !modelo.isEmpty()) {
-                    Aviao aviao = new Aviao();
-                    aviao.modelo      = modelo;
-                    aviao.numAssentos = assentos != null ? assentos : 0;
-                    resultado.avioes.add(aviao);
-                    linhaValida = true;
-                }
-
-                // --- Voo ---
-                Integer nrVoo          = getInt(row, cabecalho, "nr_voo");
-                Integer tipoVoo        = getInt(row, cabecalho, "cd_di");
-                Integer passagosPagos  = getInt(row, cabecalho, "nr_passag_pagos");
-                Integer passagosGratis = getInt(row, cabecalho, "nr_passag_gratis");
-                int qtdPassageiros     = (passagosPagos  != null ? passagosPagos  : 0)
-                                       + (passagosGratis != null ? passagosGratis : 0);
-                if (nrVoo != null) {
-                    Voo voo = new Voo();
-                    voo.numVoo         = nrVoo;
-                    voo.tipoVoo        = tipoVoo != null ? tipoVoo : 0;
-                    voo.qtdPassageiros = qtdPassageiros;
-                    resultado.voos.add(voo);
-                    linhaValida = true;
-                }
-
-                // --- Aeroporto Origem ---
-                String nmAerodromoOrigem = getString(row, cabecalho, "nm_aerodromo_origem");
-                String sgIcaoOrigem      = getString(row, cabecalho, "sg_icao_origem");
-                if (nmAerodromoOrigem != null && !nmAerodromoOrigem.isEmpty()) {
-                    Aeroporto origem = new Aeroporto();
-                    origem.nomeAeroporto = nmAerodromoOrigem;
-                    origem.municipio     = getString(row, cabecalho, "nm_municipio_origem");
-                    origem.uf            = getString(row, cabecalho, "sg_uf_origem");
-                    origem.regiao        = getString(row, cabecalho, "nm_regiao_origem");
-                    origem.pais          = getString(row, cabecalho, "nm_pais_origem");
-                    origem.icao          = sgIcaoOrigem;
-                    resultado.aeroportos.add(origem);
-                    linhaValida = true;
-                }
-
-                // --- Aeroporto Destino ---
-                String nmAerodromoDestino = getString(row, cabecalho, "nm_aerodromo_destino");
-                String sgIcaoDestino      = getString(row, cabecalho, "sg_icao_destino");
-                if (nmAerodromoDestino != null && !nmAerodromoDestino.isEmpty()) {
-                    Aeroporto destino = new Aeroporto();
-                    destino.nomeAeroporto = nmAerodromoDestino;
-                    destino.municipio     = getString(row, cabecalho, "nm_municipio_destino");
-                    destino.uf            = getString(row, cabecalho, "sg_uf_destino");
-                    destino.regiao        = getString(row, cabecalho, "nm_regiao_destino");
-                    destino.pais          = getString(row, cabecalho, "nm_pais_destino");
-                    destino.icao          = sgIcaoDestino;
-                    resultado.aeroportos.add(destino);
-                    linhaValida = true;
-                }
-
-                // --- AeroportoDirecao Partida ---
-                LocalDate dtPartida = getLocalDate(row, cabecalho, "dt_partida_real");
-                LocalTime hrPartida = getLocalTime(row, cabecalho, "hr_partida_real");
-                if (dtPartida != null && hrPartida != null) {
-                    AeroportoDirecao partida = new AeroportoDirecao();
-                    partida.direcao = "Partida";
-                    partida.dia     = dtPartida;
-                    partida.hora    = hrPartida;
-                    resultado.aeroportoDirecoes.add(partida);
-                }
-
-                // --- AeroportoDirecao Destino ---
-                LocalDate dtChegada = getLocalDate(row, cabecalho, "dt_chegada_real");
-                LocalTime hrChegada = getLocalTime(row, cabecalho, "hr_chegada_real");
-                if (dtChegada != null && hrChegada != null) {
-                    AeroportoDirecao chegada = new AeroportoDirecao();
-                    chegada.direcao = "Destino";
-                    chegada.dia     = dtChegada;
-                    chegada.hora    = hrChegada;
-                    resultado.aeroportoDirecoes.add(chegada);
-                }
-
-                // Contabiliza linha como lida ou rejeitada
-                if (linhaValida) {
-                    resultado.linhasLidas++;
-                } else {
-                    resultado.linhasRejeitadas++;
-                }
+            SheetIterator sheetIterator = (SheetIterator) xssfReader.getSheetsData();
+            if (!sheetIterator.hasNext()) {
+                throw new RuntimeException("Nenhuma sheet encontrada no arquivo.");
             }
 
-            // Define status final com base nas métricas
+            try (InputStream sheetStream = sheetIterator.next()) {
+                String sheetName = sheetIterator.getSheetName();
+                System.out.println("Lendo sheet: " + sheetName);
+
+                XMLInputFactory xmlFactory = XMLInputFactory.newInstance();
+                // Proteção contra XXE
+                xmlFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+                xmlFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+                XMLStreamReader xml = xmlFactory.createXMLStreamReader(sheetStream);
+
+                // Mapa de coluna (índice) -> nome do cabeçalho
+                String[] cabecalho = null;
+                // Linha atual: mapa colIndex -> valor
+                Map<Integer, String> currentRow = new HashMap<>();
+                // Tipo de cada célula na linha atual
+                Map<Integer, String> currentTypes = new HashMap<>();
+                int currentRowNum = -1;
+                boolean inRow = false;
+                boolean inCell = false;
+                boolean inV = false;
+                int currentCol = -1;
+                String currentType = null;
+                StringBuilder currentVal = new StringBuilder();
+
+                while (xml.hasNext()) {
+                    int event = xml.next();
+
+                    switch (event) {
+                        case XMLStreamReader.START_ELEMENT:
+                            String localName = xml.getLocalName();
+
+                            if ("row".equals(localName)) {
+                                inRow = true;
+                                currentRow.clear();
+                                currentTypes.clear();
+                                String r = xml.getAttributeValue(null, "r");
+                                currentRowNum = r != null ? Integer.parseInt(r) - 1 : -1;
+                            } else if ("c".equals(localName) && inRow) {
+                                inCell = true;
+                                String r = xml.getAttributeValue(null, "r");
+                                currentCol = refToColIndex(r);
+                                currentType = xml.getAttributeValue(null, "t");
+                                currentVal.setLength(0);
+                            } else if ("v".equals(localName) && inCell) {
+                                inV = true;
+                            } else if ("t".equals(localName) && inCell) {
+                                // inlineStr: <c t="inlineStr"><is><t>valor</t></is></c>
+                                inV = true;
+                            }
+                            break;
+
+                        case XMLStreamReader.CHARACTERS:
+                            if (inV) {
+                                currentVal.append(xml.getText());
+                            }
+                            break;
+
+                        case XMLStreamReader.END_ELEMENT:
+                            String endName = xml.getLocalName();
+
+                            if ("v".equals(endName) || "t".equals(endName)) {
+                                inV = false;
+                            } else if ("c".equals(endName) && inCell) {
+                                inCell = false;
+                                String val = currentVal.toString();
+                                // Resolve shared string se tipo "s"
+                                if ("s".equals(currentType) && !val.isEmpty()) {
+                                    try {
+                                        int sstIdx = Integer.parseInt(val);
+                                        val = sharedStrings.getItemAt(sstIdx).getString();
+                                    } catch (Exception ignored) {
+                                        val = "";
+                                    }
+                                }
+                                if (currentCol >= 0 && val != null && !val.isEmpty()) {
+                                    currentRow.put(currentCol, val);
+                                    currentTypes.put(currentCol, currentType);
+                                }
+                            } else if ("row".equals(endName) && inRow) {
+                                inRow = false;
+
+                                // Processa a linha
+                                if (currentRowNum == 0 || cabecalho == null) {
+                                    // Linha de cabeçalho
+                                    int maxCol = 0;
+                                    for (Integer k : currentRow.keySet()) {
+                                        if (k > maxCol) maxCol = k;
+                                    }
+                                    cabecalho = new String[maxCol + 1];
+                                    for (Map.Entry<Integer, String> e : currentRow.entrySet()) {
+                                        cabecalho[e.getKey()] = e.getValue() != null ? e.getValue().toLowerCase() : "";
+                                    }
+                                    System.out.println("Total de colunas indexadas: " + cabecalho.length);
+                                } else {
+                                    resultado.linhasEncontradas++;
+                                    boolean linhaValida = processarLinha(currentRow, currentTypes, cabecalho, resultado);
+                                    if (linhaValida) {
+                                        resultado.linhasLidas++;
+                                    } else {
+                                        resultado.linhasRejeitadas++;
+                                    }
+                                }
+                            }
+                            break;
+                    }
+                }
+
+                xml.close();
+            }
+
+            // Status
             if (resultado.linhasRejeitadas == 0) {
                 resultado.statusLeitura = "LIDO";
             } else if (resultado.linhasLidas > 0) {
@@ -300,7 +324,7 @@ public class LeitorExcel {
 
         } catch (Exception e) {
             resultado.statusLeitura = "ERRO_NA_LEITURA";
-            resultado.detalheErro   = e.getMessage();
+            resultado.detalheErro = e.getMessage();
             throw new RuntimeException("Erro ao ler a planilha: " + e.getMessage(), e);
         }
 
@@ -308,33 +332,130 @@ public class LeitorExcel {
     }
 
     // ---------------------------------------------------------------
-    // Lê a linha de cabeçalho e devolve um array de nomes (lowercase)
-    // Índice no array = índice da coluna na planilha
+    // Processa uma linha e extrai entidades
     // ---------------------------------------------------------------
-    private String[] lerCabecalho(Row row) {
-        printarLinhas();
-        System.out.println("Lendo e indexando cabecalho...");
+    private boolean processarLinha(Map<Integer, String> row, Map<Integer, String> types,
+                                    String[] cabecalho, ResultadoLeitura resultado) {
+        boolean linhaValida = false;
 
-        int totalColunas = row.getLastCellNum();
-        String[] cabecalho = new String[totalColunas];
-
-        for (int i = 0; i < totalColunas; i++) {
-            Cell cell = row.getCell(i);
-            if (cell != null && cell.getStringCellValue() != null) {
-                cabecalho[i] = cell.getStringCellValue().trim().toLowerCase();
-            } else {
-                cabecalho[i] = "";
-            }
+        // --- Companhia ---
+        Integer codEmpresa = getValInt(row, cabecalho, "id_empresa");
+        String nmEmpresa = getValStr(row, cabecalho, "nm_empresa");
+        String paisEmpresa = getValStr(row, cabecalho, "nm_pais");
+        if (paisEmpresa == null || paisEmpresa.isEmpty()) {
+            paisEmpresa = getValStr(row, cabecalho, "nm_pais_origem");
+        }
+        if (codEmpresa != null && nmEmpresa != null && !nmEmpresa.isEmpty()) {
+            Companhia c = new Companhia();
+            c.codCompanhia = codEmpresa;
+            c.nomeCompanhia = nmEmpresa;
+            c.paisCompanhia = (paisEmpresa != null && !paisEmpresa.isEmpty()) ? paisEmpresa : "BRASIL";
+            resultado.companhias.add(c);
+            linhaValida = true;
         }
 
-        System.out.println("Total de colunas indexadas: " + totalColunas);
-        printarLinhas();
-        return cabecalho;
+        // --- Aviao ---
+        String modelo = getValStr(row, cabecalho, "ds_modelo");
+        Integer assentos = getValInt(row, cabecalho, "nr_assentos_ofertados");
+        if (modelo != null && !modelo.isEmpty()) {
+            Aviao a = new Aviao();
+            a.modelo = modelo;
+            a.numAssentos = assentos != null ? assentos : 0;
+            resultado.avioes.add(a);
+            linhaValida = true;
+        }
+
+        // --- Voo ---
+        Integer nrVoo = getValInt(row, cabecalho, "nr_voo");
+        Integer tipoVoo = getValInt(row, cabecalho, "cd_di");
+        Integer passPagos = getValInt(row, cabecalho, "nr_passag_pagos");
+        Integer passGratis = getValInt(row, cabecalho, "nr_passag_gratis");
+        int qtdPass = (passPagos != null ? passPagos : 0) + (passGratis != null ? passGratis : 0);
+        if (nrVoo != null) {
+            Voo v = new Voo();
+            v.numVoo = nrVoo;
+            v.tipoVoo = tipoVoo != null ? tipoVoo : 0;
+            v.qtdPassageiros = qtdPass;
+            resultado.voos.add(v);
+            linhaValida = true;
+        }
+
+        // --- Aeroporto Origem ---
+        String nmAeroOrig = getValStr(row, cabecalho, "nm_aerodromo_origem");
+        String icaoOrig = getValStr(row, cabecalho, "sg_icao_origem");
+        if (nmAeroOrig != null && !nmAeroOrig.isEmpty()) {
+            Aeroporto orig = new Aeroporto();
+            orig.nomeAeroporto = nmAeroOrig;
+            orig.municipio = getValStr(row, cabecalho, "nm_municipio_origem");
+            orig.uf = getValStr(row, cabecalho, "sg_uf_origem");
+            orig.regiao = getValStr(row, cabecalho, "nm_regiao_origem");
+            orig.pais = getValStr(row, cabecalho, "nm_pais_origem");
+            orig.icao = icaoOrig;
+            resultado.aeroportos.add(orig);
+            linhaValida = true;
+        }
+
+        // --- Aeroporto Destino ---
+        String nmAeroDest = getValStr(row, cabecalho, "nm_aerodromo_destino");
+        String icaoDest = getValStr(row, cabecalho, "sg_icao_destino");
+        if (nmAeroDest != null && !nmAeroDest.isEmpty()) {
+            Aeroporto dest = new Aeroporto();
+            dest.nomeAeroporto = nmAeroDest;
+            dest.municipio = getValStr(row, cabecalho, "nm_municipio_destino");
+            dest.uf = getValStr(row, cabecalho, "sg_uf_destino");
+            dest.regiao = getValStr(row, cabecalho, "nm_regiao_destino");
+            dest.pais = getValStr(row, cabecalho, "nm_pais_destino");
+            dest.icao = icaoDest;
+            resultado.aeroportos.add(dest);
+            linhaValida = true;
+        }
+
+        // --- AeroportoDirecao Partida ---
+        LocalDate dtPart = getValDate(row, cabecalho, "dt_partida_real");
+        LocalTime hrPart = getValTime(row, cabecalho, "hr_partida_real");
+        if (dtPart != null && hrPart != null) {
+            AeroportoDirecao p = new AeroportoDirecao();
+            p.direcao = "Partida";
+            p.dia = dtPart;
+            p.hora = hrPart;
+            resultado.aeroportoDirecoes.add(p);
+        }
+
+        // --- AeroportoDirecao Destino ---
+        LocalDate dtCheg = getValDate(row, cabecalho, "dt_chegada_real");
+        LocalTime hrCheg = getValTime(row, cabecalho, "hr_chegada_real");
+        if (dtCheg != null && hrCheg != null) {
+            AeroportoDirecao c = new AeroportoDirecao();
+            c.direcao = "Destino";
+            c.dia = dtCheg;
+            c.hora = hrCheg;
+            resultado.aeroportoDirecoes.add(c);
+        }
+
+        return linhaValida;
     }
 
     // ---------------------------------------------------------------
-    // Busca o índice de uma coluna pelo nome no array de cabeçalho
-    // Retorna -1 se não encontrar
+    // Converte referência "AB12" em índice de coluna (0-based)
+    // ---------------------------------------------------------------
+    private int refToColIndex(String ref) {
+        if (ref == null || ref.isEmpty()) return 0;
+        int col = 0;
+        for (int i = 0; i < ref.length(); i++) {
+            char c = ref.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                col = col * 26 + (c - 'A' + 1);
+            } else if (c >= 'a' && c <= 'z') {
+                col = col * 26 + (c - 'a' + 1);
+            } else {
+                break;
+            }
+        }
+        return col - 1;
+    }
+
+    // ---------------------------------------------------------------
+    // Busca índice de coluna pelo nome
     // ---------------------------------------------------------------
     private int indiceColuna(String[] cabecalho, String nomeColuna) {
         String nomeBusca = nomeColuna.toLowerCase();
@@ -347,73 +468,57 @@ public class LeitorExcel {
     }
 
     // ---------------------------------------------------------------
-    // Leitores de célula — usam o array de cabeçalho para localizar a coluna
+    // Leitores de célula — operam sobre Map<Integer, String>
     // ---------------------------------------------------------------
-    private String getString(Row row, String[] cabecalho, String nomeColuna) {
+    private String getValStr(Map<Integer, String> row, String[] cabecalho, String nomeColuna) {
         int idx = indiceColuna(cabecalho, nomeColuna);
         if (idx == -1) return null;
-        Cell cell = row.getCell(idx);
-        if (cell == null) return null;
-        if (cell.getCellType() == CellType.STRING) {
-            return cell.getStringCellValue().trim();
-        }
-        if (cell.getCellType() == CellType.NUMERIC) {
-            return String.valueOf((long) cell.getNumericCellValue());
-        }
-        return cell.toString().trim();
+        return row.get(idx);
     }
 
-    private Integer getInt(Row row, String[] cabecalho, String nomeColuna) {
-        int idx = indiceColuna(cabecalho, nomeColuna);
-        if (idx == -1) return null;
-        Cell cell = row.getCell(idx);
-        if (cell == null) return null;
+    private Integer getValInt(Map<Integer, String> row, String[] cabecalho, String nomeColuna) {
+        String val = getValStr(row, cabecalho, nomeColuna);
+        if (val == null || val.isEmpty()) return null;
         try {
-            if (cell.getCellType() == CellType.NUMERIC) {
-                return (int) cell.getNumericCellValue();
-            }
-            if (cell.getCellType() == CellType.STRING) {
-                String val = cell.getStringCellValue().trim();
-                if (val.isEmpty()) return null;
-                return (int) Double.parseDouble(val);
-            }
-        } catch (Exception ignored) {}
+            return (int) Double.parseDouble(val);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private LocalDate getValDate(Map<Integer, String> row, String[] cabecalho, String nomeColuna) {
+        String val = getValStr(row, cabecalho, nomeColuna);
+        if (val == null || val.isEmpty()) return null;
+        try {
+            // Serial date Excel epoch: 1899-12-30
+            double d = Double.parseDouble(val);
+            return LocalDate.of(1899, 12, 30).plusDays((long) d);
+        } catch (NumberFormatException nfe) {
+            try {
+                if (val.contains("-")) {
+                    return LocalDate.parse(val, FMT_DATA);
+                } else if (val.contains("/")) {
+                    return LocalDate.parse(val, FMT_DATA_BR);
+                }
+            } catch (Exception ignored) {}
+        }
         return null;
     }
 
-    private LocalDate getLocalDate(Row row, String[] cabecalho, String nomeColuna) {
-        int idx = indiceColuna(cabecalho, nomeColuna);
-        if (idx == -1) return null;
-        Cell cell = row.getCell(idx);
-        if (cell == null) return null;
+    private LocalTime getValTime(Map<Integer, String> row, String[] cabecalho, String nomeColuna) {
+        String val = getValStr(row, cabecalho, nomeColuna);
+        if (val == null || val.isEmpty()) return null;
         try {
-            if (cell.getCellType() == CellType.NUMERIC && cell.getLocalDateTimeCellValue() != null) {
-                return cell.getLocalDateTimeCellValue().toLocalDate();
-            }
-            String str = cell.getStringCellValue().trim();
-            if (str.isEmpty()) return null;
-            if (str.contains("-")) {
-                return LocalDate.parse(str, FMT_DATA);
-            } else if (str.contains("/")) {
-                return LocalDate.parse(str, FMT_DATA_BR);
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
-
-    private LocalTime getLocalTime(Row row, String[] cabecalho, String nomeColuna) {
-        int idx = indiceColuna(cabecalho, nomeColuna);
-        if (idx == -1) return null;
-        Cell cell = row.getCell(idx);
-        if (cell == null) return null;
-        try {
-            if (cell.getCellType() == CellType.NUMERIC && cell.getLocalDateTimeCellValue() != null) {
-                return cell.getLocalDateTimeCellValue().toLocalTime();
-            }
-            String str = cell.getStringCellValue().trim();
-            if (str.isEmpty()) return null;
-            return LocalTime.parse(str, FMT_HORA);
-        } catch (Exception ignored) {}
+            // Fração do dia (ex: 0.5 = 12:00:00)
+            double d = Double.parseDouble(val);
+            double fraction = d - (long) d;
+            int seconds = (int) (fraction * 24 * 60 * 60);
+            return LocalTime.ofSecondOfDay(seconds);
+        } catch (NumberFormatException nfe) {
+            try {
+                return LocalTime.parse(val, FMT_HORA);
+            } catch (Exception ignored) {}
+        }
         return null;
     }
 

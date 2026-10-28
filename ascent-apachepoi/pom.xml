@@ -64,6 +64,7 @@
                 <version>3.1.0</version>
                 <configuration>
                     <mainClass>com.ascent.apachepoi.MainApp</mainClass>
+                    <commandlineArgs>-Xmx2g</commandlineArgs>
                 </configuration>
             </plugin>
 

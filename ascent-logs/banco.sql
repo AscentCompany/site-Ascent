@@ -38,12 +38,12 @@ CREATE TABLE IF NOT EXISTS funcionalidades (
 -- Tabela: Companhia
 CREATE TABLE IF NOT EXISTS companhia (
     idCompanhia   INT AUTO_INCREMENT PRIMARY KEY,
-    codCompanhia  INT          NOT NULL,
-    nomeCompanhia VARCHAR(45)  NOT NULL,
-    paisCompanhia VARCHAR(45)  NOT NULL,
-    razaoSocial   VARCHAR(100) NOT NULL,
-    cnpj          VARCHAR(18)  NOT NULL,
-    fkCargo       INT          NOT NULL,
+    codCompanhia  INT           NOT NULL,
+    nomeCompanhia VARCHAR(255)  NOT NULL,
+    paisCompanhia VARCHAR(100)  NOT NULL,
+    razaoSocial   VARCHAR(255)  NOT NULL,
+    cnpj          VARCHAR(18)   NOT NULL,
+    fkCargo       INT           NOT NULL,
     FOREIGN KEY (fkCargo) REFERENCES cargo(idCargo)
 );
 
@@ -89,8 +89,8 @@ CREATE TABLE IF NOT EXISTS logsServico (
 -- Tabela: Aviao
 CREATE TABLE IF NOT EXISTS aviao (
     idAviao     INT AUTO_INCREMENT PRIMARY KEY,
-    numAssentos INT         NOT NULL,
-    modelo      VARCHAR(45) NOT NULL
+    numAssentos INT          NOT NULL,
+    modelo      VARCHAR(255) NOT NULL
 );
 
 -- Tabela: Voo
@@ -108,11 +108,11 @@ CREATE TABLE IF NOT EXISTS voo (
 -- Tabela: Aeroporto
 CREATE TABLE IF NOT EXISTS aeroporto (
     idAeroporto   INT AUTO_INCREMENT PRIMARY KEY,
-    nomeAeroporto VARCHAR(45) NOT NULL,
-    municipio     VARCHAR(45) NOT NULL,
-    uf            VARCHAR(2)  NOT NULL,
-    regiao        VARCHAR(45) NOT NULL,
-    pais          VARCHAR(45) NOT NULL
+    nomeAeroporto VARCHAR(255) NOT NULL,
+    municipio     VARCHAR(100) NOT NULL,
+    uf            VARCHAR(10)  NOT NULL,
+    regiao        VARCHAR(100) NOT NULL,
+    pais          VARCHAR(100) NOT NULL
 );
 
 -- Tabela: AeroportoDirecao

@@ -5,11 +5,11 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -19,6 +19,19 @@ public class MainApp {
     private static final Scanner scnTextos  = new Scanner(System.in);
     private static Conexao     bancoAscent;
     private static JdbcTemplate bd;
+
+    private static final DateTimeFormatter FMT_LOG = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    // ---------------------------------------------------------------
+    // Imprime log com horário
+    // ---------------------------------------------------------------
+    private static void log(String msg) {
+        System.out.printf("[%s] %s%n", LocalDateTime.now().format(FMT_LOG), msg);
+    }
+
+    private static void logErro(String msg) {
+        System.err.printf("[%s] %s%n", LocalDateTime.now().format(FMT_LOG), msg);
+    }
 
     public static void main(String[] args) {
         carregarEnv();
@@ -34,8 +47,8 @@ public class MainApp {
         if (rodarS3) {
             importarDadosAnac();
         } else {
-            System.out.println("Servico Apache POI pronto.");
-            System.out.println("Para importar os dados do S3, execute com AUTO_IMPORT=true ou passe o argumento '--s3'.");
+            log("Servico Apache POI pronto.");
+            log("Para importar os dados do S3, execute com AUTO_IMPORT=true ou passe o argumento '--s3'.");
         }
     }
 
@@ -91,7 +104,7 @@ public class MainApp {
                 bd.update("INSERT INTO cargo (cargo) VALUES ('Padrao')");
             }
         } catch (Exception e) {
-            System.err.println("Aviso ao verificar cargo: " + e.getMessage());
+            logErro("Aviso ao verificar cargo: " + e.getMessage());
         }
     }
 
@@ -99,47 +112,48 @@ public class MainApp {
     // Importação automática da base ANAC via S3 com Apache POI e JDBC
     // ---------------------------------------------------------------
     public static void importarDadosAnac() {
-        System.out.println("\n=== Iniciando importacao da base ANAC do S3 ===");
+        log("=== Iniciando importacao da base ANAC do S3 ===");
         try {
             LeitorExcel leitorExcel = new LeitorExcel();
             List<String> arquivos = leitorExcel.obterListaDeArquivos();
 
-            System.out.printf("Total de arquivos identificados para leitura: %d%n", arquivos.size());
+            log(String.format("Total de arquivos identificados para leitura: %d", arquivos.size()));
             int totalSucesso = 0;
 
             for (int i = 0; i < arquivos.size(); i++) {
                 String arquivo = arquivos.get(i);
-                System.out.printf("%n>>> Processando [%d/%d]: %s%n", (i + 1), arquivos.size(), arquivo);
+                log(String.format(">>> Processando [%d/%d]: %s", (i + 1), arquivos.size(), arquivo));
                 try {
                     LeitorExcel.ResultadoLeitura dados = leitorExcel.extrairDadosDoArquivo(arquivo);
                     inserirDadosNoBanco(dados);
                     totalSucesso++;
+                    log(String.format(">>> Arquivo %s concluido com sucesso! [%d/%d]", arquivo, (i + 1), arquivos.size()));
                 } catch (Exception eArq) {
-                    System.err.printf("Erro ao processar arquivo %s: %s%n", arquivo, eArq.getMessage());
+                    logErro(String.format("Erro ao processar arquivo %s: %s", arquivo, eArq.getMessage()));
                     eArq.printStackTrace();
                     novoLogBanco("ERROR", "importacao", "Falha na importacao do arquivo " + arquivo + ": " + eArq.getMessage(), LocalDateTime.now(), "Java");
                 }
             }
 
-            System.out.printf("%n=== Importacao concluida: %d/%d arquivos processados com sucesso! ===%n",
-                    totalSucesso, arquivos.size());
+            log(String.format("=== Importacao concluida: %d/%d arquivos processados com sucesso! ===",
+                    totalSucesso, arquivos.size()));
         } catch (Exception e) {
-            System.err.println("\n=== ERRO GERAL NA IMPORTACAO DO S3 ===");
-            System.err.println(e.getMessage());
+            logErro("=== ERRO GERAL NA IMPORTACAO DO S3 ===");
+            logErro(e.getMessage());
             e.printStackTrace();
             novoLogBanco("ERROR", "importacao", "Falha na importacao S3: " + e.getMessage(), LocalDateTime.now(), "Java");
         }
     }
 
     public static void importarDadosArquivoLocal(String caminho) {
-        System.out.println("\n=== Iniciando importacao do arquivo local ===");
-        try (InputStream is = new java.io.FileInputStream(caminho)) {
+        log("=== Iniciando importacao do arquivo local ===");
+        try {
             LeitorExcel leitorExcel = new LeitorExcel();
-            LeitorExcel.ResultadoLeitura dados = leitorExcel.extrairDeInputStream(is);
+            LeitorExcel.ResultadoLeitura dados = leitorExcel.extrairDeArquivo(new java.io.File(caminho));
             inserirDadosNoBanco(dados);
         } catch (Exception e) {
-            System.err.println("\n=== ERRO NA IMPORTACAO DO ARQUIVO LOCAL ===");
-            System.err.println(e.getMessage());
+            logErro("=== ERRO NA IMPORTACAO DO ARQUIVO LOCAL ===");
+            logErro(e.getMessage());
             e.printStackTrace();
             novoLogBanco("ERROR", "importacao", "Falha na importacao local: " + e.getMessage(), LocalDateTime.now(), "Java");
         }
@@ -147,26 +161,22 @@ public class MainApp {
 
     // ---------------------------------------------------------------
     // Inserção no banco de dados via JDBC
-    // Caches implementados como duas listas paralelas (chave + id).
-    // A busca é realizada por iteração linear.
     // ---------------------------------------------------------------
     public static void inserirDadosNoBanco(LeitorExcel.ResultadoLeitura dados) {
-        System.out.println("\n=== Gravando registros no Banco de Dados via JDBC ===");
+        log(String.format("=== Gravando registros no Banco de Dados via JDBC (arquivo: %s) ===",
+                dados.nomeArquivo != null ? dados.nomeArquivo : "desconhecido"));
 
-        // Cache de companhias: codCompanhia (Integer) → idCompanhia (Integer)
         List<Integer> cacheCompanhiasChave = new ArrayList<>();
         List<Integer> cacheCompanhiasId    = new ArrayList<>();
 
-        // Cache de avioes: modelo (String) → idAviao (Integer)
         List<String>  cacheAvioesChave = new ArrayList<>();
         List<Integer> cacheAvioesId    = new ArrayList<>();
 
-        // Cache de aeroportos: icao ou nomeAeroporto (String) → idAeroporto (Integer)
         List<String>  cacheAeroportosChave = new ArrayList<>();
         List<Integer> cacheAeroportosId    = new ArrayList<>();
 
         // 1. Companhias
-        System.out.println("[1/5] Inserindo companhias...");
+        log("[1/5] Inserindo companhias...");
         for (Companhia c : dados.companhias) {
             if (c.codCompanhia == null) continue;
             if (buscarNaLista(cacheCompanhiasChave, c.codCompanhia) != -1) continue;
@@ -183,14 +193,15 @@ public class MainApp {
                     @Override
                     public PreparedStatement createPreparedStatement(Connection con) throws java.sql.SQLException {
                         PreparedStatement ps = con.prepareStatement(
-                            "INSERT INTO companhia (codCompanhia, nomeCompanhia, paisCompanhia, razaoSocial, cnpj)" +
-                            " VALUES (?, ?, ?, ?, ?)",
+                            "INSERT INTO companhia (codCompanhia, nomeCompanhia, paisCompanhia, razaoSocial, cnpj, fkCargo)" +
+                            " VALUES (?, ?, ?, ?, ?, ?)",
                             Statement.RETURN_GENERATED_KEYS);
                         ps.setInt(1, c.codCompanhia);
                         ps.setString(2, c.nomeCompanhia  != null ? c.nomeCompanhia  : "DESCONHECIDA");
                         ps.setString(3, c.paisCompanhia  != null ? c.paisCompanhia  : "BRASIL");
                         ps.setString(4, c.razaoSocial    != null ? c.razaoSocial    : "");
                         ps.setString(5, c.cnpj           != null ? c.cnpj           : "");
+                        ps.setInt(6, 1); // fkCargo = 1 (cargo padrão garantido em garantirCargoPadrao())
                         return ps;
                     }
                 }, keyHolder);
@@ -201,10 +212,10 @@ public class MainApp {
                 }
             }
         }
-        System.out.printf("Total de companhias em cache: %d%n", cacheCompanhiasChave.size());
+        log(String.format("Total de companhias em cache: %d", cacheCompanhiasChave.size()));
 
         // 2. Aviões
-        System.out.println("[2/5] Inserindo avioes...");
+        log("[2/5] Inserindo avioes...");
         for (Aviao a : dados.avioes) {
             if (a.modelo == null || a.modelo.trim().isEmpty()) continue;
             if (buscarNaLista(cacheAvioesChave, a.modelo) != -1) continue;
@@ -235,10 +246,10 @@ public class MainApp {
                 }
             }
         }
-        System.out.printf("Total de modelos de avioes em cache: %d%n", cacheAvioesChave.size());
+        log(String.format("Total de modelos de avioes em cache: %d", cacheAvioesChave.size()));
 
         // 3. Aeroportos
-        System.out.println("[3/5] Inserindo aeroportos...");
+        log("[3/5] Inserindo aeroportos...");
         for (Aeroporto a : dados.aeroportos) {
             String chave = (a.icao != null && !a.icao.isEmpty()) ? a.icao : a.nomeAeroporto;
             if (chave == null) continue;
@@ -281,10 +292,10 @@ public class MainApp {
                 }
             }
         }
-        System.out.printf("Total de aeroportos em cache: %d%n", cacheAeroportosChave.size());
+        log(String.format("Total de aeroportos em cache: %d", cacheAeroportosChave.size()));
 
         // 4. Voos
-        System.out.println("[4/5] Inserindo voos...");
+        log("[4/5] Inserindo voos...");
         Integer idCompanhiaPadrao = cacheCompanhiasId.isEmpty()
                 ? buscarId("SELECT idCompanhia FROM companhia LIMIT 1")
                 : cacheCompanhiasId.get(0);
@@ -334,10 +345,10 @@ public class MainApp {
                 voosInseridos++;
             }
         }
-        System.out.printf("Total de voos inseridos: %d%n", voosInseridos);
+        log(String.format("Total de voos inseridos: %d", voosInseridos));
 
         // 5. AeroportoDirecao
-        System.out.println("[5/5] Inserindo direcoes de aeroporto...");
+        log("[5/5] Inserindo direcoes de aeroporto...");
         int direcoesInseridas = 0;
         int maxDirecoes = Math.min(dados.aeroportoDirecoes.size(), dados.aeroportos.size());
         for (int i = 0; i < maxDirecoes; i++) {
@@ -369,9 +380,10 @@ public class MainApp {
                 // ignora duplicados ou falhas menores
             }
         }
-        System.out.printf("Total de direcoes inseridas: %d%n", direcoesInseridas);
+        log(String.format("Total de direcoes inseridas: %d", direcoesInseridas));
 
-        System.out.println("\n=== Importacao e insercao concluidas com sucesso! ===");
+        log(String.format("=== Importacao e insercao concluidas com sucesso! (arquivo: %s) ===",
+                dados.nomeArquivo != null ? dados.nomeArquivo : "desconhecido"));
         novoLogLeitura(
             "INFO", "importacao",
             String.format("Base ANAC importada: %d companhias, %d avioes, %d aeroportos, %d voos.",
@@ -381,8 +393,7 @@ public class MainApp {
     }
 
     // ---------------------------------------------------------------
-    // Busca o índice de um valor em uma lista.
-    // Retorna -1 se não encontrar.
+    // Busca o índice de um valor em uma lista. Retorna -1 se não encontrar.
     // ---------------------------------------------------------------
     private static <T> int buscarNaLista(List<T> lista, T valor) {
         for (int i = 0; i < lista.size(); i++) {
@@ -412,18 +423,20 @@ public class MainApp {
     public static void novoLogBanco(String categoria, String servico, String mensagem,
                                     LocalDateTime dataHora, String origemCadastro) {
         try {
+            // Trunca a mensagem para caber na coluna VARCHAR(255) do banco
+            String msg = mensagem != null && mensagem.length() > 250
+                    ? mensagem.substring(0, 250) : mensagem;
             bd.update(
                 "INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro)" +
                 " VALUES (?, ?, ?, ?, ?)",
-                categoria, servico, mensagem, dataHora, origemCadastro);
+                categoria, servico, msg, dataHora, origemCadastro);
         } catch (Exception e) {
-            System.err.println("Falha ao registrar log no banco: " + e.getMessage());
+            logErro("Falha ao registrar log no banco: " + e.getMessage());
         }
     }
 
     // ---------------------------------------------------------------
     // Log completo de leitura — preenche todos os campos do logsServico
-    // incluindo métricas de linhas e status de leitura
     // ---------------------------------------------------------------
     public static void novoLogLeitura(String categoria, String servico, String mensagem,
                                       LocalDateTime dataHora, String origemCadastro,
@@ -447,7 +460,7 @@ public class MainApp {
                 resultado.detalheErro
             );
         } catch (Exception e) {
-            System.err.println("Falha ao registrar log de leitura no banco: " + e.getMessage());
+            logErro("Falha ao registrar log de leitura no banco: " + e.getMessage());
         }
     }
 }
