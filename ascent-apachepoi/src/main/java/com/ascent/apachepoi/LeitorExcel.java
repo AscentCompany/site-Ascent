@@ -11,10 +11,6 @@ import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 
@@ -41,15 +37,6 @@ public class LeitorExcel {
         return padrao;
     }
 
-    private static String obterBucket() {
-        return getEnvOrProp("AWS_BUCKET", "ascent-base-de-dados");
-    }
-
-    private static Region obterRegiao() {
-        String reg = getEnvOrProp("AWS_REGION", "us-east-1");
-        return Region.of(reg);
-    }
-
     private static final DateTimeFormatter FMT_DATA    = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter FMT_DATA_BR = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter FMT_HORA    = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -67,103 +54,6 @@ public class LeitorExcel {
         public int    linhasRejeitadas  = 0;
         public String statusLeitura     = "LIDO";
         public String detalheErro       = null;
-    }
-
-    public static S3Client criarClienteS3(Region regiao) {
-        String accessKey    = getEnvOrProp("AWS_ACCESS_KEY_ID", null);
-        String secretKey    = getEnvOrProp("AWS_SECRET_ACCESS_KEY", null);
-        String sessionToken = getEnvOrProp("AWS_SESSION_TOKEN", null);
-
-        if (accessKey != null && !accessKey.isEmpty() && secretKey != null && !secretKey.isEmpty()) {
-            System.out.println("Autenticacao S3: utilizando credenciais explicitas informadas.");
-            if (sessionToken != null && !sessionToken.isEmpty()) {
-                return S3Client.builder()
-                        .region(regiao)
-                        .credentialsProvider(software.amazon.awssdk.auth.credentials.StaticCredentialsProvider.create(
-                                software.amazon.awssdk.auth.credentials.AwsSessionCredentials.create(accessKey, secretKey, sessionToken)))
-                        .build();
-            } else {
-                return S3Client.builder()
-                        .region(regiao)
-                        .credentialsProvider(software.amazon.awssdk.auth.credentials.StaticCredentialsProvider.create(
-                                software.amazon.awssdk.auth.credentials.AwsBasicCredentials.create(accessKey, secretKey)))
-                        .build();
-            }
-        }
-
-        System.out.println("Autenticacao S3: utilizando IAM Role da instancia EC2 (Instance Profile)...");
-        return S3Client.builder()
-                .region(regiao)
-                .build();
-    }
-
-    public List<String> obterListaDeArquivos() {
-        List<String> arquivos = new ArrayList<>();
-        String prefixo        = getEnvOrProp("AWS_PREFIXO_ARQUIVOS", "anac_part_");
-        String totalPartesStr = getEnvOrProp("AWS_TOTAL_PARTES", "23");
-
-        if (totalPartesStr != null && !totalPartesStr.isEmpty()) {
-            try {
-                int total = Integer.parseInt(totalPartesStr);
-                for (int i = 1; i <= total; i++) {
-                    arquivos.add(String.format("%s%03d.xlsx", prefixo, i));
-                }
-                return arquivos;
-            } catch (NumberFormatException ignored) {}
-        }
-
-        String unicoArquivo = getEnvOrProp("AWS_ARQUIVO_ANAC", "anac_part_001.xlsx");
-        arquivos.add(unicoArquivo);
-        return arquivos;
-    }
-
-    public ResultadoLeitura extrairDados() {
-        String arquivo = getEnvOrProp("AWS_ARQUIVO_ANAC", "anac_part_001.xlsx");
-        return extrairDadosDoArquivo(arquivo);
-    }
-
-    public ResultadoLeitura extrairDadosDoArquivo(String nomeArquivo) {
-        java.io.File tempFile = baixarDoS3(nomeArquivo);
-        try {
-            ResultadoLeitura resultado = extrairDeArquivo(tempFile);
-            resultado.nomeArquivo = nomeArquivo;
-            return resultado;
-        } finally {
-            if (tempFile != null && tempFile.exists()) {
-                tempFile.delete();
-            }
-        }
-    }
-
-    public java.io.File baixarDoS3(String nomeArquivo) {
-        String bucket = obterBucket();
-        Region regiao = obterRegiao();
-
-        System.out.printf("[%s] Conectando ao S3: %s/%s%n",
-                java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")),
-                bucket, nomeArquivo);
-
-        try (S3Client s3 = criarClienteS3(regiao)) {
-            GetObjectRequest pedido = GetObjectRequest.builder().bucket(bucket).key(nomeArquivo).build();
-
-            java.io.File tempFile = java.io.File.createTempFile("anac_", ".xlsx");
-            tempFile.deleteOnExit();
-            System.out.printf("[%s] Baixando %s para disco: %s%n",
-                    java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")),
-                    nomeArquivo, tempFile.getAbsolutePath());
-
-            try (InputStream stream = s3.getObject(pedido);
-                 java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile)) {
-                stream.transferTo(fos);
-            }
-            System.out.printf("[%s] Download concluido: %s (%d MB)%n",
-                    java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")),
-                    nomeArquivo, tempFile.length() / 1024 / 1024);
-            return tempFile;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao baixar do S3 (" + nomeArquivo + "): " + e.getMessage(), e);
-        }
     }
 
     public ResultadoLeitura extrairDeArquivo(java.io.File arquivo) {

@@ -33,11 +33,33 @@ public class MainApp {
             LeitorExcel.ResultadoLeitura dados = leitor.extrairDeArquivo(new java.io.File(arquivo));
             dados.nomeArquivo = "anac_part_023.xlsx";
             log("Leitura concluida — " + dados.linhasLidas + " linhas validas, " + dados.linhasRejeitadas + " rejeitadas");
+            registrarLogLeitura(dados);
             log("Iniciando insercao no banco...");
             inserirDadosNoBanco(dados);
         } catch (Exception e) {
             logErro("Falha: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private static void registrarLogLeitura(LeitorExcel.ResultadoLeitura dados) {
+        String categoria = switch (dados.statusLeitura) {
+            case "LIDO"              -> "INFO";
+            case "PARCIALMENTE_LIDO" -> "WARN";
+            default                  -> "ERROR";
+        };
+        String mensagem = String.format("Leitura %s: %d encontradas, %d lidas, %d rejeitadas.",
+                dados.statusLeitura, dados.linhasEncontradas, dados.linhasLidas, dados.linhasRejeitadas);
+        try {
+            bd.update(
+                "INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro," +
+                " nomeArquivo, statusLeitura, linhasEncontradas, linhasLidas, linhasRejeitadas, detalheErro)" +
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                categoria, "importacao", mensagem, LocalDateTime.now(), "Java",
+                dados.nomeArquivo, dados.statusLeitura,
+                dados.linhasEncontradas, dados.linhasLidas, dados.linhasRejeitadas, dados.detalheErro);
+        } catch (Exception e) {
+            logErro("Falha ao registrar log: " + e.getMessage());
         }
     }
 
@@ -342,21 +364,6 @@ public class MainApp {
 
         log(String.format("Concluido — %d companhias | %d avioes | %d aeroportos | %d voos | %d direcoes inseridos",
             cacheCompChave.size(), cacheAvChave.size(), cacheAeroChave.size(), voosInseridos, direcoesInseridas));
-
-        try {
-            bd.update(
-                "INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro," +
-                " nomeArquivo, statusLeitura, linhasEncontradas, linhasLidas, linhasRejeitadas, detalheErro)" +
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                "INFO", "importacao",
-                String.format("ANAC: %d comp, %d av, %d aero, %d voos",
-                    cacheCompChave.size(), cacheAvChave.size(), cacheAeroChave.size(), voosInseridos),
-                LocalDateTime.now(), "Java",
-                dados.nomeArquivo, dados.statusLeitura,
-                dados.linhasEncontradas, dados.linhasLidas, dados.linhasRejeitadas, dados.detalheErro);
-        } catch (Exception e) {
-            logErro("Falha ao registrar log: " + e.getMessage());
-        }
     }
 
     private static <T> int buscarNaLista(List<T> lista, T valor) {
