@@ -1,4 +1,42 @@
 let database = require("../../database/config");
+let http = require("http");
+
+
+function notificarAlertas(rotas, faixaOcupacao) {
+    let NOTIFICADOR_URL = process.env.NOTIFICADOR_URL || "http://localhost:8080";
+
+    rotas.forEach(function (rt) {
+        let icone = rt.severidade === "critico" ? "🔴" : "🟡";
+        let nivel = rt.severidade === "critico" ? "CRÍTICO" : "ATENÇÃO";
+        let mensagem = `${icone} [${nivel}] Alerta Ascent: Rota ${rt.origemIata} → ${rt.destinoIata} com ${rt.ocupacaoMedia}% de ocupação (abaixo de ${faixaOcupacao}%)`;
+
+        let payload = JSON.stringify({
+            mensagem: mensagem,
+            enviarSlack: true
+        });
+
+        let urlParsed = new URL(NOTIFICADOR_URL + "/api/notificar");
+
+        let options = {
+            hostname: urlParsed.hostname,
+            port: urlParsed.port || 8080,
+            path: "/api/notificar",
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }
+        };
+
+        let req = http.request(options, function (res) {
+            console.log(`Notificação enviada para rota ${rt.origemIata} → ${rt.destinoIata}: status ${res.statusCode}`);
+        });
+
+        req.on("error", function (e) {
+            console.log("NotificadorApp indisponível, alerta registrado apenas no banco.");
+        });
+
+        req.write(payload);
+        req.end();
+    });
+}
 
 
 function listarRegras(idCompanhia) {
@@ -63,8 +101,26 @@ function editarRegra(idRegra, faixaOcupacao, severidade, janelaAnalise, janelaIn
         });
 }
 
+function inserirAlertas(rotas, r, idRegra, idCompanhia) {
+    if (!rotas.length) return Promise.resolve();
+
+    let values = rotas.map(function (rt) {
+        return `('${rt.origemIata}', '${rt.destinoIata}', ${rt.ocupacaoMedia}, '${r.severidade}', 0, ${idRegra}, ${idCompanhia})`;
+    }).join(", ");
+
+    return database.executar(`INSERT INTO alerta (origemIata, destinoIata, ocupacaoMedia, severidade, lida, fkRegraAlerta, fkCompanhia) VALUES ${values};`)
+        .then(function () {
+            notificarAlertas(rotas.map(function (rt) {
+                return { origemIata: rt.origemIata, destinoIata: rt.destinoIata, ocupacaoMedia: rt.ocupacaoMedia, severidade: r.severidade };
+            }), r.faixaOcupacao);
+        });
+}
+
 function excluirRegra(idRegra, idCompanhia) {
-    return database.executar(`DELETE FROM regraAlerta WHERE idRegraAlerta = ${idRegra} AND fkCompanhia = ${idCompanhia};`);
+    return database.executar(`DELETE FROM alerta WHERE fkRegraAlerta = ${idRegra};`)
+        .then(function () {
+            return database.executar(`DELETE FROM regraAlerta WHERE idRegraAlerta = ${idRegra} AND fkCompanhia = ${idCompanhia};`);
+        });
 }
 
 
@@ -104,11 +160,20 @@ function processarRegra(idRegra, idCompanhia) {
                     .then(function () {
                         if (!rotas.length) return;
 
-                        let values = rotas.map(function (rt) {
-                            return `('${rt.origemIata}', '${rt.destinoIata}', ${rt.ocupacaoMedia}, '${r.severidade}', 0, ${idRegra}, ${idCompanhia})`;
-                        }).join(", ");
+                        // se a regra é de atenção, remove rotas que já estão como crítico no banco
+                        let rotasFiltradas = rotas;
+                        if (r.severidade === "atencao") {
+                            return database.executar(`
+                                SELECT origemIata, destinoIata FROM alerta
+                                WHERE fkCompanhia = ${idCompanhia} AND severidade = 'critico';
+                            `).then(function (criticas) {
+                                let chavesCriticas = criticas.map(c => c.origemIata + "→" + c.destinoIata);
+                                rotasFiltradas = rotas.filter(rt => !chavesCriticas.includes(rt.origemIata + "→" + rt.destinoIata));
+                                return inserirAlertas(rotasFiltradas, r, idRegra, idCompanhia);
+                            });
+                        }
 
-                        return database.executar(`INSERT INTO alerta (origemIata, destinoIata, ocupacaoMedia, severidade, lida, fkRegraAlerta, fkCompanhia) VALUES ${values};`);
+                        return inserirAlertas(rotasFiltradas, r, idRegra, idCompanhia);
                     });
             });
         });
