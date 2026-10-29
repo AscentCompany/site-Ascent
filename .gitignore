@@ -9,7 +9,6 @@ target/
 # Node
 ascent-api/node_modules
 ascent-api/.env
-ascent-api/package-lock.json
 
 # Variáveis de ambiente (nunca commitar)
 .env

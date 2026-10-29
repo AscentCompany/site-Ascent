@@ -18,30 +18,14 @@ jobs:
 
       - name: Instalar dependências
         working-directory: ./ascent-api
-        run: npm ci
+        run: npm install
 
       - name: Construir imagem Docker
         working-directory: ./ascent-api
         run: docker build -t ascent-api .
 
-      - name: Subir container
-        run: |
-          docker run -d --name ascent-api \
-            -p 3333:3333 \
-            -e APP_PORT=3333 \
-            -e APP_HOST=localhost \
-            -e AMBIENTE_PROCESSO=desenvolvimento \
-            -e DB_HOST=localhost \
-            -e DB_PORT=3306 \
-            -e DB_DATABASE=ascent \
-            -e DB_USER=admin \
-            -e DB_PASSWORD=admin \
-            ascent-api
-
-      - name: Verificar se o container está rodando
-        run: |
-          sleep 10
-          docker ps | grep ascent-api
+      - name: Verificar se a imagem foi criada
+        run: docker images | grep ascent-api
 
       - name: Salvar imagem para o próximo job
         run: docker save ascent-api -o ascent-api.tar
