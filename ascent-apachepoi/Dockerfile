@@ -14,7 +14,7 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/target/ascent-apachepoi-1.0-SNAPSHOT-jar-with-dependencies.jar ./app.jar
+COPY --from=builder /app/target/*-jar-with-dependencies.jar ./app.jar
 
 CMD ["java", "-Xmx2g", "-jar", "app.jar"]
 

@@ -43,6 +43,15 @@ jobs:
           sleep 10
           docker ps | grep ascent-api
 
+      - name: Salvar imagem para o próximo job
+        run: docker save ascent-api -o ascent-api.tar
+
+      - name: Fazer upload da imagem
+        uses: actions/upload-artifact@v4
+        with:
+          name: ascent-api-image
+          path: ascent-api.tar
+
   cd:
     runs-on: ubuntu-latest
     needs: ci
@@ -52,6 +61,14 @@ jobs:
       - name: Baixar o código
         uses: actions/checkout@v4
 
+      - name: Baixar imagem do CI
+        uses: actions/download-artifact@v4
+        with:
+          name: ascent-api-image
+
+      - name: Carregar imagem Docker
+        run: docker load -i ascent-api.tar
+
       - name: Login no Docker Hub
         uses: docker/login-action@v3
         with:
@@ -59,9 +76,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Publicar imagem no Docker Hub
-        working-directory: ./ascent-api
         run: |
-          docker build -t lucasveneroso/ascent:ascent-api .
+          docker tag ascent-api lucasveneroso/ascent:ascent-api
           docker push lucasveneroso/ascent:ascent-api
 
       - name: Aceitar o Pull Request
