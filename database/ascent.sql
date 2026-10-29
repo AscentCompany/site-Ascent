@@ -3,11 +3,11 @@ USE ascent;
 
 CREATE TABLE IF NOT EXISTS aeroporto(
   idAeroporto INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-  nomeAeroporto VARCHAR(45) NULL DEFAULT NULL,
-  municipio VARCHAR(45) NULL DEFAULT NULL,
+  nomeAeroporto VARCHAR(200) NULL DEFAULT NULL,
+  municipio VARCHAR(100) NULL DEFAULT NULL,
   uf VARCHAR(2) NULL DEFAULT NULL,
-  regiao VARCHAR(45) NULL DEFAULT NULL,
-  pais VARCHAR(45) NULL DEFAULT NULL
+  regiao VARCHAR(100) NULL DEFAULT NULL,
+  pais VARCHAR(100) NULL DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS aviao (
@@ -19,10 +19,10 @@ CREATE TABLE IF NOT EXISTS aviao (
 CREATE TABLE IF NOT EXISTS companhia (
   idCompanhia INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
   codCompanhia INT NULL DEFAULT NULL,
-  nomeCompanhia VARCHAR(45) NULL DEFAULT NULL,
-  paisCompanhia VARCHAR(45) NULL DEFAULT NULL,
-  razaoSocial VARCHAR(100) NULL DEFAULT NULL,
-  cnpj VARCHAR(18) NULL DEFAULT NULL
+  nomeCompanhia VARCHAR(200) NULL DEFAULT NULL,
+  paisCompanhia VARCHAR(100) NULL DEFAULT NULL,
+  razaoSocial VARCHAR(200) NULL DEFAULT NULL,
+  cnpj VARCHAR(30) NULL DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS voo (
@@ -109,6 +109,36 @@ CREATE TABLE IF NOT EXISTS funcPermissao (
   PRIMARY KEY (fkFuncionalidade, fkPermissao)
 );
 
+
+CREATE TABLE IF NOT EXISTS regraAlerta (
+  idRegraAlerta INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  faixaOcupacao DECIMAL(5,2) NOT NULL,
+  severidade VARCHAR(10) NOT NULL,
+  janelaAnalise VARCHAR(20) NOT NULL,
+  janelaInicio DATE NULL DEFAULT NULL,
+  janelaFim DATE NULL DEFAULT NULL,
+  ativo TINYINT(1) NOT NULL,
+  fkCompanhia INT NOT NULL,
+  CONSTRAINT chkFkCompanhia_ra FOREIGN KEY (fkCompanhia) REFERENCES companhia(idCompanhia),
+  fkUsuarioCriador INT NOT NULL,
+  CONSTRAINT chkFkUsuario_ra FOREIGN KEY (fkUsuarioCriador) REFERENCES usuario(idUsuario),
+  dataCriacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_regra (faixaOcupacao, janelaAnalise, janelaInicio, janelaFim, fkCompanhia)
+);
+
+CREATE TABLE IF NOT EXISTS alerta (
+  idAlerta INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  origemIata VARCHAR(10) NOT NULL,
+  destinoIata VARCHAR(10) NOT NULL,
+  ocupacaoMedia DECIMAL(5,2) NOT NULL,
+  severidade VARCHAR(10) NOT NULL,
+  lida TINYINT(1) NOT NULL,
+  fkRegraAlerta INT NOT NULL,
+  CONSTRAINT chkFkRegra_alerta FOREIGN KEY (fkRegraAlerta) REFERENCES regraAlerta(idRegraAlerta),
+  fkCompanhia INT NOT NULL,
+  CONSTRAINT chkFkCompanhia_alerta FOREIGN KEY (fkCompanhia) REFERENCES companhia(idCompanhia),
+  dataCriacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 INSERT INTO companhia (codCompanhia, nomeCompanhia, paisCompanhia, razaoSocial, cnpj) VALUES 
 (1001, 'Ascent Airlines', 'Brasil', 'Ascent Linhas Aéreas S.A.', '12.345.678/0001-99');

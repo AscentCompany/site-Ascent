@@ -28,9 +28,9 @@ public class NotificadorApp {
 
     public static void main(String[] args) throws Exception {
 
-        if (SLACK_WEBHOOK_URL == null || SLACK_WEBHOOK_CADASTRO_URL == null || EMAIL_REMETENTE == null || SENHA_APP == null) {
+        if (SLACK_WEBHOOK_URL == null || SLACK_WEBHOOK_CADASTRO_URL == null) {
             System.err.println("ERRO FATAL: Variáveis de ambiente não configuradas!");
-            System.err.println("Certifique-se de definir: SLACK_WEBHOOK_URL_GERAL, SLACK_WEBHOOK_URL_CADASTRO, EMAIL_REMETENTE, SENHA_APP");
+            System.err.println("Certifique-se de definir: SLACK_WEBHOOK_URL e SLACK_WEBHOOK_CADASTRO_URL");
             System.exit(1);
         }
 

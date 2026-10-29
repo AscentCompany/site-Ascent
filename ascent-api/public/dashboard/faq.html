@@ -22,12 +22,12 @@
     <!-- SIDEBAR PADRÃO -->
     <aside class="sidebar">
       <div class="logo">
-        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>      
+        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>
       </div>
 
       <div class="profile">
-        <img src="/ascent-api/public/assets/icon/" alt="">
-        <span>Thamyres Batista</span>
+        <img src="/assets/icon/" alt="">
+        <span id="nomeUsuarioFaq">Usuário</span>
       </div>
 
       <nav class="nav">
@@ -35,6 +35,9 @@
         <div class="nav-item"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
         <div class="nav-item "><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
         <div class="nav-item"><a href="#">Gestão</a></div>
+        <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
+        <div class="nav-item" id="nav-configurar-faq" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
+        <div class="nav-item"><a href="#">Ascent IA</a></div>
         <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
         <div class="nav-item ativo"><a href="./faq.html">FAQ</a></div>
       </nav>
@@ -204,6 +207,14 @@
         if(item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
       });
     });
+
+    // Nome do usuário + permissão gestor
+    var nomeEl = document.getElementById('nomeUsuarioFaq');
+    if (nomeEl) nomeEl.textContent = sessionStorage.NOME_USUARIO || 'Usuário';
+    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
+      var navConf = document.getElementById('nav-configurar-faq');
+      if (navConf) navConf.style.display = '';
+    }
 
     // ---------- SCRIPT DO ACCORDION (FAQ) ----------
     const faqItems = document.querySelectorAll('.faq-item');

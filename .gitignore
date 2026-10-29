@@ -1,7 +1,25 @@
-ascent-api/node_modules
-ascent-api/.env
-ascent-api/package-lock.json
-.dockerignore
-
+# IDEs
 .idea/
 *.iml
+
+# Java / Maven
+target/
+**/target/
+
+# Node
+ascent-api/node_modules
+ascent-api/.env
+
+# Variáveis de ambiente (nunca commitar)
+.env
+**/.env
+
+# Shell scripts locais (não versionados)
+*.sh
+
+# Logs gerados em runtime
+*.log
+start.log
+
+# Dados persistidos do MySQL em /dados
+/dados/

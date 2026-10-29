@@ -12,6 +12,7 @@
   <link rel="stylesheet"
     href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
   <link rel="stylesheet" href="../css/dashboardOperacoes.css">
+  <link rel="stylesheet" href="../css/alertas.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 </head>
 <body>
@@ -30,15 +31,18 @@
       </div>
 
       <div class="profile">
-        <img src="/ascent-api/public/assets/icon/" alt="">
+        <img src="/assets/icon/" alt="">
         <span id="sNomeUsuario"></span>
       </div>
 
       <nav class="nav">
         <span class="nav-indicador" id="nav-indicador"></span>
-        <div class="nav-item"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
+        <div class="nav-item "><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
         <div class="nav-item ativo"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
         <div class="nav-item"><a href="#">Gestão</a></div>
+        <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
+        <div class="nav-item" id="nav-configurar-op" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
+        <div class="nav-item"><a href="#">Ascent IA</a></div>
         <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
         <div class="nav-item"><a href="./faq.html">FAQ</a></div>
       </nav>
@@ -202,10 +206,12 @@
       </section>
     </main>
   </div>
-</body>
 
-</html>
+  <!-- container do modal de detalhe -->
+  <div id="modal-alerta-container"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/alertas.js"></script>
 <script>
 
   if (sessionStorage.NOME_USUARIO != null){
@@ -383,3 +389,14 @@
     }
   });
 </script>
+
+  <!-- nav-configurar visível apenas para gestores -->
+  <script>
+    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
+      var el = document.getElementById('nav-configurar-op');
+      if (el) el.style.display = '';
+    }
+  </script>
+
+</body>
+</html>

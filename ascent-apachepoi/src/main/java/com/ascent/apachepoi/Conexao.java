@@ -7,11 +7,11 @@ public class Conexao {
     private DataSource conexao;
 
     public Conexao() {
-        String host = System.getenv("DB_HOST") != null ? System.getenv("DB_HOST") : "localhost";
-        String port = System.getenv("DB_PORT") != null ? System.getenv("DB_PORT") : "3306";
-        String database = System.getenv("DB_DATABASE") != null ? System.getenv("DB_DATABASE") : "ascent";
-        String user = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : "admin";
-        String password = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "admin";
+        String host = LeitorExcel.getEnvOrProp("DB_HOST", "localhost");
+        String port = LeitorExcel.getEnvOrProp("DB_PORT", "3306");
+        String database = LeitorExcel.getEnvOrProp("DB_DATABASE", "ascent");
+        String user = LeitorExcel.getEnvOrProp("DB_USER", "admin");
+        String password = LeitorExcel.getEnvOrProp("DB_PASSWORD", "admin");
 
         DriverManagerDataSource driver = new DriverManagerDataSource();
         driver.setDriverClassName("com.mysql.cj.jdbc.Driver");

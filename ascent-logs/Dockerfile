@@ -6,7 +6,7 @@ COPY pom.xml .
 
 RUN mvn dependency:go-offline
 
-COPY src /app
+COPY src ./src
 
 RUN mvn clean package -DskipTests
 
@@ -14,9 +14,9 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/target/*.jar ./app.jar
+COPY --from=builder /app/target/*-jar-with-dependencies.jar ./app.jar
 
-CMD ["java","-jar","app.jar"]
+CMD ["java", "-jar", "app.jar"]
 
 # Build the image:
 #   docker build -t ascent-logs .
