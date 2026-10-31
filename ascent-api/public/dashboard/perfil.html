@@ -27,8 +27,10 @@
       </div>
 
       <div class="profile">
-        <img src="assets/icon/" alt="">
-        <span id="sNomeUsuario">Thamyres Batista</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        <span id="nome-usuario"></span>
       </div>
 
       <nav class="nav">
@@ -106,8 +108,8 @@
 
 <script>
   // ---------- SCRIPT DA SIDEBAR E NOME DO USUÁRIO ----------
+  document.getElementById('nome-usuario').textContent = sessionStorage.NOME_USUARIO || 'Usuário';
   if (sessionStorage.NOME_USUARIO != null) {
-    document.getElementById('sNomeUsuario').textContent = sessionStorage.NOME_USUARIO;
     document.getElementById('nomeUsuarioBanner').textContent = sessionStorage.NOME_USUARIO;
   }
 

@@ -31,8 +31,10 @@
       </div>
 
       <div class="profile">
-        <img src="/assets/icon/" alt="">
-        <span id="sNomeUsuario"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        <span id="nome-usuario"></span>
       </div>
 
       <nav class="nav">
@@ -214,11 +216,7 @@
 <script src="/js/alertas.js"></script>
 <script>
 
-  if (sessionStorage.NOME_USUARIO != null){
-    sNomeUsuario.textContent = sessionStorage.NOME_USUARIO;
-  }else{
-    sNomeUsuario.textContent = "Bem Vindo!";
-  }
+  document.getElementById('nome-usuario').textContent = sessionStorage.NOME_USUARIO || 'Usuário';
 
   const btnMenu = document.getElementById('btn-menu');
   const overlay = document.getElementById('overlay');

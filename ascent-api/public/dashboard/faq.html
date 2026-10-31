@@ -26,8 +26,10 @@
       </div>
 
       <div class="profile">
-        <img src="/assets/icon/" alt="">
-        <span id="nomeUsuarioFaq">Usuário</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        <span id="nome-usuario">Usuário</span>
       </div>
 
       <nav class="nav">
@@ -209,7 +211,7 @@
     });
 
     // Nome do usuário + permissão gestor
-    var nomeEl = document.getElementById('nomeUsuarioFaq');
+    var nomeEl = document.getElementById('nome-usuario');
     if (nomeEl) nomeEl.textContent = sessionStorage.NOME_USUARIO || 'Usuário';
     if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
       var navConf = document.getElementById('nav-configurar-faq');
