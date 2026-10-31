@@ -157,7 +157,7 @@ body.menu-fechado .sidebar {
   min-width: 0;
   margin-left: var(--sidebar-w);
   transition: margin-left .3s ease, padding-left .3s ease;
-  padding: 0 14px 14px;
+  padding: 14px 14px 14px;
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   grid-template-rows: auto auto min-content;
@@ -518,8 +518,7 @@ body.menu-fechado .btn-menu {
 
 .chart-placeholder,
 .grafico-container,
-.grafico-div,
-.rotas-scroll {
+.grafico-div {
   min-width: 0;
   max-width: 100%;
 }
@@ -529,48 +528,67 @@ body.menu-fechado .btn-menu {
 }
 
 .tabela-rotas {
-  font-size: 15px;
+  --colunas-rotas: minmax(0, 1.3fr) minmax(52px, 0.7fr) minmax(76px, 1fr);
+  font-size: 14px;
 }
 
 .cabecalho-rotas,
 .linha-rota {
   display: grid;
-  grid-template-columns: 1.3fr 1fr 0.8fr;
+  grid-template-columns: var(--colunas-rotas);
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   text-align: center;
 }
 
 .cabecalho-rotas {
+  width: calc(100% + 16px);
+  margin-left: -8px;
   background: #ffeded;
   border-radius: 8px;
-  padding: 7px 4px;
+  padding: 10px 6px;
   font-weight: 700;
-  font-size: 20px;
+  font-size: clamp(13px, 1.2vw, 16px);
+  white-space: nowrap;
 }
 
-.rotas-scroll::-webkit-scrollbar-thumb {
-  background: #d5d5d5;
-  border-radius: 10px;
+.tabela-rotas-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px;
+  border: 1px solid #e8dada;
+  border-radius: 8px;
+  background: #fff8f8;
 }
 
-.rotas-scroll::-webkit-scrollbar-track {
-  background: transparent;
+.tabela-rotas {
+  width: 100%;
+}
+
+.tabela-rotas-container .cabecalho-rotas {
+  border-radius: 6px;
 }
 
 .linha-rota {
   min-height: 30px;
+  padding: 0 6px;
 }
 
 .linha-rota>span:first-child {
-  text-align: left;
-  padding-left: 5px;
+  text-align: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .titulo-maiores,
 .titulo-menores {
   margin: 9px 0 4px;
+  padding: 0 6px;
   font-size: 15px;
+  text-align: left;
 }
 
 .titulo-maiores {
@@ -604,12 +622,14 @@ body.menu-fechado .btn-menu {
 
 .indicadores-rotas {
   flex: 0 0 auto;
+  align-self: center;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: calc(100% + 16px);
   gap: 8px;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid #e8dada;
+  padding: 8px;
+  border: 1px solid #e8dada;
+  border-radius: 6px;
   background: #fff8f8;
 }
 
@@ -675,6 +695,10 @@ body.menu-fechado .btn-menu {
   .card-mensal,
   .card-faixa {
     margin-top: 0;
+  }
+
+  .tabela-rotas-container {
+    flex: 0 0 auto;
   }
 
   .kpis,

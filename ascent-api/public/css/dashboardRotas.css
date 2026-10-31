@@ -528,6 +528,23 @@ body.menu-fechado .btn-menu {
   max-width: 100%;
 }
 
+.card-faixa .grafico-div {
+  position: relative;
+  width: 100%;
+  min-height: 380px;
+  height: auto;
+  flex: 1 1 0;
+  align-self: stretch;
+}
+
+@media (max-width: 900px) {
+  .card-faixa .grafico-div {
+    height: clamp(360px, 55vh, 460px);
+    min-height: 0;
+    flex: 0 0 clamp(360px, 55vh, 460px);
+  }
+}
+
 .tabela-rotas {
   font-size: 15px;
 }

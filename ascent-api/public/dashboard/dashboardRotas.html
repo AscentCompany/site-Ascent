@@ -122,7 +122,7 @@
       <section class="card card-faixa">
         <h2 class="chart-title">DEMANDA POR ROTA</h2>
 
-        <div class="grafico-div" style="position: relative; height: 380px;">
+        <div class="grafico-div">
           <canvas id="grafico-barras"></canvas>
         </div>
       </section>
@@ -277,7 +277,8 @@
           '#4fd8cf', '#ffb866', '#dca8ee', '#ffa87a'
         ],
         borderRadius: 4,
-        barThickness: 30
+        categoryPercentage: 0.9,
+        barPercentage: 0.85
       }]
     },
     options: {
