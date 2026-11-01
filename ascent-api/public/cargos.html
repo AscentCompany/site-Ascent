@@ -38,10 +38,16 @@
 <div class="page-wrapper">
 
     <div class="sidebar">
-        <div class="logo-container">
+        <div class="logo-container logo-container-usuario">
             <a href="dashboard/acessoRapido.html">
                 <img src="assets/icon/logo.png" alt="Logo da Ascent" />
             </a>
+        </div>
+        <div class="profile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+            <span id="nome-usuario"></span>
         </div>
         <nav class="sidebar-menu">
             <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
@@ -78,6 +84,7 @@
 
 <script>
 
+    document.getElementById("nome-usuario").textContent = sessionStorage.NOME_USUARIO || "Usuário";
     let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
     let permissoesEscolhidas = [];
 
