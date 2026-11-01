@@ -235,8 +235,21 @@
         } else {
           item.classList.add('aberto');
           trigger.setAttribute('aria-expanded', 'true');
-          content.style.maxHeight = content.scrollHeight + 'px';
+          content.style.maxHeight = 'none';
+          const alturaConteudo = content.scrollHeight + 'px';
+          content.style.maxHeight = '0px';
+          content.offsetHeight;
+          content.style.maxHeight = alturaConteudo;
         }
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      faqItems.forEach(item => {
+        if (!item.classList.contains('aberto')) return;
+        const content = item.querySelector('.faq-content');
+        content.style.maxHeight = 'none';
+        content.style.maxHeight = content.scrollHeight + 'px';
       });
     });
   </script>
