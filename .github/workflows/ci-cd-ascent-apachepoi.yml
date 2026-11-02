@@ -7,8 +7,17 @@ on:
     paths:
       - 'ascent-apachepoi/**'
 
+# Permissões necessárias para:
+#   - contents: write   → fazer o merge do PR
+#   - pull-requests: write → aprovar/fechar o PR via API
+# Sem essas permissões o automerge retorna 403 e o CD falha.
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   ci:
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
     if: github.head_ref == 'develop'
 
@@ -43,6 +52,7 @@ jobs:
           path: ascent-apachepoi.tar
 
   cd:
+    name: Publicar no Docker Hub
     runs-on: ubuntu-latest
     needs: ci
     if: github.head_ref == 'develop'
@@ -50,6 +60,17 @@ jobs:
     steps:
       - name: Baixar o código
         uses: actions/checkout@v4
+
+      - name: Verificar se o PR tem conflitos de merge
+        run: |
+          MERGEABLE=$(gh pr view ${{ github.event.pull_request.number }} --json mergeable --jq '.mergeable')
+          echo "Estado de mergeabilidade: $MERGEABLE"
+          if [ "$MERGEABLE" = "CONFLICTING" ]; then
+            echo "::error::O PR tem conflitos de merge. Resolva antes de continuar."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Baixar imagem do CI
         uses: actions/download-artifact@v4
@@ -75,3 +96,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MERGE_METHOD: squash
+          MERGE_LABELS: ""

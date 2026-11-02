@@ -1,0 +1,141 @@
+# =============================================================
+# docker-compose.yml — Ascent (produção / AWS EC2)
+#
+# Como usar:
+#   1. Copie .env.example para .env e preencha os valores reais
+#   2. docker compose up -d
+#
+# Serviços:
+#   mysql          → banco de dados (porta 3306, interna)
+#   ascent-api     → Node.js API + frontend (porta 3333)
+#   ascent-logs    → notificador Java (sem porta exposta, roda em background)
+#   ascent-apachepoi → leitor de planilha ANAC via S3 (sem porta exposta, roda sob demanda)
+# =============================================================
+
+services:
+
+  # -----------------------------------------------------------
+  # MySQL 8
+  # A porta 3306 NÃO é exposta para o host — só os containers
+  # da rede "ascent" enxergam o banco, reduzindo a superfície
+  # de ataque na EC2. Se precisar de acesso externo para debug,
+  # descomente o bloco "ports" abaixo.
+  # -----------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: ascent-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      # Persistência dos dados entre reinicializações / deploys
+      - mysql_data:/var/lib/mysql
+      # Script de inicialização do schema e dados seed
+      - ./database/ascent.sql:/docker-entrypoint-initdb.d/01-ascent.sql:ro
+    # ports:
+    #   - "3306:3306"   # descomente apenas para debug local
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ascent
+
+  # -----------------------------------------------------------
+  # ascent-api — Node.js (Express + frontend estático)
+  # Puxa a imagem publicada no Docker Hub pelo CI/CD.
+  # A porta 3333 é mapeada para o host; no EC2, o Security
+  # Group deve liberar apenas a porta 80/443 (via nginx/ALB)
+  # ou diretamente a 3333 caso não use proxy reverso.
+  # -----------------------------------------------------------
+  ascent-api:
+    image: lucasveneroso/ascent:ascent-api
+    container_name: ascent-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: ${APP_PORT:-3333}
+      AMBIENTE_PROCESSO: producao
+      DB_HOST: mysql          # nome do serviço dentro da rede Docker
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${APP_PORT:-3333}:${APP_PORT:-3333}"
+    networks:
+      - ascent
+
+  # -----------------------------------------------------------
+  # ascent-logs — notificador Java (Slack + e-mail)
+  # Roda continuamente em background; não expõe portas.
+  # -----------------------------------------------------------
+  ascent-logs:
+    image: lucasveneroso/ascent:ascent-logs
+    container_name: ascent-logs
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
+      SLACK_WEBHOOK_CADASTRO_URL: ${SLACK_WEBHOOK_CADASTRO_URL}
+      EMAIL_REMETENTE: ${EMAIL_REMETENTE}
+      SENHA_APP: ${SENHA_APP}
+    networks:
+      - ascent
+
+  # -----------------------------------------------------------
+  # ascent-apachepoi — leitor de planilha ANAC via S3
+  # Roda sob demanda (restart: on-failure). Quando terminar
+  # de processar a planilha, o container para sozinho.
+  # Se AUTO_IMPORT=true, reinicia automaticamente conforme
+  # a lógica interna do serviço.
+  # -----------------------------------------------------------
+  ascent-apachepoi:
+    image: lucasveneroso/ascent:ascent-apachepoi
+    container_name: ascent-apachepoi
+    restart: on-failure
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_BUCKET: ${AWS_BUCKET}
+      AWS_ARQUIVO_ANAC: ${AWS_ARQUIVO_ANAC:-anac_brazil.xlsx}
+      AUTO_IMPORT: ${AUTO_IMPORT:-false}
+    networks:
+      - ascent
+
+# -----------------------------------------------------------
+# Rede interna — isola os serviços do tráfego externo
+# -----------------------------------------------------------
+networks:
+  ascent:
+    driver: bridge
+
+# -----------------------------------------------------------
+# Volume nomeado para persistência do MySQL
+# -----------------------------------------------------------
+volumes:
+  mysql_data:
+    driver: local
