@@ -69,11 +69,25 @@ echo "=== 3. Removendo containers antigos dos serviços Java ==="
 docker rm -f ascent-logs ascent-apachepoi 2>/dev/null || true
 
 echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
-# Detecta se é "docker compose" (v2) ou "docker-compose" (v1)
+# Detecta se é "docker compose" (v2) ou "docker-compose" (v1), instala se necessário
 if docker compose version &>/dev/null; then
   COMPOSE_CMD="docker compose"
-else
+elif command -v docker-compose &>/dev/null; then
   COMPOSE_CMD="docker-compose"
+else
+  echo ">> docker compose não encontrado. Instalando plugin..."
+  DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+  mkdir -p "$DOCKER_CONFIG/cli-plugins"
+  curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
+    -o "$DOCKER_CONFIG/cli-plugins/docker-compose"
+  chmod +x "$DOCKER_CONFIG/cli-plugins/docker-compose"
+  if docker compose version &>/dev/null; then
+    COMPOSE_CMD="docker compose"
+    echo ">> Plugin instalado com sucesso!"
+  else
+    echo "ERRO: Não foi possível instalar docker compose. Abortando."
+    exit 1
+  fi
 fi
 echo ">> Usando: $COMPOSE_CMD"
 $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
