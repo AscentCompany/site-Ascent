@@ -12,14 +12,15 @@ echo "=== 2. Configurando ambiente (.env) ==="
 if [ ! -f .env ]; then
 cat << 'EOF' > .env
 # =============================================================
-# Banco de Dados MySQL (Container ascent-mysql)
+# Banco de Dados MySQL (Container mysql)
 # =============================================================
-DB_HOST=ascent-mysql
+DB_HOST=mysql
 DB_PORT=3306
 DB_DATABASE=ascent
 DB_USER=admin
 DB_PASSWORD=admin
 DB_ROOT_PASSWORD=root
+MYSQL_ROOT_PASSWORD=root
 
 # =============================================================
 # ascent-api (Node.js)
@@ -54,7 +55,7 @@ AWS_SESSION_TOKEN=
 EOF
 echo ".env criado com sucesso!"
 else
-echo ".env já existe. Usando configurações existentes."
+  echo ".env já existe. Usando configurações existentes."
 fi
 
 # Detecta se está rodando dentro de uma instância EC2 da AWS
@@ -64,87 +65,44 @@ if curl -s -m 2 http://169.254.169.254/latest/meta-data/ 2>/dev/null | grep -q '
     echo ">> Ambiente AWS EC2 detectado! O ascent-apachepoi usará a IAM Role (LabRole) da máquina."
 fi
 
-echo "=== 3. Preparando rede, diretórios e limpando containers antigos ==="
-if [ "$IS_EC2" = true ]; then
-    sudo mkdir -p /dados/mysql
-    MYSQL_VOLUME=/dados/mysql
-else
-    mkdir -p ./dados/mysql
-    MYSQL_VOLUME=$(pwd)/dados/mysql
-fi
+echo "=== 3. Removendo containers antigos dos serviços Java ==="
+docker rm -f ascent-logs ascent-apachepoi 2>/dev/null || true
 
-docker network create ascent 2>/dev/null || true
-docker rm -f ascent-mysql ascent-api ascent-logs ascent-apachepoi 2>/dev/null || true
+echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
+docker compose down --remove-orphans 2>/dev/null || true
+docker compose up -d --pull always
 
-echo "=== 4. Inicializando MySQL ==="
-docker run -d \
-  --name ascent-mysql \
-  --network ascent \
-  --restart unless-stopped \
-  -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD=root \
-  -e MYSQL_DATABASE=ascent \
-  -e MYSQL_USER=admin \
-  -e MYSQL_PASSWORD=admin \
-  -v "$MYSQL_VOLUME":/var/lib/mysql \
-  mysql:8.0
-
-echo "Aguardando MySQL inicializar e aceitar conexões..."
+echo "Aguardando MySQL ficar saudável (healthcheck do compose)..."
 for i in $(seq 1 60); do
-  if docker exec ascent-mysql mysqladmin ping -u root -proot --silent 2>/dev/null; then
-    echo "MySQL pronto em ${i}s!"
+  STATUS=$(docker inspect --format='{{.State.Health.Status}}' mysql 2>/dev/null || echo "starting")
+  if [ "$STATUS" = "healthy" ]; then
+    echo "MySQL pronto em ${i}0s!"
     break
   fi
   if [ "$i" -eq 60 ]; then
-    echo "ERRO: MySQL não respondeu em 60 segundos. Abortando."
+    echo "ERRO: MySQL não ficou saudável em 60 tentativas. Abortando."
+    docker logs mysql --tail 20
     exit 1
   fi
-  sleep 1
+  sleep 10
 done
 
-echo "=== Aplicando schema do banco de dados ==="
-
-if [ ! -f database/ascent.sql ]; then
-    echo "ERRO: database/ascent.sql não encontrado. Verifique se o 'git pull' funcionou."
-    exit 1
-fi
-
-# Importa apenas se o banco ainda não tem tabelas (idempotente — evita
-# duplicar dados de seed em re-execuções)
-TABLE_COUNT=$(docker exec ascent-mysql mysql -u root -proot ascent -N \
-    -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='ascent'" 2>/dev/null || echo "0")
-
-if [ "${TABLE_COUNT:-0}" -eq 0 ] 2>/dev/null; then
-    echo "Importando schema (database/ascent.sql)..."
-    docker exec -i ascent-mysql mysql -u root -proot ascent < database/ascent.sql
-    echo "Schema aplicado com sucesso!"
-else
-    echo "Banco já possui ${TABLE_COUNT} tabelas. Pulando importação do schema."
-fi
-
-echo "=== 5. Inicializando ascent-api ==="
-docker run -d \
-  --name ascent-api \
-  --network ascent \
-  --restart unless-stopped \
-  -p 3333:3333 \
-  --env-file .env \
-  lucasveneroso/ascent:ascent-api
-
-echo "=== 6. Inicializando ascent-logs ==="
+echo "=== 5. Inicializando ascent-logs ==="
 docker run -d \
   --name ascent-logs \
-  --network ascent \
+  --network ascent_ascent \
   --restart unless-stopped \
   -p 8080:8080 \
   --env-file .env \
-  lucasveneroso/ascent:ascent-logs
+  lucasveneroso/ascent:ascent-logs || {
+    echo ">> AVISO: Não foi possível iniciar ascent-logs (imagem não encontrada no Docker Hub)."
+    echo "   O restante do sistema continua funcionando normalmente."
+  }
 
-echo "=== 7. Inicializando ascent-apachepoi ==="
+echo "=== 6. Inicializando ascent-apachepoi ==="
 # Na EC2 com LabRole: passa as credenciais da instância automaticamente via IAM Role.
 # Localmente: usa as chaves definidas no .env.
 if [ "$IS_EC2" = true ]; then
-  # Obtém credenciais temporárias via metadata da EC2 (LabRole)
   ROLE_NAME=$(curl -s -m 2 http://169.254.169.254/latest/meta-data/iam/security-credentials/ 2>/dev/null)
   if [ -n "$ROLE_NAME" ]; then
     CREDS=$(curl -s -m 2 "http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE_NAME")
@@ -154,7 +112,7 @@ if [ "$IS_EC2" = true ]; then
     echo ">> Credenciais da LabRole obtidas via metadata da EC2."
     docker run -d \
       --name ascent-apachepoi \
-      --network ascent \
+      --network ascent_ascent \
       --restart unless-stopped \
       -p 8081:8080 \
       --env-file .env \
@@ -169,7 +127,7 @@ if [ "$IS_EC2" = true ]; then
     echo ">> Aviso: não foi possível obter credenciais da LabRole. Usando .env."
     docker run -d \
       --name ascent-apachepoi \
-      --network ascent \
+      --network ascent_ascent \
       --restart unless-stopped \
       -p 8081:8080 \
       --env-file .env \
@@ -181,7 +139,7 @@ if [ "$IS_EC2" = true ]; then
 else
   docker run -d \
     --name ascent-apachepoi \
-    --network ascent \
+    --network ascent_ascent \
     --restart unless-stopped \
     -p 8081:8080 \
     --env-file .env \
@@ -191,7 +149,7 @@ else
     }
 fi
 
-echo "=== 8. Configurando crontab (DuckDNS a cada minuto) ==="
+echo "=== 7. Configurando crontab (DuckDNS a cada minuto) ==="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/setup-duckdns.sh" ]; then
   bash "$SCRIPT_DIR/setup-duckdns.sh"
@@ -207,4 +165,4 @@ echo "  Logs:        http://<IP>:8080"
 echo "  Apache POI:  http://<IP>:8081"
 echo "  DuckDNS:     crontab a cada minuto (setup-duckdns.sh)"
 echo ""
-docker ps --filter "name=ascent-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+docker ps --filter "name=ascent" --filter "name=mysql" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
