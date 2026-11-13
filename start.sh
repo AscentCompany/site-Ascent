@@ -79,6 +79,11 @@ echo ">> Usando: $COMPOSE_CMD"
 $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
 $COMPOSE_CMD up -d --pull always
 
+
+echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
+docker compose down --remove-orphans 2>/dev/null || true
+docker compose up -d --pull always
+
 echo "Aguardando MySQL ficar saudável (healthcheck do compose)..."
 for i in $(seq 1 60); do
   STATUS=$(docker inspect --format='{{.State.Health.Status}}' mysql 2>/dev/null || echo "starting")
