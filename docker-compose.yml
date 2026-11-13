@@ -5,11 +5,12 @@
 #   1. Copie .env.example para .env e preencha os valores reais
 #   2. docker compose up -d
 #
-# Serviços:
-#   mysql            → banco de dados (apenas rede interna)
-#   ascent-api       → Node.js API + frontend (porta 3333)
-#   ascent-logs      → notificador Java (porta 8080)
-#   ascent-apachepoi → leitor S3 ANAC (porta 8081)
+# Serviços neste compose:
+#   mysql       → banco de dados (apenas rede interna)
+#   ascent-api  → Node.js API + frontend (porta 3333)
+#
+# Serviços Java (ascent-logs e ascent-apachepoi) NÃO estão aqui.
+# Eles são iniciados pelo start.sh (docker run).
 # =============================================================
 
 services:
@@ -53,55 +54,6 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
     ports:
       - "${APP_PORT:-3333}:${APP_PORT:-3333}"
-    networks:
-      - ascent
-
-  ascent-logs:
-    image: lucasveneroso/ascent:ascent-logs
-    container_name: ascent-logs
-    restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
-      SLACK_WEBHOOK_CADASTRO_URL: ${SLACK_WEBHOOK_CADASTRO_URL}
-      EMAIL_REMETENTE: ${EMAIL_REMETENTE}
-      SENHA_APP: ${SENHA_APP}
-    ports:
-      - "8080:8080"
-    networks:
-      - ascent
-
-  ascent-apachepoi:
-    image: lucasveneroso/ascent:ascent-apachepoi
-    container_name: ascent-apachepoi
-    restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
-      AWS_BUCKET: ${AWS_BUCKET}
-      AWS_PREFIXO_ARQUIVOS: ${AWS_PREFIXO_ARQUIVOS:-anac_part_}
-      AWS_TOTAL_PARTES: ${AWS_TOTAL_PARTES:-23}
-      AWS_ARQUIVO_ANAC: ${AWS_ARQUIVO_ANAC}
-      AUTO_IMPORT: ${AUTO_IMPORT:-true}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
-    ports:
-      - "8081:8080"
     networks:
       - ascent
 

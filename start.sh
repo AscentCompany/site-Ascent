@@ -103,8 +103,7 @@ for i in $(seq 1 60); do
 done
 
 echo "=== Aplicando schema do banco de dados ==="
-# Usa database/ascent.sql (schema completo com tabelas, dados iniciais e usuários)
-# NÃO usa ascent-logs/banco.sql (versão antiga e incompatível)
+
 if [ ! -f database/ascent.sql ]; then
     echo "ERRO: database/ascent.sql não encontrado. Verifique se o 'git pull' funcionou."
     exit 1
@@ -192,11 +191,20 @@ else
     }
 fi
 
+echo "=== 8. Configurando crontab (DuckDNS a cada minuto) ==="
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/setup-duckdns.sh" ]; then
+  bash "$SCRIPT_DIR/setup-duckdns.sh"
+else
+  echo ">> AVISO: setup-duckdns.sh não encontrado. Crontab DuckDNS não configurado."
+fi
+
 echo ""
 echo "=== Sistema Ascent iniciado com sucesso! ==="
 echo ""
 echo "  API:         http://<IP>:3333"
 echo "  Logs:        http://<IP>:8080"
 echo "  Apache POI:  http://<IP>:8081"
+echo "  DuckDNS:     crontab a cada minuto (setup-duckdns.sh)"
 echo ""
 docker ps --filter "name=ascent-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
