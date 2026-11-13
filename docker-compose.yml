@@ -1,0 +1,66 @@
+# =============================================================
+# docker-compose.yml — Ascent (produção / AWS EC2)
+#
+# Como usar:
+#   1. Copie .env.example para .env e preencha os valores reais
+#   2. docker compose up -d
+#
+# Serviços neste compose:
+#   mysql       → banco de dados (apenas rede interna)
+#   ascent-api  → Node.js API + frontend (porta 3333)
+#
+# Serviços Java (ascent-logs e ascent-apachepoi) NÃO estão aqui.
+# Eles são iniciados pelo start.sh (docker run).
+# =============================================================
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: ascent-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/ascent.sql:/docker-entrypoint-initdb.d/01-ascent.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - ascent
+
+  ascent-api:
+    image: lucasveneroso/ascent:ascent-api
+    container_name: ascent-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: ${APP_PORT:-3333}
+      AMBIENTE_PROCESSO: producao
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${APP_PORT:-3333}:${APP_PORT:-3333}"
+    networks:
+      - ascent
+
+networks:
+  ascent:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local

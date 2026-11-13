@@ -16,6 +16,9 @@ ascent-api/.env
 
 # Shell scripts locais (não versionados)
 *.sh
+# Exceção: start.sh é versionado — necessário para deploy na nuvem
+!start.sh
+!setup-duckdns.sh
 
 # Logs gerados em runtime
 *.log
