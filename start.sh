@@ -65,8 +65,9 @@ if curl -s -m 2 http://169.254.169.254/latest/meta-data/ 2>/dev/null | grep -q '
     echo ">> Ambiente AWS EC2 detectado! O ascent-apachepoi usará a IAM Role (LabRole) da máquina."
 fi
 
-echo "=== 3. Removendo containers antigos dos serviços Java ==="
-docker rm -f ascent-logs ascent-apachepoi 2>/dev/null || true
+echo "=== 3. Removendo containers antigos ==="
+# Remove todos os containers do projeto (incluindo ascent-mysql legado do start.sh anterior)
+docker rm -f ascent-mysql mysql ascent-api ascent-logs ascent-apachepoi 2>/dev/null || true
 
 echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
 # Detecta se é "docker compose" (v2) ou "docker-compose" (v1), instala se necessário
