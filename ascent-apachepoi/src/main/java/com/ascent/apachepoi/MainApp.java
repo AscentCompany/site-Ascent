@@ -1,4 +1,3 @@
-// Bom dia
 package com.ascent.apachepoi;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -6,6 +5,9 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
+import java.io.File;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -20,26 +22,126 @@ public class MainApp {
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private static void log(String msg)     { System.out.printf("[%s] %s%n", LocalDateTime.now().format(FMT), msg); }
-    private static void logErro(String msg) { System.err.printf("[%s] %s%n",  LocalDateTime.now().format(FMT), msg); }
+    private static void logErro(String msg) { System.err.printf("[%s] ERRO: %s%n", LocalDateTime.now().format(FMT), msg); }
 
     public static void main(String[] args) {
         carregarEnv();
         bd = new JdbcTemplate(new Conexao().getConexao());
 
-        String arquivo = "/home/lucasveneroso/Sptech/Pi/Ascent/output/anac_part_023.xlsx";
-        log("Lendo arquivo: " + arquivo);
-
+        String bucket  = LeitorExcel.getEnvOrProp("AWS_BUCKET", "ascent-base-de-dados");
+        String prefixo = LeitorExcel.getEnvOrProp("AWS_PREFIXO_ARQUIVOS", "anac_part_");
+        String region  = LeitorExcel.getEnvOrProp("AWS_REGION", "us-east-1");
+        int totalPartes;
         try {
-            LeitorExcel leitor = new LeitorExcel();
-            LeitorExcel.ResultadoLeitura dados = leitor.extrairDeArquivo(new java.io.File(arquivo));
-            dados.nomeArquivo = "anac_part_023.xlsx";
-            log("Leitura concluida — " + dados.linhasLidas + " linhas validas, " + dados.linhasRejeitadas + " rejeitadas");
-            registrarLogLeitura(dados);
-            log("Iniciando insercao no banco...");
-            inserirDadosNoBanco(dados);
+            totalPartes = Integer.parseInt(LeitorExcel.getEnvOrProp("AWS_TOTAL_PARTES", "23"));
+        } catch (NumberFormatException e) {
+            totalPartes = 23;
+        }
+
+        log("=== Iniciando importacao do S3 ===");
+        log("Bucket : s3://" + bucket);
+        log("Prefixo: " + prefixo);
+        log("Partes : " + totalPartes);
+        log("Regiao : " + region);
+
+        // Verifica se o AWS CLI está disponível
+        if (!awsCliDisponivel()) {
+            logErro("AWS CLI não encontrado. Instale o AWS CLI na imagem ou na EC2.");
+            System.exit(1);
+        }
+
+        File tmpDir = new File("/tmp/ascent-s3");
+        tmpDir.mkdirs();
+
+        int partesProcessadas = 0;
+        int partesComErro     = 0;
+
+        for (int i = 1; i <= totalPartes; i++) {
+            String nomeArquivo = String.format("%s%03d.xlsx", prefixo, i);
+            String s3Uri       = String.format("s3://%s/%s", bucket, nomeArquivo);
+            File   destino     = new File(tmpDir, nomeArquivo);
+
+            log(String.format("[%d/%d] Baixando %s ...", i, totalPartes, s3Uri));
+
+            // Baixa via AWS CLI (usa IAM Role da EC2 automaticamente)
+            boolean baixou = baixarDoS3(s3Uri, destino.getAbsolutePath(), region);
+            if (!baixou) {
+                logErro("Falha ao baixar " + s3Uri + ". Pulando.");
+                partesComErro++;
+                continue;
+            }
+
+            log(String.format("[%d/%d] Processando %s (%.1f MB)...",
+                i, totalPartes, nomeArquivo, destino.length() / 1_048_576.0));
+
+            try {
+                LeitorExcel leitor = new LeitorExcel();
+                LeitorExcel.ResultadoLeitura dados = leitor.extrairDeArquivo(destino);
+                dados.nomeArquivo = nomeArquivo;
+                log(String.format("[%d/%d] Leitura concluida — %d linhas validas, %d rejeitadas",
+                    i, totalPartes, dados.linhasLidas, dados.linhasRejeitadas));
+
+                registrarLogLeitura(dados);
+                inserirDadosNoBanco(dados);
+                partesProcessadas++;
+            } catch (Exception e) {
+                logErro("Falha ao processar " + nomeArquivo + ": " + e.getMessage());
+                partesComErro++;
+            } finally {
+                // Remove arquivo temporário para liberar espaço em disco
+                destino.delete();
+            }
+        }
+
+        log("=== Importacao concluida ===");
+        log("Partes processadas: " + partesProcessadas);
+        log("Partes com erro   : " + partesComErro);
+
+        // Limpa o diretório temporário
+        tmpDir.delete();
+    }
+
+    // Baixa um arquivo do S3 usando AWS CLI (aproveita IAM Role da EC2 automaticamente)
+    private static boolean baixarDoS3(String s3Uri, String destino, String region) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                "aws", "s3", "cp", s3Uri, destino,
+                "--region", region,
+                "--no-progress"
+            );
+            pb.redirectErrorStream(true);
+            Process processo = pb.start();
+
+            StringBuilder saida = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(processo.getInputStream()))) {
+                String linha;
+                while ((linha = reader.readLine()) != null) {
+                    saida.append(linha).append("\n");
+                }
+            }
+
+            int exitCode = processo.waitFor();
+            if (exitCode != 0) {
+                logErro("aws s3 cp falhou (exit " + exitCode + "): " + saida.toString().trim());
+                return false;
+            }
+            return true;
         } catch (Exception e) {
-            logErro("Falha: " + e.getMessage());
-            e.printStackTrace();
+            logErro("Erro ao executar aws cli: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Verifica se o AWS CLI está instalado
+    private static boolean awsCliDisponivel() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("aws", "--version");
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            p.waitFor();
+            return p.exitValue() == 0;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -66,40 +168,26 @@ public class MainApp {
 
     private static void carregarEnv() {
         java.io.File f = new java.io.File(".env");
-        if (!f.exists()) {
-            f = new java.io.File("../.env");
-        }
-        if (!f.exists()) {
-            return;
-        }
+        if (!f.exists()) f = new java.io.File("../.env");
+        if (!f.exists()) return;
         try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(f))) {
             String linha;
             while ((linha = br.readLine()) != null) {
                 linha = linha.trim();
-                if (linha.isEmpty() || linha.startsWith("#") || !linha.contains("=")) {
-                    continue;
-                }
+                if (linha.isEmpty() || linha.startsWith("#") || !linha.contains("=")) continue;
                 int eq       = linha.indexOf('=');
                 String chave = linha.substring(0, eq).trim();
                 String valor = linha.substring(eq + 1).trim();
-                if ((valor.startsWith("\"") && valor.endsWith("\"")) || (valor.startsWith("'") && valor.endsWith("'"))) {
+                if ((valor.startsWith("\"") && valor.endsWith("\"")) ||
+                    (valor.startsWith("'")  && valor.endsWith("'"))) {
                     valor = valor.substring(1, valor.length() - 1);
                 }
-                if (valor.isEmpty()) {
-                    continue;
-                }
-                if (System.getProperty(chave) == null) {
-                    System.setProperty(chave, valor);
-                }
-                if ("AWS_ACCESS_KEY_ID".equalsIgnoreCase(chave)) {
-                    System.setProperty("aws.accessKeyId", valor);
-                } else if ("AWS_SECRET_ACCESS_KEY".equalsIgnoreCase(chave)) {
-                    System.setProperty("aws.secretAccessKey", valor);
-                } else if ("AWS_SESSION_TOKEN".equalsIgnoreCase(chave)) {
-                    System.setProperty("aws.sessionToken", valor);
-                } else if ("AWS_REGION".equalsIgnoreCase(chave)) {
-                    System.setProperty("aws.region", valor);
-                }
+                if (valor.isEmpty()) continue;
+                if (System.getProperty(chave) == null) System.setProperty(chave, valor);
+                if ("AWS_ACCESS_KEY_ID".equalsIgnoreCase(chave))       System.setProperty("aws.accessKeyId",    valor);
+                else if ("AWS_SECRET_ACCESS_KEY".equalsIgnoreCase(chave)) System.setProperty("aws.secretAccessKey", valor);
+                else if ("AWS_SESSION_TOKEN".equalsIgnoreCase(chave))  System.setProperty("aws.sessionToken",   valor);
+                else if ("AWS_REGION".equalsIgnoreCase(chave))         System.setProperty("aws.region",         valor);
             }
         } catch (Exception ignored) {}
     }
@@ -113,9 +201,7 @@ public class MainApp {
         List<Integer> cacheAeroId    = new ArrayList<>();
 
         for (Companhia c : dados.companhias) {
-            if (c.codCompanhia == null || buscarNaLista(cacheCompChave, c.codCompanhia) != -1) {
-                continue;
-            }
+            if (c.codCompanhia == null || buscarNaLista(cacheCompChave, c.codCompanhia) != -1) continue;
             Integer id = buscarId("SELECT idCompanhia FROM companhia WHERE codCompanhia = ? LIMIT 1", c.codCompanhia);
             if (id != null) {
                 cacheCompChave.add(c.codCompanhia);
@@ -127,26 +213,10 @@ public class MainApp {
                         "INSERT INTO companhia (codCompanhia, nomeCompanhia, paisCompanhia, razaoSocial, cnpj) VALUES (?,?,?,?,?)",
                         Statement.RETURN_GENERATED_KEYS);
                     ps.setInt(1, c.codCompanhia);
-                    if (c.nomeCompanhia != null) {
-                        ps.setString(2, c.nomeCompanhia);
-                    } else {
-                        ps.setString(2, "DESCONHECIDA");
-                    }
-                    if (c.paisCompanhia != null) {
-                        ps.setString(3, c.paisCompanhia);
-                    } else {
-                        ps.setString(3, "BRASIL");
-                    }
-                    if (c.razaoSocial != null) {
-                        ps.setString(4, c.razaoSocial);
-                    } else {
-                        ps.setString(4, "");
-                    }
-                    if (c.cnpj != null) {
-                        ps.setString(5, c.cnpj);
-                    } else {
-                        ps.setString(5, "");
-                    }
+                    ps.setString(2, c.nomeCompanhia != null ? c.nomeCompanhia : "DESCONHECIDA");
+                    ps.setString(3, c.paisCompanhia != null ? c.paisCompanhia : "BRASIL");
+                    ps.setString(4, c.razaoSocial   != null ? c.razaoSocial   : "");
+                    ps.setString(5, c.cnpj          != null ? c.cnpj          : "");
                     return ps;
                 }, kh);
                 if (kh.getKey() != null) {
@@ -157,9 +227,7 @@ public class MainApp {
         }
 
         for (Aviao a : dados.avioes) {
-            if (a.modelo == null || a.modelo.isBlank() || buscarNaLista(cacheAvChave, a.modelo) != -1) {
-                continue;
-            }
+            if (a.modelo == null || a.modelo.isBlank() || buscarNaLista(cacheAvChave, a.modelo) != -1) continue;
             Integer id = buscarId("SELECT idAviao FROM aviao WHERE modelo = ? LIMIT 1", a.modelo);
             if (id != null) {
                 cacheAvChave.add(a.modelo);
@@ -169,11 +237,7 @@ public class MainApp {
                 bd.update((Connection con) -> {
                     PreparedStatement ps = con.prepareStatement(
                         "INSERT INTO aviao (numAssentos, modelo) VALUES (?,?)", Statement.RETURN_GENERATED_KEYS);
-                    if (a.numAssentos != null) {
-                        ps.setInt(1, a.numAssentos);
-                    } else {
-                        ps.setInt(1, 0);
-                    }
+                    ps.setInt(1, a.numAssentos != null ? a.numAssentos : 0);
                     ps.setString(2, a.modelo);
                     return ps;
                 }, kh);
@@ -185,15 +249,8 @@ public class MainApp {
         }
 
         for (Aeroporto a : dados.aeroportos) {
-            String chave;
-            if (a.icao != null && !a.icao.isEmpty()) {
-                chave = a.icao;
-            } else {
-                chave = a.nomeAeroporto;
-            }
-            if (chave == null || buscarNaLista(cacheAeroChave, chave) != -1) {
-                continue;
-            }
+            String chave = (a.icao != null && !a.icao.isEmpty()) ? a.icao : a.nomeAeroporto;
+            if (chave == null || buscarNaLista(cacheAeroChave, chave) != -1) continue;
             Integer id;
             if (a.icao != null && !a.icao.isEmpty()) {
                 id = buscarId("SELECT idAeroporto FROM aeroporto WHERE nomeAeroporto = ? OR nomeAeroporto = ? LIMIT 1", a.nomeAeroporto, a.icao);
@@ -209,31 +266,11 @@ public class MainApp {
                     PreparedStatement ps = con.prepareStatement(
                         "INSERT INTO aeroporto (nomeAeroporto, municipio, uf, regiao, pais) VALUES (?,?,?,?,?)",
                         Statement.RETURN_GENERATED_KEYS);
-                    if (a.nomeAeroporto != null) {
-                        ps.setString(1, a.nomeAeroporto);
-                    } else {
-                        ps.setString(1, "");
-                    }
-                    if (a.municipio != null) {
-                        ps.setString(2, a.municipio);
-                    } else {
-                        ps.setString(2, "");
-                    }
-                    if (a.uf != null) {
-                        ps.setString(3, a.uf);
-                    } else {
-                        ps.setString(3, "");
-                    }
-                    if (a.regiao != null) {
-                        ps.setString(4, a.regiao);
-                    } else {
-                        ps.setString(4, "");
-                    }
-                    if (a.pais != null) {
-                        ps.setString(5, a.pais);
-                    } else {
-                        ps.setString(5, "BRASIL");
-                    }
+                    ps.setString(1, a.nomeAeroporto != null ? a.nomeAeroporto : "");
+                    ps.setString(2, a.municipio     != null ? a.municipio     : "");
+                    ps.setString(3, a.uf            != null ? a.uf            : "");
+                    ps.setString(4, a.regiao        != null ? a.regiao        : "");
+                    ps.setString(5, a.pais          != null ? a.pais          : "BRASIL");
                     return ps;
                 }, kh);
                 if (kh.getKey() != null) {
@@ -243,84 +280,30 @@ public class MainApp {
             }
         }
 
-        Integer compPadrao;
-        if (cacheCompId.isEmpty()) {
-            compPadrao = buscarId("SELECT idCompanhia FROM companhia LIMIT 1");
-        } else {
-            compPadrao = cacheCompId.get(0);
-        }
-
-        Integer avPadrao;
-        if (cacheAvId.isEmpty()) {
-            avPadrao = buscarId("SELECT idAviao FROM aviao LIMIT 1");
-        } else {
-            avPadrao = cacheAvId.get(0);
-        }
+        Integer compPadrao = cacheCompId.isEmpty() ? buscarId("SELECT idCompanhia FROM companhia LIMIT 1") : cacheCompId.get(0);
+        Integer avPadrao   = cacheAvId.isEmpty()   ? buscarId("SELECT idAviao FROM aviao LIMIT 1")         : cacheAvId.get(0);
 
         int voosInseridos = 0;
         for (int i = 0; i < Math.min(dados.voos.size(), dados.companhias.size()); i++) {
             Voo       v = dados.voos.get(i);
             Companhia c = dados.companhias.get(i);
+            Aviao     a = i < dados.avioes.size() ? dados.avioes.get(i) : null;
 
-            Aviao a;
-            if (i < dados.avioes.size()) {
-                a = dados.avioes.get(i);
-            } else {
-                a = null;
-            }
+            int idxC = (c != null && c.codCompanhia != null) ? buscarNaLista(cacheCompChave, c.codCompanhia) : -1;
+            int idxA = (a != null && a.modelo != null)       ? buscarNaLista(cacheAvChave,   a.modelo)       : -1;
 
-            int idxC;
-            if (c != null && c.codCompanhia != null) {
-                idxC = buscarNaLista(cacheCompChave, c.codCompanhia);
-            } else {
-                idxC = -1;
-            }
-
-            int idxA;
-            if (a != null && a.modelo != null) {
-                idxA = buscarNaLista(cacheAvChave, a.modelo);
-            } else {
-                idxA = -1;
-            }
-
-            final Integer fkC;
-            if (idxC != -1) {
-                fkC = cacheCompId.get(idxC);
-            } else {
-                fkC = compPadrao;
-            }
-
-            final Integer fkA;
-            if (idxA != -1) {
-                fkA = cacheAvId.get(idxA);
-            } else {
-                fkA = avPadrao;
-            }
-
-            if (fkC == null || fkA == null) {
-                continue;
-            }
+            final Integer fkC = idxC != -1 ? cacheCompId.get(idxC) : compPadrao;
+            final Integer fkA = idxA != -1 ? cacheAvId.get(idxA)   : avPadrao;
+            if (fkC == null || fkA == null) continue;
 
             KeyHolder kh = new GeneratedKeyHolder();
             bd.update((Connection con) -> {
                 PreparedStatement ps = con.prepareStatement(
                     "INSERT INTO voo (numVoo, tipoVoo, qtdPassageiros, fkCompanhia, fkAviao) VALUES (?,?,?,?,?)",
                     Statement.RETURN_GENERATED_KEYS);
-                if (v.numVoo != null) {
-                    ps.setInt(1, v.numVoo);
-                } else {
-                    ps.setInt(1, 0);
-                }
-                if (v.tipoVoo != null) {
-                    ps.setInt(2, v.tipoVoo);
-                } else {
-                    ps.setInt(2, 0);
-                }
-                if (v.qtdPassageiros != null) {
-                    ps.setInt(3, v.qtdPassageiros);
-                } else {
-                    ps.setInt(3, 0);
-                }
+                ps.setInt(1, v.numVoo         != null ? v.numVoo         : 0);
+                ps.setInt(2, v.tipoVoo        != null ? v.tipoVoo        : 0);
+                ps.setInt(3, v.qtdPassageiros != null ? v.qtdPassageiros : 0);
                 ps.setInt(4, fkC);
                 ps.setInt(5, fkA);
                 return ps;
@@ -336,23 +319,12 @@ public class MainApp {
             AeroportoDirecao ad   = dados.aeroportoDirecoes.get(i);
             Aeroporto        aero = dados.aeroportos.get(i);
             int idxVoo = i / 2;
-            if (idxVoo >= dados.voos.size()) {
-                break;
-            }
+            if (idxVoo >= dados.voos.size()) break;
             Voo voo = dados.voos.get(idxVoo);
-            if (voo.idVoo == null) {
-                continue;
-            }
-            String chave;
-            if (aero.icao != null && !aero.icao.isEmpty()) {
-                chave = aero.icao;
-            } else {
-                chave = aero.nomeAeroporto;
-            }
+            if (voo.idVoo == null) continue;
+            String chave = (aero.icao != null && !aero.icao.isEmpty()) ? aero.icao : aero.nomeAeroporto;
             int idxAero = buscarNaLista(cacheAeroChave, chave);
-            if (idxAero == -1) {
-                continue;
-            }
+            if (idxAero == -1) continue;
             try {
                 bd.update(
                     "INSERT INTO aeroportoDirecao (fkAeroporto, fkVoo, direcao, dia, hora) VALUES (?,?,?,?,?)" +
@@ -369,9 +341,7 @@ public class MainApp {
 
     private static <T> int buscarNaLista(List<T> lista, T valor) {
         for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i) != null && lista.get(i).equals(valor)) {
-                return i;
-            }
+            if (lista.get(i) != null && lista.get(i).equals(valor)) return i;
         }
         return -1;
     }
@@ -379,10 +349,7 @@ public class MainApp {
     private static Integer buscarId(String sql, Object... params) {
         try {
             List<Integer> r = bd.queryForList(sql, Integer.class, params);
-            if (r != null && !r.isEmpty()) {
-                return r.get(0);
-            }
-            return null;
+            return (r != null && !r.isEmpty()) ? r.get(0) : null;
         } catch (Exception ignored) {
             return null;
         }

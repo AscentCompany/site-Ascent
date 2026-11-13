@@ -152,6 +152,7 @@ public class LeitorExcel {
                                 inRow = false;
 
                                 if (currentRowNum == 0 || cabecalho == null) {
+
                                     int maxCol = 0;
                                     for (Integer k : currentRow.keySet()) {
                                         if (k > maxCol) maxCol = k;
@@ -165,17 +166,10 @@ public class LeitorExcel {
                                         }
                                     }
                                 } else {
-                                    if (resultado.linhasLidas >= 5) {
-                                        xml.close();
-                                        break;
-                                    }
                                     resultado.linhasEncontradas++;
                                     boolean linhaValida = processarLinha(currentRow, currentTypes, cabecalho, resultado);
                                     if (linhaValida) {
                                         resultado.linhasLidas++;
-                                        System.out.printf("[%s] Linha %d lida%n",
-                                            java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")),
-                                            resultado.linhasLidas);
                                     } else {
                                         resultado.linhasRejeitadas++;
                                     }
