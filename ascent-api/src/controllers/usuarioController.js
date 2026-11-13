@@ -1,3 +1,4 @@
+// Bom dia - teste 2
 var usuarioModel = require("../models/usuarioModel");
 var logModel = require("../models/logModel");
 
