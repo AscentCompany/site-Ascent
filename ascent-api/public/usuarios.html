@@ -84,6 +84,7 @@
 
 <script>
     document.getElementById("nome-usuario").textContent = sessionStorage.NOME_USUARIO || "Usuário";
+    let idUsuarioLogado = Number(sessionStorage.ID_USUARIO);
     let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
     let idCargoUsuarioLogado = Number(sessionStorage.CARGO_USUARIO);
     let cargosGlobais = [];
@@ -171,7 +172,11 @@
             fetch(`/usuarios/editar/${idUsuario}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: novoEmail, fkCargo: novoCargo })
+                body: JSON.stringify({ 
+                    email: novoEmail, 
+                    fkCargo: novoCargo,
+                    fkUsuarioAcao: idUsuarioLogado
+                })
             }).then(res => {
                 if(res.ok) {
                     alert("Usuário atualizado com sucesso!");
@@ -179,13 +184,16 @@
                 } else {
                     alert("Erro ao atualizar usuário.");
                 }
+            }).catch(err => {
+                console.error("Erro na requisição:", err);
+                alert("Erro ao conectar ao servidor.");
             });
         }
     }
 
     function excluirUsuario(idUsuario) {
         if(confirm("Atenção! Deseja realmente excluir este usuário da organização?")) {
-            fetch(`/usuarios/deletar/${idUsuario}`, {
+            fetch(`/usuarios/deletar/${idUsuario}?fkUsuarioAcao=${idUsuarioLogado}`, {
                 method: "DELETE"
             }).then(res => {
                 if(res.ok) {
@@ -194,6 +202,9 @@
                 } else {
                     alert("Erro ao excluir usuário.");
                 }
+            }).catch(err => {
+                console.error("Erro na requisição:", err);
+                alert("Erro ao conectar ao servidor.");
             });
         }
     }
@@ -217,14 +228,20 @@
                 emailServer: emailVar,
                 senhaServer: senhaVar,
                 idCompanhiaServer: idCompanhia,
-                idCargoServer: cargoVar
+                idCargoServer: cargoVar,
+                fkUsuarioAcao: idUsuarioLogado
             })
         }).then(res => {
             if(res.ok) {
                 alert("Funcionário cadastrado com sucesso!");
                 fecharModal();
                 listarUsuarios();
+            } else {
+                alert("Erro ao cadastrar funcionário.");
             }
+        }).catch(err => {
+            console.error("Erro na requisição:", err);
+            alert("Erro ao conectar ao servidor.");
         });
     }
 

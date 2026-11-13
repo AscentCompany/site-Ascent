@@ -1,4 +1,5 @@
 var usuarioModel = require("../models/usuarioModel");
+var logModel = require("../models/logModel");
 
 function autenticar(req, res) {
     var email = req.body.emailServer;
@@ -112,13 +113,20 @@ function cadastrarFuncionario(req, res) {
     var senha = req.body.senhaServer;
     var idCompanhia = req.body.idCompanhiaServer;
     var idCargo = req.body.idCargoServer;
+    var fkUsuarioAcao = req.body.fkUsuarioAcao;
 
     if (nome == undefined || email == undefined || senha == undefined || idCompanhia == undefined || idCargo == undefined) {
         res.status(400).send("Valores indefinidos!");
     } else {
         usuarioModel.cadastrarFuncionario(nome, email, senha, idCompanhia, idCargo)
-            .then(resultado => res.json(resultado))
-            .catch(erro => res.status(500).json(erro.sqlMessage));
+            .then(resultado => {
+                logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO", `Cadastrou o funcionário ${nome}`, "usuarios.html", fkUsuarioAcao);
+                res.json(resultado);
+            })
+            .catch(erro => {
+                logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO_ERRO", `Falha ao cadastrar o funcionário ${nome}`, "usuarios.html", fkUsuarioAcao);
+                res.status(500).json(erro.sqlMessage);
+            });
     }
 }
 
@@ -126,17 +134,32 @@ function editarUsuario(req, res) {
     var idUsuario = req.params.idUsuario;
     var email = req.body.email;
     var fkCargo = req.body.fkCargo;
+    var fkUsuarioAcao = req.body.fkUsuarioAcao;
 
     usuarioModel.editarUsuario(idUsuario, email, fkCargo)
-        .then(resultado => res.json(resultado))
-        .catch(erro => res.status(500).json(erro.sqlMessage));
+        .then(resultado => {
+            logModel.registrarLog("GESTÃO DE USUÁRIO", "EDICAO", `Atualizou os dados do funcionário ID ${idUsuario}`, "usuarios.html", fkUsuarioAcao);
+            res.json(resultado);
+        })
+        .catch(erro => {
+            logModel.registrarLog("GESTÃO DE USUÁRIO", "EDICAO_ERRO", `Falha ao salvar alterações do funcionário ID ${idUsuario}`, "usuarios.html", fkUsuarioAcao);
+            res.status(500).json(erro.sqlMessage);
+        });
 }
 
 function deletarUsuario(req, res) {
     var idUsuario = req.params.idUsuario;
+    var fkUsuarioAcao = req.query.fkUsuarioAcao || req.body.fkUsuarioAcao;
+
     usuarioModel.deletarUsuario(idUsuario)
-        .then(resultado => res.json(resultado))
-        .catch(erro => res.status(500).json(erro.sqlMessage));
+        .then(resultado => {
+            logModel.registrarLog("GESTÃO DE USUÁRIO", "EXCLUSAO", `Excluiu o funcionário ID ${idUsuario}`, "usuarios.html", fkUsuarioAcao);
+            res.json(resultado);
+        })
+        .catch(erro => {
+            logModel.registrarLog("GESTÃO DE USUÁRIO", "EXCLUSAO_ERRO", `Falha ao excluir o funcionário ID ${idUsuario}`, "usuarios.html", fkUsuarioAcao);
+            res.status(500).json(erro.sqlMessage);
+        });
 }
 
 module.exports = {
