@@ -69,6 +69,18 @@ echo "=== 3. Removendo containers antigos dos serviços Java ==="
 docker rm -f ascent-logs ascent-apachepoi 2>/dev/null || true
 
 echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
+# Detecta se é "docker compose" (v2) ou "docker-compose" (v1)
+if docker compose version &>/dev/null; then
+  COMPOSE_CMD="docker compose"
+else
+  COMPOSE_CMD="docker-compose"
+fi
+echo ">> Usando: $COMPOSE_CMD"
+$COMPOSE_CMD down --remove-orphans 2>/dev/null || true
+$COMPOSE_CMD up -d --pull always
+
+
+echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
 docker compose down --remove-orphans 2>/dev/null || true
 docker compose up -d --pull always
 
