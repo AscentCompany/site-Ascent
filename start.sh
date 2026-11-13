@@ -94,22 +94,6 @@ echo ">> Usando: $COMPOSE_CMD"
 $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
 $COMPOSE_CMD up -d --pull always
 
-echo "Aguardando MySQL ficar saudável (healthcheck do compose)..."
-for i in $(seq 1 30); do
-  STATUS=$(docker inspect --format='{{.State.Health.Status}}' mysql 2>/dev/null || echo "starting")
-  echo "  [${i}/30] status: $STATUS"
-  if [ "$STATUS" = "healthy" ]; then
-    echo "MySQL pronto!"
-    break
-  fi
-  if [ "$i" -eq 30 ]; then
-    echo "ERRO: MySQL não ficou saudável em 30 tentativas. Abortando."
-    docker logs mysql --tail 20
-    exit 1
-  fi
-  sleep 5
-done
-
 echo "=== 5. Inicializando ascent-logs ==="
 docker run -d \
   --name ascent-logs \
