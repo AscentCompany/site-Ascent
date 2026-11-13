@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="../css/faq.css">
 </head>
 <body>
+  <script src="../js/sessao.js"></script>
+  <script>validarSessao();</script>
   <div class="app">
 
     <!-- BOTÃO ABRIR/FECHAR MENU -->
@@ -26,22 +28,24 @@
       </div>
 
       <div class="profile">
-        <img src="/ascent-api/public/assets/icon/" alt="">
-        <span id="sNomeUsuario">Bem Vindo!</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        <span id="nome-usuario">Usuário</span>
       </div>
 
       <nav class="nav">
         <span class="nav-indicador" id="nav-indicador"></span>
         <div class="nav-item"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
         <div class="nav-item "><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
-        <div class="nav-item"><a href="../cargos.html">Gestão</a></div>
+        <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
         <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
         <div class="nav-item" id="nav-configurar-faq" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
         <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
         <div class="nav-item ativo"><a href="./faq.html">FAQ</a></div>
       </nav>
 
-      <button class="logout" type="button"><a href="../index.html" style="color: inherit; text-decoration: none;">SAIR</a></button>
+      <button class="logout" type="button" onclick="limparSessao()">SAIR</button>
     </aside>
 
     <!-- CONTEÚDO PRINCIPAL - FAQ -->
@@ -208,7 +212,7 @@
     });
 
     // Nome do usuário + permissão gestor
-    var nomeEl = document.getElementById('nomeUsuarioFaq');
+    var nomeEl = document.getElementById('nome-usuario');
     if (nomeEl) nomeEl.textContent = sessionStorage.NOME_USUARIO || 'Usuário';
     if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
       var navConf = document.getElementById('nav-configurar-faq');
@@ -233,8 +237,21 @@
         } else {
           item.classList.add('aberto');
           trigger.setAttribute('aria-expanded', 'true');
-          content.style.maxHeight = content.scrollHeight + 'px';
+          content.style.maxHeight = 'none';
+          const alturaConteudo = content.scrollHeight + 'px';
+          content.style.maxHeight = '0px';
+          content.offsetHeight;
+          content.style.maxHeight = alturaConteudo;
         }
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      faqItems.forEach(item => {
+        if (!item.classList.contains('aberto')) return;
+        const content = item.querySelector('.faq-content');
+        content.style.maxHeight = 'none';
+        content.style.maxHeight = content.scrollHeight + 'px';
       });
     });
   </script>

@@ -1,20 +1,31 @@
 // sessão
+var URL_LOGIN = new URL("../login.html", document.currentScript.src).href;
+
 function validarSessao() {
     var email = sessionStorage.EMAIL_USUARIO;
     var nome = sessionStorage.NOME_USUARIO;
 
-    var b_usuario = document.getElementById("b_usuario");
+    var b_usuario = document.getElementById("b_usuario") || document.getElementById("nome-usuario");
 
     if (email != null && nome != null) {
-        b_usuario.innerHTML = nome;
+        if (b_usuario) {
+            b_usuario.innerHTML = nome;
+        } else if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", function () {
+                var usuario = document.getElementById("b_usuario") || document.getElementById("nome-usuario");
+                if (usuario) {
+                    usuario.innerHTML = nome;
+                }
+            }, { once: true });
+        }
     } else {
-        window.location = "../login.html";
+        window.location = URL_LOGIN;
     }
 }
 
 function limparSessao() {
     sessionStorage.clear();
-    window.location = "../login.html";
+    window.location = URL_LOGIN;
 }
 
 // carregamento (loading)
@@ -33,4 +44,3 @@ function finalizarAguardar(texto) {
         divErrosLogin.innerHTML = texto;
     }
 }
-

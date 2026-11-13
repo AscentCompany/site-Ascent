@@ -16,6 +16,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 </head>
 <body>
+  <script src="../js/sessao.js"></script>
+  <script>validarSessao();</script>
   <div class="app">
 
     <!-- BOTÃO ABRIR/FECHAR MENU -->
@@ -31,22 +33,24 @@
       </div>
 
       <div class="profile">
-        <img src="/assets/icon/" alt="">
-        <span id="sNomeUsuario"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        <span id="nome-usuario"></span>
       </div>
 
       <nav class="nav">
         <span class="nav-indicador" id="nav-indicador"></span>
         <div class="nav-item "><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
         <div class="nav-item ativo"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
-        <div class="nav-item"><a href="../cargos.html">Gestão</a></div>
+        <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
         <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
         <div class="nav-item" id="nav-configurar-op" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
         <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
         <div class="nav-item"><a href="./faq.html">FAQ</a></div>
       </nav>
 
-      <button class="logout" type="button"><a href="../index.html" style="color: inherit; text-decoration: none;">SAIR</a></button>
+      <button class="logout" type="button" onclick="limparSessao()">SAIR</button>
     </aside>
 
     <!-- CONTEÚDO -->
@@ -121,8 +125,7 @@
       <section class="card card-faixa">
         <h2 class="chart-title">Informativo rotas</h2>
 
-        <!-- Área com scroll -->
-        <div class="rotas-scroll">
+        <div class="tabela-rotas-container">
           <div class="tabela-rotas">
             <div class="cabecalho-rotas">
               <span>Rota</span>
@@ -185,21 +188,18 @@
               <span>198</span>
               <span class="ocupacao baixa">83,4%</span>
             </div>
-
-            <!-- Adicione as demais linhas aqui -->
-          </div>
-        </div>
-
-        <!-- Fica sempre visível -->
-        <div class="indicadores-rotas">
-          <div class="indicador-rota">
-            <span>⚠ SUBUTILIZAÇÃO</span>
-            <strong>18 rotas</strong>
           </div>
 
-          <div class="indicador-rota">
-            <span>↗ GARGALO DE DEMANDA</span>
-            <strong>12 rotas</strong>
+          <div class="indicadores-rotas">
+            <div class="indicador-rota">
+              <span>⚠ SUBUTILIZAÇÃO</span>
+              <strong>18 rotas</strong>
+            </div>
+
+            <div class="indicador-rota">
+              <span>↗ GARGALO DE DEMANDA</span>
+              <strong>12 rotas</strong>
+            </div>
           </div>
         </div>
       </section>
@@ -213,11 +213,7 @@
 <script src="/js/alertas.js"></script>
 <script>
 
-  if (sessionStorage.NOME_USUARIO != null){
-    sNomeUsuario.textContent = sessionStorage.NOME_USUARIO;
-  }else{
-    sNomeUsuario.textContent = "Bem Vindo!";
-  }
+  document.getElementById('nome-usuario').textContent = sessionStorage.NOME_USUARIO || 'Usuário';
 
   const btnMenu = document.getElementById('btn-menu');
   const overlay = document.getElementById('overlay');

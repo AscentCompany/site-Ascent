@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="../css/alertas.css">
 </head>
 <body>
+  <script src="../js/sessao.js"></script>
+  <script>validarSessao();</script>
 <div class="app">
 
   <button class="btn-menu" id="btn-menu" onclick="document.body.classList.toggle('menu-fechado')">
@@ -22,29 +24,31 @@
 
   <aside class="sidebar">
     <div class="logo">
-        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>
-      </div>
+      <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>
+    </div>
 
     <div class="profile">
-        <img src="/ascent-api/public/assets/icon/" alt="">
-        <span id="sNomeUsuario">Bem Vindo!</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      <span id="nome-usuario"></span>
     </div>
 
     <nav class="nav">
       <span class="nav-indicador" id="nav-indicador"></span>
-        <div class="nav-item"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
-        <div class="nav-item"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
-        <div class="nav-item"><a href="../cargos.html">Gestão</a></div>
-        <div class="nav-item ativo"><a href="./centralAlertas.html">Central de Alertas</a></div>
-        <div class="nav-item" id="nav-configurar-ar" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
-        <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
-        <div class="nav-item"><a href="./faq.html">FAQ</a></div>
+      <div class="nav-item"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
+      <div class="nav-item"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
+      <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
+      <div class="nav-item ativo"><a href="./centralAlertas.html">Central de Alertas</a></div>
+      <div class="nav-item" id="nav-configurar" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
+      <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
+      <div class="nav-item"><a href="./faq.html">FAQ</a></div>
     </nav>
 
-    <a class="logout" href="/index.html">SAIR</a>
+    <button class="logout" type="button" onclick="limparSessao()">SAIR</button>
   </aside>
 
-  <div style="margin-left: var(--sidebar-w); transition: margin-left .3s ease;">
+  <div class="central-main">
     <div class="central-wrapper">
 
       <h1 class="central-titulo">Central de Alertas</h1>
