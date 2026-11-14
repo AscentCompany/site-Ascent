@@ -85,12 +85,13 @@ public class LogServico {
 
     public String formatarLog() {
         String dataHoraFormatada = (dataHora != null) ? dataHora.format(FORMATTER) : "SEM_DATA";
-        return String.format("[%s] [%s] [%s] %s (ID: %s, Origem: %s)",
+        return String.format("[%s] [%s] [%s] %s (LogID: %s, AutorID: %s, Origem: %s)",
                 dataHoraFormatada,
                 categoria,
                 servico,
                 mensagem,
                 idLogServico != null ? idLogServico : "N/A",
+                fkUsuario != null ? fkUsuario : "SISTEMA",
                 origemCadastro != null ? origemCadastro : "N/A"
         );
     }

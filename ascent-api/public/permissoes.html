@@ -126,6 +126,7 @@
     overlay.addEventListener("click", () => document.body.classList.add("menu-fechado"));
 
     let funcionalidadesEscolhidas = [];
+    let idUsuarioLogado = sessionStorage.ID_USUARIO;
 
     function abrirModal() {
         document.getElementById("modalCadastro").style.display = "flex";
@@ -218,7 +219,8 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 nomePermissaoServer: nomePermissao,
-                funcionalidadesServer: idsParaEnviar
+                funcionalidadesServer: idsParaEnviar,
+                fkUsuarioAcao: idUsuarioLogado
             })
         }).then(res => {
             if(res.ok) {
@@ -301,7 +303,7 @@
                 }
 
                 if(confirm(mensagem)) {
-                    fetch(`/permissoes/deletar/${idPermissao}`, {
+                    fetch(`/permissoes/deletar/${idPermissao}?fkUsuarioAcao=${idUsuarioLogado}`, {
                         method: "DELETE"
                     }).then(res => {
                         if(res.ok) {
@@ -332,7 +334,8 @@
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    funcionalidadesServer: funcSelecionadas
+                    funcionalidadesServer: funcSelecionadas,
+                    fkUsuarioAcao: idUsuarioLogado
                 })
             }).then(res => {
                 if (res.ok) {

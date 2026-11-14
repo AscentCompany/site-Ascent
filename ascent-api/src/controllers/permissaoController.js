@@ -1,4 +1,5 @@
 var permissaoModel = require("../models/permissaoModel");
+var logModel = require("../models/logModel");
 
 function listarPermissoes(req, res) {
     permissaoModel.listarPermissoes()
@@ -15,6 +16,7 @@ function listarFuncionalidades(req, res) {
 function cadastrar(req, res) {
     var nomePermissao = req.body.nomePermissaoServer;
     var funcionalidades = req.body.funcionalidadesServer;
+    let fkUsuarioAcao = req.body.fkUsuarioAcao;
 
     permissaoModel.cadastrarPermissao(nomePermissao)
         .then(() => {
@@ -24,6 +26,7 @@ function cadastrar(req, res) {
             var idNovaPermissao = resultadoUltimo[0].idNovaPermissao;
 
             if (funcionalidades.length === 0) {
+                logModel.registrarLog("GESTÃO DE PERMISSÃO", "CADASTRO", `Cadastrou a permissão ${nomePermissao} sem funcionalidades`, "permissoes.html", fkUsuarioAcao);
                 res.json({ mensagem: "Permissão salva sem funcionalidades" });
                 return;
             }
@@ -34,13 +37,20 @@ function cadastrar(req, res) {
                     .then(() => {
                         salvos++;
                         if (salvos === funcionalidades.length) {
+                            logModel.registrarLog("GESTÃO DE PERMISSÃO", "CADASTRO", `Cadastrou a permissão ${nomePermissao}`, "permissoes.html", fkUsuarioAcao);
                             res.json({ mensagem: "Permissão e funcionalidades cadastradas!" });
                         }
                     })
-                    .catch(erro => console.log(erro));
+                    .catch(erro => {
+                        console.log(erro);
+                        logModel.registrarLog("GESTÃO DE PERMISSÃO", "CADASTRO_ERRO", `Falha ao vincular a funcionalidade ID ${funcionalidades[i]} na permissão ${nomePermissao}`, "permissoes.html", fkUsuarioAcao);
+                    });
             }
         })
-        .catch(erro => res.status(500).json(erro.sqlMessage));
+        .catch(erro => {
+            logModel.registrarLog("GESTÃO DE PERMISSÃO", "CADASTRO_ERRO", `Falha ao cadastrar a permissão ${nomePermissao}`, "permissoes.html", fkUsuarioAcao);
+            res.status(500).json(erro.sqlMessage);
+        });
 }
 
 function buscarCargosVinculados(req, res) {
@@ -52,6 +62,7 @@ function buscarCargosVinculados(req, res) {
 
 function deletar(req, res) {
     var idPermissao = req.params.idPermissao;
+    let fkUsuarioAcao = req.query.fkUsuarioAcao || req.body.fkUsuarioAcao;
 
     permissaoModel.contarPermissoes()
         .then(resultado => {
@@ -60,9 +71,13 @@ function deletar(req, res) {
             if (qtdPermissoes <= 1) {
                 permissaoModel.deletarPermissaoFuncionalidades(idPermissao)
                     .then(() => {
+                        logModel.registrarLog("GESTÃO DE PERMISSÃO", "EXCLUSAO", `Removeu as funcionalidades da última permissão ID ${idPermissao} (a permissão foi mantida)`, "permissoes.html", fkUsuarioAcao);
                         res.json({ mensagem: "Como esta é a última permissão do sistema, ela não foi excluída, mas todas as suas funcionalidades foram removidas!" });
                     })
-                    .catch(erro => res.status(500).json(erro.sqlMessage));
+                    .catch(erro => {
+                        logModel.registrarLog("GESTÃO DE PERMISSÃO", "EXCLUSAO_ERRO", `Falha ao remover as funcionalidades da permissão ID ${idPermissao}`, "permissoes.html", fkUsuarioAcao);
+                        res.status(500).json(erro.sqlMessage);
+                    });
             }
             else {
                 permissaoModel.deletarCargoPermissoesPorPermissao(idPermissao)
@@ -73,22 +88,31 @@ function deletar(req, res) {
                         return permissaoModel.deletarPermissao(idPermissao);
                     })
                     .then(() => {
+                        logModel.registrarLog("GESTÃO DE PERMISSÃO", "EXCLUSAO", `Excluiu a permissão ID ${idPermissao}`, "permissoes.html", fkUsuarioAcao);
                         res.json({ mensagem: "Permissão excluída com sucesso!" });
                     })
-                    .catch(erro => res.status(500).json(erro.sqlMessage));
+                    .catch(erro => {
+                        logModel.registrarLog("GESTÃO DE PERMISSÃO", "EXCLUSAO_ERRO", `Falha ao excluir a permissão ID ${idPermissao}`, "permissoes.html", fkUsuarioAcao);
+                        res.status(500).json(erro.sqlMessage);
+                    });
             }
         })
-        .catch(erro => res.status(500).json(erro.sqlMessage));
+        .catch(erro => {
+            logModel.registrarLog("GESTÃO DE PERMISSÃO", "EXCLUSAO_ERRO", `Falha ao excluir a permissão ID ${idPermissao}`, "permissoes.html", fkUsuarioAcao);
+            res.status(500).json(erro.sqlMessage);
+        });
 }
 
 function atualizar(req, res) {
     var idPermissao = req.params.idPermissao;
     var funcionalidades = req.body.funcionalidadesServer;
+    let fkUsuarioAcao = req.body.fkUsuarioAcao;
 
     permissaoModel.deletarPermissaoFuncionalidades(idPermissao)
         .then(() => {
 
             if (funcionalidades.length === 0) {
+                logModel.registrarLog("GESTÃO DE PERMISSÃO", "EDICAO", `Removeu todas as funcionalidades da permissão ID ${idPermissao}`, "permissoes.html", fkUsuarioAcao);
                 res.json({ mensagem: "A permissão foi atualizada e não possui mais funcionalidades vinculadas." });
                 return;
             }
@@ -99,13 +123,20 @@ function atualizar(req, res) {
                     .then(() => {
                         salvos++;
                         if (salvos === funcionalidades.length) {
+                            logModel.registrarLog("GESTÃO DE PERMISSÃO", "EDICAO", `Atualizou as funcionalidades da permissão ID ${idPermissao}`, "permissoes.html", fkUsuarioAcao);
                             res.json({ mensagem: "Permissão atualizada com sucesso!" });
                         }
                     })
-                    .catch(erro => console.log(erro));
+                    .catch(erro => {
+                        console.log(erro);
+                        logModel.registrarLog("GESTÃO DE PERMISSÃO", "EDICAO_ERRO", `Falha ao vincular a funcionalidade ID ${funcionalidades[i]} na permissão ID ${idPermissao}`, "permissoes.html", fkUsuarioAcao);
+                    });
             }
         })
-        .catch(erro => res.status(500).json(erro.sqlMessage));
+        .catch(erro => {
+            logModel.registrarLog("GESTÃO DE PERMISSÃO", "EDICAO_ERRO", `Falha ao atualizar as funcionalidades da permissão ID ${idPermissao}`, "permissoes.html", fkUsuarioAcao);
+            res.status(500).json(erro.sqlMessage);
+        });
 }
 
 module.exports = {

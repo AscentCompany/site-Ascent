@@ -10,6 +10,7 @@ public class Log {
     private String mensagem;
     private LocalDateTime dataHora;
     private String origemCadastro;
+    private Integer fkUsuario;
 
     public Log() {}
 
@@ -78,6 +79,14 @@ public class Log {
         this.origemCadastro = origemCadastro;
     }
 
+    public Integer getFkUsuario() {
+        return fkUsuario;
+    }
+
+    public void setFkUsuario(Integer fkUsuario) {
+        this.fkUsuario = fkUsuario;
+    }
+
     @Override
     public String toString() {
         return "\nLog{" +
@@ -86,6 +95,7 @@ public class Log {
                 ", servico='" + servico + '\'' +
                 ", mensagem='" + mensagem + '\'' +
                 ", dataHora=" + dataHora +
+                ", fkUsuario=" + fkUsuario +
                 ", origemCadastro='" + origemCadastro + '\'' +
                 '}';
     }
