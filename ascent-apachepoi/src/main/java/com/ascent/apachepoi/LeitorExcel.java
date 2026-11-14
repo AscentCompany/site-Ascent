@@ -8,12 +8,10 @@ import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.eventusermodel.XSSFReader.SheetIterator;
 import org.apache.poi.xssf.model.SharedStrings;
-import org.apache.poi.xssf.model.StylesTable;
-import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
-
+import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -25,41 +23,54 @@ import java.util.Map;
 
 public class LeitorExcel {
 
-    public static String getEnvOrProp(String chave, String padrao) {
-        String val = System.getProperty(chave);
-        if (val != null && !val.trim().isEmpty()) {
-            return val.trim();
-        }
-        val = System.getenv(chave);
-        if (val != null && !val.trim().isEmpty()) {
-            return val.trim();
-        }
-        return padrao;
-    }
-
     private static final DateTimeFormatter FMT_DATA    = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter FMT_DATA_BR = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter FMT_HORA    = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    // <editor-fold desc="ResultadoLeitura">
     public static class ResultadoLeitura {
-        public List<Companhia>        companhias        = new ArrayList<>();
-        public List<Aviao>            avioes            = new ArrayList<>();
-        public List<Voo>              voos              = new ArrayList<>();
-        public List<Aeroporto>        aeroportos        = new ArrayList<>();
-        public List<AeroportoDirecao> aeroportoDirecoes = new ArrayList<>();
 
-        public String nomeArquivo       = null;
-        public int    linhasEncontradas = 0;
-        public int    linhasLidas       = 0;
-        public int    linhasRejeitadas  = 0;
-        public String statusLeitura     = "LIDO";
-        public String detalheErro       = null;
+        private List<Companhia>        companhias        = new ArrayList<>();
+        private List<Aviao>            avioes            = new ArrayList<>();
+        private List<Voo>              voos              = new ArrayList<>();
+        private List<Aeroporto>        aeroportos        = new ArrayList<>();
+        private List<AeroportoDirecao> aeroportoDirecoes = new ArrayList<>();
+
+        private String nomeArquivo       = null;
+        private int    linhasEncontradas = 0;
+        private int    linhasLidas       = 0;
+        private int    linhasRejeitadas  = 0;
+        private String statusLeitura     = "LIDO";
+        private String detalheErro       = null;
+
+        public List<Companhia> getCompanhias() { return companhias; }
+        public List<Aviao> getAvioes() { return avioes; }
+        public List<Voo> getVoos() { return voos; }
+        public List<Aeroporto> getAeroportos() { return aeroportos; }
+        public List<AeroportoDirecao> getAeroportoDirecoes() { return aeroportoDirecoes; }
+
+        public String getNomeArquivo() { return nomeArquivo; }
+        public void setNomeArquivo(String nomeArquivo) { this.nomeArquivo = nomeArquivo; }
+
+        public int getLinhasEncontradas() { return linhasEncontradas; }
+        public int getLinhasLidas() { return linhasLidas; }
+        public int getLinhasRejeitadas() { return linhasRejeitadas; }
+        public String getStatusLeitura() { return statusLeitura; }
+        public String getDetalheErro() { return detalheErro; }
+
+        @Override
+        public String toString() {
+            return String.format("ResultadoLeitura{arquivo='%s', lidas=%d, rejeitadas=%d, status='%s'}",
+                    nomeArquivo, linhasLidas, linhasRejeitadas, statusLeitura);
+        }
     }
+    // </editor-fold>
 
-    public ResultadoLeitura extrairDeArquivo(java.io.File arquivo) {
+    public ResultadoLeitura extrairDeArquivo(File arquivo) {
         ResultadoLeitura resultado = new ResultadoLeitura();
-        IOUtils.setByteArrayMaxOverride(1_000_000_000);
+        resultado.setNomeArquivo(arquivo.getName());
 
+        IOUtils.setByteArrayMaxOverride(1_000_000_000);
         ZipSecureFile.setMaxEntrySize(Long.MAX_VALUE);
         ZipSecureFile.setMaxTextSize(Long.MAX_VALUE);
         ZipSecureFile.setMinInflateRatio(0.0);
@@ -68,8 +79,8 @@ public class LeitorExcel {
 
             XSSFReader    xssfReader    = new XSSFReader(pkg);
             SharedStrings sharedStrings = new ReadOnlySharedStringsTable(pkg);
-
             SheetIterator sheetIterator = (SheetIterator) xssfReader.getSheetsData();
+
             if (!sheetIterator.hasNext()) {
                 throw new RuntimeException("Nenhuma sheet encontrada no arquivo.");
             }
@@ -82,314 +93,263 @@ public class LeitorExcel {
                 XMLStreamReader xml = xmlFactory.createXMLStreamReader(sheetStream);
 
                 String[] cabecalho = null;
-                Map<Integer, String> currentRow   = new HashMap<>();
-                Map<Integer, String> currentTypes = new HashMap<>();
-                int     currentRowNum = -1;
-                boolean inRow         = false;
-                boolean inCell        = false;
-                boolean inV           = false;
-                int     currentCol    = -1;
-                String  currentType   = null;
-                StringBuilder currentVal = new StringBuilder();
+                Map<Integer, String> linhaAtual  = new HashMap<>();
+                Map<Integer, String> tiposAtual  = new HashMap<>();
+                int     numLinha     = -1;
+                boolean emLinha      = false;
+                boolean emCelula     = false;
+                boolean emValor      = false;
+                int     colunaAtual  = -1;
+                String  tipoAtual    = null;
+                StringBuilder valorAtual = new StringBuilder();
 
                 while (xml.hasNext()) {
-                    int event = xml.next();
+                    int evento = xml.next();
 
-                    switch (event) {
-                        case XMLStreamReader.START_ELEMENT:
-                            String localName = xml.getLocalName();
-
-                            if ("row".equals(localName)) {
-                                inRow = true;
-                                currentRow.clear();
-                                currentTypes.clear();
+                    switch (evento) {
+                        case XMLStreamReader.START_ELEMENT -> {
+                            String tag = xml.getLocalName();
+                            if ("row".equals(tag)) {
+                                emLinha = true;
+                                linhaAtual.clear();
+                                tiposAtual.clear();
                                 String r = xml.getAttributeValue(null, "r");
-                                if (r != null) {
-                                    currentRowNum = Integer.parseInt(r) - 1;
-                                } else {
-                                    currentRowNum = -1;
-                                }
-                            } else if ("c".equals(localName) && inRow) {
-                                inCell = true;
-                                String r = xml.getAttributeValue(null, "r");
-                                currentCol  = refToColIndex(r);
-                                currentType = xml.getAttributeValue(null, "t");
-                                currentVal.setLength(0);
-                            } else if ("v".equals(localName) && inCell) {
-                                inV = true;
-                            } else if ("t".equals(localName) && inCell) {
-                                inV = true;
+                                numLinha = r != null ? Integer.parseInt(r) - 1 : -1;
+                            } else if ("c".equals(tag) && emLinha) {
+                                emCelula    = true;
+                                colunaAtual = refParaColuna(xml.getAttributeValue(null, "r"));
+                                tipoAtual   = xml.getAttributeValue(null, "t");
+                                valorAtual.setLength(0);
+                            } else if (("v".equals(tag) || "t".equals(tag)) && emCelula) {
+                                emValor = true;
                             }
-                            break;
-
-                        case XMLStreamReader.CHARACTERS:
-                            if (inV) {
-                                currentVal.append(xml.getText());
-                            }
-                            break;
-
-                        case XMLStreamReader.END_ELEMENT:
-                            String endName = xml.getLocalName();
-
-                            if ("v".equals(endName) || "t".equals(endName)) {
-                                inV = false;
-                            } else if ("c".equals(endName) && inCell) {
-                                inCell = false;
-                                String val = currentVal.toString();
-                                if ("s".equals(currentType) && !val.isEmpty()) {
+                        }
+                        case XMLStreamReader.CHARACTERS -> {
+                            if (emValor) valorAtual.append(xml.getText());
+                        }
+                        case XMLStreamReader.END_ELEMENT -> {
+                            String tag = xml.getLocalName();
+                            if ("v".equals(tag) || "t".equals(tag)) {
+                                emValor = false;
+                            } else if ("c".equals(tag) && emCelula) {
+                                emCelula = false;
+                                String val = valorAtual.toString();
+                                if ("s".equals(tipoAtual) && !val.isEmpty()) {
                                     try {
-                                        int sstIdx = Integer.parseInt(val);
-                                        val = sharedStrings.getItemAt(sstIdx).getString();
-                                    } catch (Exception ignored) {
+                                        val = sharedStrings.getItemAt(Integer.parseInt(val)).getString();
+                                    } catch (Exception e) {
                                         val = "";
                                     }
                                 }
-                                if (currentCol >= 0 && val != null && !val.isEmpty()) {
-                                    currentRow.put(currentCol, val);
-                                    currentTypes.put(currentCol, currentType);
+                                if (colunaAtual >= 0 && !val.isEmpty()) {
+                                    linhaAtual.put(colunaAtual, val);
+                                    tiposAtual.put(colunaAtual, tipoAtual);
                                 }
-                            } else if ("row".equals(endName) && inRow) {
-                                inRow = false;
-
-                                if (currentRowNum == 0 || cabecalho == null) {
-
-                                    int maxCol = 0;
-                                    for (Integer k : currentRow.keySet()) {
-                                        if (k > maxCol) maxCol = k;
-                                    }
-                                    cabecalho = new String[maxCol + 1];
-                                    for (Map.Entry<Integer, String> e : currentRow.entrySet()) {
-                                        if (e.getValue() != null) {
-                                            cabecalho[e.getKey()] = e.getValue().toLowerCase();
-                                        } else {
-                                            cabecalho[e.getKey()] = "";
-                                        }
-                                    }
+                            } else if ("row".equals(tag) && emLinha) {
+                                emLinha = false;
+                                if (numLinha == 0 || cabecalho == null) {
+                                    cabecalho = construirCabecalho(linhaAtual);
                                 } else {
                                     resultado.linhasEncontradas++;
-                                    boolean linhaValida = processarLinha(currentRow, currentTypes, cabecalho, resultado);
-                                    if (linhaValida) {
+                                    boolean valida = processarLinha(linhaAtual, cabecalho, resultado);
+                                    if (valida) {
                                         resultado.linhasLidas++;
                                     } else {
                                         resultado.linhasRejeitadas++;
                                     }
                                 }
                             }
-                            break;
+                        }
                     }
                 }
-
                 xml.close();
             }
 
-            if (resultado.linhasRejeitadas == 0) {
-                resultado.statusLeitura = "LIDO";
-            } else if (resultado.linhasLidas > 0) {
-                resultado.statusLeitura = "PARCIALMENTE_LIDO";
-            } else {
-                resultado.statusLeitura = "ERRO_NA_LEITURA";
-            }
+            resultado.statusLeitura = resultado.linhasRejeitadas == 0        ? "LIDO"
+                                    : resultado.linhasLidas       > 0         ? "PARCIALMENTE_LIDO"
+                                                                               : "ERRO_NA_LEITURA";
 
         } catch (Exception e) {
             resultado.statusLeitura = "ERRO_NA_LEITURA";
             resultado.detalheErro   = e.getMessage();
-            throw new RuntimeException("Erro ao ler a planilha: " + e.getMessage(), e);
+            throw new RuntimeException("Erro ao ler o arquivo " + arquivo.getName() + ": " + e.getMessage(), e);
         }
 
         return resultado;
     }
 
-    private boolean processarLinha(Map<Integer, String> row, Map<Integer, String> types,
-                                    String[] cabecalho, ResultadoLeitura resultado) {
-        boolean linhaValida = false;
-
-        Integer codEmpresa  = getValInt(row, cabecalho, "id_empresa");
-        String  nmEmpresa   = getValStr(row, cabecalho, "nm_empresa");
-        String  paisEmpresa = getValStr(row, cabecalho, "nm_pais");
-        if (paisEmpresa == null || paisEmpresa.isEmpty()) {
-            paisEmpresa = getValStr(row, cabecalho, "nm_pais_origem");
+    // Monta o array de cabeçalho a partir da linha 0
+    private String[] construirCabecalho(Map<Integer, String> linha) {
+        int maxCol = linha.keySet().stream().mapToInt(i -> i).max().orElse(0);
+        String[] cabecalho = new String[maxCol + 1];
+        for (Map.Entry<Integer, String> e : linha.entrySet()) {
+            cabecalho[e.getKey()] = e.getValue() != null ? e.getValue().toLowerCase() : "";
         }
-        if (codEmpresa != null && nmEmpresa != null && !nmEmpresa.isEmpty()) {
-            Companhia c = new Companhia();
-            c.codCompanhia  = codEmpresa;
-            c.nomeCompanhia = nmEmpresa;
-            if (paisEmpresa != null && !paisEmpresa.isEmpty()) {
-                c.paisCompanhia = paisEmpresa;
-            } else {
-                c.paisCompanhia = "BRASIL";
-            }
-            resultado.companhias.add(c);
-            linhaValida = true;
-        }
-
-        String  modelo   = getValStr(row, cabecalho, "ds_modelo");
-        Integer assentos = getValInt(row, cabecalho, "nr_assentos_ofertados");
-        if (modelo != null && !modelo.isEmpty()) {
-            Aviao a = new Aviao();
-            a.modelo = modelo;
-            if (assentos != null) {
-                a.numAssentos = assentos;
-            } else {
-                a.numAssentos = 0;
-            }
-            resultado.avioes.add(a);
-            linhaValida = true;
-        }
-
-        Integer nrVoo      = getValInt(row, cabecalho, "nr_voo");
-        Integer tipoVoo    = getValInt(row, cabecalho, "cd_di");
-        Integer passPagos  = getValInt(row, cabecalho, "nr_passag_pagos");
-        Integer passGratis = getValInt(row, cabecalho, "nr_passag_gratis");
-        int pagos;
-        if (passPagos != null) {
-            pagos = passPagos;
-        } else {
-            pagos = 0;
-        }
-        int gratis;
-        if (passGratis != null) {
-            gratis = passGratis;
-        } else {
-            gratis = 0;
-        }
-        int qtdPass = pagos + gratis;
-        if (nrVoo != null) {
-            Voo v = new Voo();
-            v.numVoo = nrVoo;
-            if (tipoVoo != null) {
-                v.tipoVoo = tipoVoo;
-            } else {
-                v.tipoVoo = 0;
-            }
-            v.qtdPassageiros = qtdPass;
-            resultado.voos.add(v);
-            linhaValida = true;
-        }
-
-        String nmAeroOrig = getValStr(row, cabecalho, "nm_aerodromo_origem");
-        String icaoOrig   = getValStr(row, cabecalho, "sg_icao_origem");
-        if (nmAeroOrig != null && !nmAeroOrig.isEmpty()) {
-            Aeroporto orig = new Aeroporto();
-            orig.nomeAeroporto = nmAeroOrig;
-            orig.municipio     = getValStr(row, cabecalho, "nm_municipio_origem");
-            orig.uf            = getValStr(row, cabecalho, "sg_uf_origem");
-            orig.regiao        = getValStr(row, cabecalho, "nm_regiao_origem");
-            orig.pais          = getValStr(row, cabecalho, "nm_pais_origem");
-            orig.icao          = icaoOrig;
-            resultado.aeroportos.add(orig);
-            linhaValida = true;
-        }
-
-        String nmAeroDest = getValStr(row, cabecalho, "nm_aerodromo_destino");
-        String icaoDest   = getValStr(row, cabecalho, "sg_icao_destino");
-        if (nmAeroDest != null && !nmAeroDest.isEmpty()) {
-            Aeroporto dest = new Aeroporto();
-            dest.nomeAeroporto = nmAeroDest;
-            dest.municipio     = getValStr(row, cabecalho, "nm_municipio_destino");
-            dest.uf            = getValStr(row, cabecalho, "sg_uf_destino");
-            dest.regiao        = getValStr(row, cabecalho, "nm_regiao_destino");
-            dest.pais          = getValStr(row, cabecalho, "nm_pais_destino");
-            dest.icao          = icaoDest;
-            resultado.aeroportos.add(dest);
-            linhaValida = true;
-        }
-
-        LocalDate dtPart = getValDate(row, cabecalho, "dt_partida_real");
-        LocalTime hrPart = getValTime(row, cabecalho, "hr_partida_real");
-        if (dtPart != null && hrPart != null) {
-            AeroportoDirecao p = new AeroportoDirecao();
-            p.direcao = "Partida";
-            p.dia     = dtPart;
-            p.hora    = hrPart;
-            resultado.aeroportoDirecoes.add(p);
-        }
-
-        LocalDate dtCheg = getValDate(row, cabecalho, "dt_chegada_real");
-        LocalTime hrCheg = getValTime(row, cabecalho, "hr_chegada_real");
-        if (dtCheg != null && hrCheg != null) {
-            AeroportoDirecao c = new AeroportoDirecao();
-            c.direcao = "Destino";
-            c.dia     = dtCheg;
-            c.hora    = hrCheg;
-            resultado.aeroportoDirecoes.add(c);
-        }
-
-        return linhaValida;
+        return cabecalho;
     }
 
-    private int refToColIndex(String ref) {
+    // Processa uma linha de dados — retorna false se algum campo obrigatório for nulo/inválido
+    private boolean processarLinha(Map<Integer, String> linha, String[] cabecalho, ResultadoLeitura resultado) {
+
+        // Campos obrigatórios: numVoo + codEmpresa + nmAerodromo (origem ou destino)
+        Integer codEmpresa = getInt(linha, cabecalho, "id_empresa");
+        Integer nrVoo      = getInt(linha, cabecalho, "nr_voo");
+        String  nmAeroOrig = getStr(linha, cabecalho, "nm_aerodromo_origem");
+
+        if (codEmpresa == null || nrVoo == null || nmAeroOrig == null || nmAeroOrig.isBlank()) {
+            return false; // linha inválida — pula
+        }
+
+        // --- Companhia ---
+        Companhia companhia = new Companhia();
+        companhia.setCodCompanhia(codEmpresa);
+        companhia.setNomeCompanhia(getStr(linha, cabecalho, "nm_empresa"));
+        companhia.setPaisCompanhia(getStrOuPadrao(linha, cabecalho, "nm_pais_origem", "BRASIL"));
+        companhia.setRazaoSocial("");
+        companhia.setCnpj("");
+        resultado.getCompanhias().add(companhia);
+
+        // --- Aviao ---
+        String modelo = getStr(linha, cabecalho, "ds_modelo");
+        if (modelo != null && !modelo.isBlank()) {
+            Aviao aviao = new Aviao();
+            aviao.setModelo(modelo);
+            aviao.setNumAssentos(getIntOuPadrao(linha, cabecalho, "nr_assentos_ofertados", 0));
+            resultado.getAvioes().add(aviao);
+        }
+
+        // --- Voo ---
+        Voo voo = new Voo();
+        voo.setNumVoo(nrVoo);
+        voo.setTipoVoo(getIntOuPadrao(linha, cabecalho, "cd_di", 0));
+        int pagos   = getIntOuPadrao(linha, cabecalho, "nr_passag_pagos",   0);
+        int gratis  = getIntOuPadrao(linha, cabecalho, "nr_passag_gratis",  0);
+        voo.setQtdPassageiros(pagos + gratis);
+        resultado.getVoos().add(voo);
+
+        // --- Aeroporto Origem ---
+        Aeroporto origem = new Aeroporto();
+        origem.setNomeAeroporto(nmAeroOrig);
+        origem.setMunicipio(getStr(linha, cabecalho, "nm_municipio_origem"));
+        origem.setUf(getStr(linha, cabecalho, "sg_uf_origem"));
+        origem.setRegiao(getStr(linha, cabecalho, "nm_regiao_origem"));
+        origem.setPais(getStrOuPadrao(linha, cabecalho, "nm_pais_origem", "BRASIL"));
+        origem.setIcao(getStr(linha, cabecalho, "sg_icao_origem"));
+        resultado.getAeroportos().add(origem);
+
+        // --- Aeroporto Destino ---
+        String nmAeroDest = getStr(linha, cabecalho, "nm_aerodromo_destino");
+        if (nmAeroDest != null && !nmAeroDest.isBlank()) {
+            Aeroporto destino = new Aeroporto();
+            destino.setNomeAeroporto(nmAeroDest);
+            destino.setMunicipio(getStr(linha, cabecalho, "nm_municipio_destino"));
+            destino.setUf(getStr(linha, cabecalho, "sg_uf_destino"));
+            destino.setRegiao(getStr(linha, cabecalho, "nm_regiao_destino"));
+            destino.setPais(getStrOuPadrao(linha, cabecalho, "nm_pais_destino", "BRASIL"));
+            destino.setIcao(getStr(linha, cabecalho, "sg_icao_destino"));
+            resultado.getAeroportos().add(destino);
+        }
+
+        // --- AeroportoDirecao Partida ---
+        LocalDate dtPart = getDate(linha, cabecalho, "dt_partida_real");
+        LocalTime hrPart = getTime(linha, cabecalho, "hr_partida_real");
+        if (dtPart != null && hrPart != null) {
+            AeroportoDirecao partida = new AeroportoDirecao();
+            partida.setDirecao("Partida");
+            partida.setDia(dtPart);
+            partida.setHora(hrPart);
+            resultado.getAeroportoDirecoes().add(partida);
+        }
+
+        // --- AeroportoDirecao Chegada ---
+        LocalDate dtCheg = getDate(linha, cabecalho, "dt_chegada_real");
+        LocalTime hrCheg = getTime(linha, cabecalho, "hr_chegada_real");
+        if (dtCheg != null && hrCheg != null) {
+            AeroportoDirecao chegada = new AeroportoDirecao();
+            chegada.setDirecao("Destino");
+            chegada.setDia(dtCheg);
+            chegada.setHora(hrCheg);
+            resultado.getAeroportoDirecoes().add(chegada);
+        }
+
+        return true;
+    }
+
+    // <editor-fold desc="Helpers de leitura de célula">
+
+    private int refParaColuna(String ref) {
         if (ref == null || ref.isEmpty()) return 0;
         int col = 0;
-        for (int i = 0; i < ref.length(); i++) {
-            char c = ref.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                col = col * 26 + (c - 'A' + 1);
-            } else if (c >= 'a' && c <= 'z') {
-                col = col * 26 + (c - 'a' + 1);
-            } else {
-                break;
-            }
+        for (char c : ref.toCharArray()) {
+            if (c >= 'A' && c <= 'Z') col = col * 26 + (c - 'A' + 1);
+            else if (c >= 'a' && c <= 'z') col = col * 26 + (c - 'a' + 1);
+            else break;
         }
         return col - 1;
     }
 
-    private int indiceColuna(String[] cabecalho, String nomeColuna) {
-        String nomeBusca = nomeColuna.toLowerCase();
+    private int indiceColuna(String[] cabecalho, String nome) {
+        String busca = nome.toLowerCase();
         for (int i = 0; i < cabecalho.length; i++) {
-            if (nomeBusca.equals(cabecalho[i])) {
-                return i;
-            }
+            if (busca.equals(cabecalho[i])) return i;
         }
         return -1;
     }
 
-    private String getValStr(Map<Integer, String> row, String[] cabecalho, String nomeColuna) {
-        int idx = indiceColuna(cabecalho, nomeColuna);
-        if (idx == -1) return null;
-        return row.get(idx);
+    private String getStr(Map<Integer, String> linha, String[] cabecalho, String nome) {
+        int idx = indiceColuna(cabecalho, nome);
+        return idx == -1 ? null : linha.get(idx);
     }
 
-    private Integer getValInt(Map<Integer, String> row, String[] cabecalho, String nomeColuna) {
-        String val = getValStr(row, cabecalho, nomeColuna);
-        if (val == null || val.isEmpty()) return null;
-        try {
-            return (int) Double.parseDouble(val);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+    private String getStrOuPadrao(Map<Integer, String> linha, String[] cabecalho, String nome, String padrao) {
+        String val = getStr(linha, cabecalho, nome);
+        return (val != null && !val.isBlank()) ? val : padrao;
     }
 
-    private LocalDate getValDate(Map<Integer, String> row, String[] cabecalho, String nomeColuna) {
-        String val = getValStr(row, cabecalho, nomeColuna);
-        if (val == null || val.isEmpty()) return null;
+    private Integer getInt(Map<Integer, String> linha, String[] cabecalho, String nome) {
+        String val = getStr(linha, cabecalho, nome);
+        if (val == null || val.isBlank()) return null;
+        try { return (int) Double.parseDouble(val); }
+        catch (NumberFormatException e) { return null; }
+    }
+
+    private int getIntOuPadrao(Map<Integer, String> linha, String[] cabecalho, String nome, int padrao) {
+        Integer val = getInt(linha, cabecalho, nome);
+        return val != null ? val : padrao;
+    }
+
+    private LocalDate getDate(Map<Integer, String> linha, String[] cabecalho, String nome) {
+        String val = getStr(linha, cabecalho, nome);
+        if (val == null || val.isBlank()) return null;
         try {
             double d = Double.parseDouble(val);
             return LocalDate.of(1899, 12, 30).plusDays((long) d);
-        } catch (NumberFormatException nfe) {
-            try {
-                if (val.contains("-")) {
-                    return LocalDate.parse(val, FMT_DATA);
-                } else if (val.contains("/")) {
-                    return LocalDate.parse(val, FMT_DATA_BR);
-                }
-            } catch (Exception ignored) {}
+        } catch (NumberFormatException e) {
+            try { return val.contains("-") ? LocalDate.parse(val, FMT_DATA) : LocalDate.parse(val, FMT_DATA_BR); }
+            catch (Exception ex) { return null; }
         }
-        return null;
     }
 
-    private LocalTime getValTime(Map<Integer, String> row, String[] cabecalho, String nomeColuna) {
-        String val = getValStr(row, cabecalho, nomeColuna);
-        if (val == null || val.isEmpty()) return null;
+    private LocalTime getTime(Map<Integer, String> linha, String[] cabecalho, String nome) {
+        String val = getStr(linha, cabecalho, nome);
+        if (val == null || val.isBlank()) return null;
         try {
-            double d        = Double.parseDouble(val);
-            double fraction = d - (long) d;
-            int    seconds  = (int) (fraction * 24 * 60 * 60);
-            return LocalTime.ofSecondOfDay(seconds);
-        } catch (NumberFormatException nfe) {
-            try {
-                return LocalTime.parse(val, FMT_HORA);
-            } catch (Exception ignored) {}
+            double d = Double.parseDouble(val);
+            int segundos = (int) ((d - (long) d) * 24 * 60 * 60);
+            return LocalTime.ofSecondOfDay(segundos);
+        } catch (NumberFormatException e) {
+            try { return LocalTime.parse(val, FMT_HORA); }
+            catch (Exception ex) { return null; }
         }
-        return null;
+    }
+
+    // </editor-fold>
+
+    public static String getEnvOrProp(String chave, String padrao) {
+        String val = System.getProperty(chave);
+        if (val != null && !val.trim().isEmpty()) return val.trim();
+        val = System.getenv(chave);
+        if (val != null && !val.trim().isEmpty()) return val.trim();
+        return padrao;
     }
 }
