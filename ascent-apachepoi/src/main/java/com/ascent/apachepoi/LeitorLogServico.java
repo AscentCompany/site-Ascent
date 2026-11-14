@@ -31,11 +31,11 @@ public class LeitorLogServico {
             return;
         }
 
-        System.out.println("=======================================================");
-        for (LogServico log : logs) {
-            System.out.println(log.formatarLog());
+        System.out.println("===================Total de logs: " + logs.size() + "=======================");
+        for (int i = logs.size() - 1; i >= 0; i--) {
+            System.out.println(logs.get(i).formatarLog());
         }
-        System.out.println("Total de logs: " + logs.size());
+       
     }
 
 
