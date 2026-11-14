@@ -77,6 +77,12 @@ else
   mkdir -p /dados/mysql
 fi
 echo ">> Diretório /dados/mysql verificado."
+  sudo mkdir -p /database/mysql
+  sudo chmod 777 /database/mysql
+else
+  mkdir -p /database/mysql
+fi
+echo ">> Diretório /database/mysql verificado."
 
 echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
 # Detecta se é "docker compose" (v2) ou "docker-compose" (v1), instala se necessário

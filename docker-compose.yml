@@ -26,6 +26,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - /dados/mysql:/var/lib/mysql
+      - /database/mysql:/var/lib/mysql
       - ./database/ascent.sql:/docker-entrypoint-initdb.d/01-ascent.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
