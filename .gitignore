@@ -24,6 +24,7 @@ ascent-api/.env
 # Logs gerados em runtime
 *.log
 start.log
+dados/logs/
 
 # Dados persistidos do MySQL em /dados
 /dados/
