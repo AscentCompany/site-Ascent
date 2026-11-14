@@ -310,151 +310,88 @@ body.menu-fechado .btn-menu {
   min-height: 120px;
 }
 
-.kpi-gradient {
-  color: #fff;
-  border: 0;
-  border-radius: 8px;
-  padding: 12px 14px;
-  position: relative;
-  width: auto;
-  min-width: 0;
-  text-align: center;
-}
-
-.kpi-region {
-  background: linear-gradient(90deg, var(--red-card) 30%, var(--orange-card));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-}
-
-.kpi-region .kpi-text-icon i {
-  display: flex;
-  margin: 8px 0 0;
-  font-size: x-large;
-}
-
-.kpi-region h2 {
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
-  line-height: 1.2;
-  max-width: 100%;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.kpi-region .big {
-  max-width: 100%;
-  font-size: clamp(17px, 2vw, 27px);
-  font-weight: 800;
-  margin-top: 10px;
-  line-height: 1;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.kpi-region .sub {
-  font-size: 11px;
-  margin: 2px 0 0;
-  font-weight: 600;
-  max-width: 100%;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.kpi-region .year {
-  font-size: 9px;
-  margin-top: 14px;
-}
-
-.kpi-mes {
-  background: linear-gradient(90deg, var(--light-orange-card) 30%, var(--salmon-orange-card));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  color: #2b2b2b;
-}
-
-.kpi-mes .kpi-text-icon i {
-  display: flex;
-  margin: 8px 0 0;
-  font-size: x-large;
-  color: var(--orange-active);
-}
-
-.kpi-mes h2 {
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
-  line-height: 1.2;
-  max-width: 100%;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.kpi-mes .big {
-  max-width: 100%;
-  font-size: clamp(17px, 2vw, 27px);
-  font-weight: 800;
-  margin-top: 10px;
-  line-height: 1;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.kpi-mes .sub {
-  font-size: 11px;
-  margin: 2px 0 0;
-  font-weight: 600;
-  max-width: 100%;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.kpi-mes .year {
-  font-size: 9px;
-  margin-top: 14px;
-}
-
-.kpi-box {
+.kpi-card,
+.kpi-critical {
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 8px 6px 6px;
-}
-
-.kpi-box .value {
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-.kpi-box .label {
-  font-size: 12px;
-  margin-top: 2px;
-}
-
-.kpi-box .prev {
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-.kpi-box .goal {
-  font-size: 8px;
-  color: var(--muted);
-}
-
-.kpi-text-icon {
+  padding: 14px 18px;
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  max-width: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.kpi-card h2,
+.kpi-critical h2 {
+  width: 100%;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: left;
+  text-transform: uppercase;
+  color: #2b2b2b;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+.kpi-card-main,
+.kpi-critical-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 2px 0;
+}
+
+.kpi-card .big,
+.kpi-critical .big {
+  margin: 0;
+  font-size: clamp(26px, 2.4vw, 42px);
+  font-weight: 800;
+  line-height: 1.05;
+  color: #1f242e;
+  letter-spacing: -0.5px;
+}
+
+.kpi-card .unit,
+.kpi-critical .unit {
+  font-size: clamp(15px, 1.2vw, 20px);
+  font-weight: 700;
+  color: #4b5563;
+}
+
+.kpi-card .sub,
+.kpi-critical .sub {
+  width: 100%;
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  text-align: left;
+  color: #555;
+  font-weight: 600;
+}
+
+.kpi-card .sub strong,
+.kpi-critical .sub strong {
+  color: #c62828;
+  font-weight: 800;
+}
+
+.kpi-card .sub strong.positive,
+.kpi-critical .sub strong.positive {
+  color: #53c529;
+}
+
+.kpi-card .sub strong.negative,
+.kpi-critical .sub strong.negative {
+  color: #c62828;
 }
 
 @media (max-width: 1200px) {
