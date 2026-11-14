@@ -142,84 +142,6 @@
     color: var(--cinza-texto);
 }
 
-.page-wrapper {
-    display: flex;
-    min-height: 100vh;
-    background: linear-gradient(160deg, #FFF3E8 0%, #FFFFFF 55%);
-}
-
-.sidebar {
-    width: 260px;
-    background-color: var(--branco);
-    border-right: 1.5px solid var(--cor-borda);
-    border-radius: 0 28px 28px 0;
-    padding: 40px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow: var(--sombra-suave);
-}
-
-.logo-container {
-    margin-bottom: 50px;
-}
-
-.logo-container-usuario {
-    margin-bottom: 18px;
-}
-
-.sidebar .profile {
-    background: var(--laranja);
-    color: var(--branco);
-    border-radius: 999px;
-    width: 100%;
-    max-width: 180px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 8px;
-    font-size: 10px;
-    font-weight: 700;
-    margin-bottom: 26px;
-}
-
-.sidebar .profile svg {
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
-}
-
-.sidebar-menu {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 15px;
-}
-
-.menu-btn {
-    padding: 12px;
-    background-color: transparent;
-    border: 1.5px solid var(--cor-borda);
-    color: var(--cinza-texto);
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.3s ease;
-    text-align: center;
-}
-
-.menu-btn:hover {
-    border-color: var(--laranja);
-    color: var(--laranja);
-}
-
-.menu-btn.active {
-    background-color: var(--laranja);
-    color: var(--branco);
-    border-color: var(--laranja);
-}
-
 .titulos {
     display: flex;
     flex-direction: column;
@@ -315,6 +237,55 @@
     font-size: 14px;
 }
 
+.container-gerenciar {
+    width: calc(100% - var(--sidebar-w, 152px));
+    min-height: 100vh;
+    margin-left: var(--sidebar-w, 152px);
+    transition: margin-left .3s ease, width .3s ease;
+}
+
+body.menu-fechado .container-gerenciar {
+    width: 100%;
+    margin-left: 0;
+}
+
+.gestao-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 28px;
+    padding: 5px;
+    overflow-x: auto;
+    border: 1px solid var(--cor-borda);
+    border-radius: 999px;
+    background: var(--branco);
+    box-shadow: 0 6px 18px rgba(138, 28, 0, 0.1);
+}
+
+.gestao-nav a {
+    flex: 0 0 auto;
+    padding: 10px 18px;
+    border-radius: 999px;
+    color: var(--cinza-texto);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.gestao-nav a:hover {
+    color: var(--laranja-escuro);
+    background: var(--cinza-claro);
+}
+
+.gestao-nav a.ativo {
+    color: var(--branco);
+    background: var(--laranja);
+}
+
 @media (max-width: 1100px) {
     .container-gerenciar {
         padding: 32px 28px;
@@ -336,54 +307,10 @@
 }
 
 @media (max-width: 900px) {
-    .page-wrapper {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        width: 100%;
-        min-height: 0;
-        padding: 16px 20px;
-        border-radius: 0 0 20px 20px;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        gap: 12px 16px;
-    }
-
-    .logo-container,
-    .logo-container-usuario {
-        width: min(120px, 32vw);
-        margin: 0;
-    }
-
-    .logo-container img {
-        width: 100%;
-        height: auto;
-    }
-
-    .sidebar .profile {
-        margin: 0;
-        justify-self: end;
-    }
-
-    .sidebar-menu {
-        grid-column: 1 / -1;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .menu-btn {
-        min-width: 0;
-        min-height: 44px;
-        padding: 8px;
-        line-height: 1.25;
-    }
-
     .container-gerenciar {
         width: 100%;
-        padding: 28px 24px;
+        margin-left: 0;
+        padding: 64px 24px 28px;
     }
 
     .header-gerenciar {
@@ -426,7 +353,7 @@
     }
 
     .container-gerenciar {
-        padding: 22px 16px;
+        padding: 64px 16px 22px;
     }
 
     .header-gerenciar {
@@ -434,6 +361,15 @@
         flex-direction: column;
         gap: 12px;
         margin-bottom: 18px;
+    }
+
+    .gestao-nav {
+        margin-bottom: 24px;
+    }
+
+    .gestao-nav a {
+        padding: 10px 14px;
+        font-size: 12px;
     }
 
     .titulo-boas-vindas {
