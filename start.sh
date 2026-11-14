@@ -71,12 +71,12 @@ docker rm -f ascent-mysql mysql ascent-api ascent-logs ascent-apachepoi 2>/dev/n
 
 # Garante que o diretório do banco no EBS secundário existe com permissões corretas
 if [ "$IS_EC2" = true ]; then
-  sudo mkdir -p /database/mysql
-  sudo chmod 777 /database/mysql
+  sudo mkdir -p /dados/mysql
+  sudo chmod 777 /dados/mysql
 else
-  mkdir -p /database/mysql
+  mkdir -p /dados/mysql
 fi
-echo ">> Diretório /database/mysql verificado."
+echo ">> Diretório /dados/mysql verificado."
 
 echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
 # Detecta se é "docker compose" (v2) ou "docker-compose" (v1), instala se necessário
