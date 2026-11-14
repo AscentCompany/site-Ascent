@@ -74,6 +74,53 @@ function buscarDadosKpiBenchmark(req, res) {
         });
 }
 
+function arredondarMedia(valor) {
+    if (valor === null || valor === undefined) {
+        return 0;
+    }
+
+    let numero = Number(valor);
+    if (isNaN(numero)) {
+        return 0;
+    }
+
+    return Math.round(numero);
+}
+
+function buscarDadosKpiVolumeMedio(req, res) {
+    let idCompanhia = Number(req.params.idCompanhia);
+
+    if (isNaN(idCompanhia) || idCompanhia <= 0 ) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: "ID da companhia inválido ou não informado."
+        });
+    }
+
+    kpiModel.obterVolumeMedioPassageiros(idCompanhia)
+        .then(function (resultado) {
+            let mediaMercado = arredondarMedia(resultado.mediaMercado);
+            let mediaCompanhia = arredondarMedia(resultado.mediaCompanhia);
+
+            res.json({
+                sucesso: true,
+                dados: {
+                    mediaMercado: mediaMercado,
+                    mediaCompanhia: mediaCompanhia
+                }
+            });
+        })
+        .catch(function (erro) {
+            console.error("Erro ao buscar volume médio de passageiros:", erro);
+            res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar dados da KPI de volume médio.",
+                erro: erro.sqlMessage || erro.message || erro
+            });
+        });
+}
+
 module.exports = {
-    buscarDadosKpiBenchmark
+    buscarDadosKpiBenchmark,
+    buscarDadosKpiVolumeMedio
 };

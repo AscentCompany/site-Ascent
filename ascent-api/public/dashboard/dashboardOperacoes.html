@@ -80,11 +80,17 @@
 
       <article class="card kpi-card">
         <h2>Volume médio de passageiros</h2>
-        <div class="kpi-card-main">
-          <div class="big">75 <span class="unit">p/ Voo</span></div>
-        </div>
-        <div class="sub">
-          Sua média é de <strong class="negative">35 passageiros por voo</strong>
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome">Passageiros p/ voo</span>
+            <strong class="kpi-coluna-taxa" id="kpi-volume-companhia">--</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Mercado</span>
+            <span class="kpi-coluna-nome">Passageiros p/ voo</span>
+            <strong class="kpi-coluna-taxa" id="kpi-volume-mercado">--</strong>
+          </div>
         </div>
       </article>
 
@@ -234,10 +240,10 @@
 
   function carregarKpiBenchmark() {
     let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
-    let nomeSuaCompanhia = document.getElementById('kpi-nome-sua-companhia');
-    let taxaSuaCompanhia = document.getElementById('kpi-taxa-sua-companhia');
-    let nomeCompanhiaBenchmark = document.getElementById('kpi-nome-benchmark');
-    let taxaCompanhiaBenchmark = document.getElementById('kpi-taxa-benchmark');
+    let elementoNomeSuaCompanhia = document.getElementById('kpi-nome-sua-companhia');
+    let elementoTaxaSuaCompanhia = document.getElementById('kpi-taxa-sua-companhia');
+    let elementoNomeBenchmark = document.getElementById('kpi-nome-benchmark');
+    let elementoTaxaBenchmark = document.getElementById('kpi-taxa-benchmark');
 
     fetch(`/api/kpis/benchmark/${companhiaId}`)
       .then(function (resposta) {
@@ -261,31 +267,70 @@
         let nomeBenchmark = benchmark.nome || 'Sem dados';
         let taxaBenchmark = Number(benchmark.taxaOcupacao) || 0;
 
-        nomeSuaCompanhia.textContent = nomeSuaCompanhia;
-        nomeSuaCompanhia.title = nomeSuaCompanhia;
-        taxaSuaCompanhia.textContent = `${taxaSuaCompanhia}%`;
-        taxaSuaCompanhia.className = `kpi-coluna-taxa ${classeSuaCompanhia}`;
+        elementoNomeSuaCompanhia.textContent = nomeSuaCompanhia;
+        elementoNomeSuaCompanhia.title = nomeSuaCompanhia;
+        elementoTaxaSuaCompanhia.textContent = `${taxaSuaCompanhia}%`;
+        elementoTaxaSuaCompanhia.className = `kpi-coluna-taxa ${classeSuaCompanhia}`;
 
-        nomeCompanhiaBenchmark.textContent = nomeBenchmark;
-        nomeCompanhiaBenchmark.title = nomeBenchmark;
-        taxaCompanhiaBenchmark.textContent = `${taxaBenchmark}%`;
-        taxaCompanhiaBenchmark.className = 'kpi-coluna-taxa positive';
+        elementoNomeBenchmark.textContent = nomeBenchmark;
+        elementoNomeBenchmark.title = nomeBenchmark;
+        elementoTaxaBenchmark.textContent = `${taxaBenchmark}%`;
+        elementoTaxaBenchmark.className = 'kpi-coluna-taxa positive';
       })
       .catch(function (erro) {
         console.error('Erro ao carregar KPI de ocupação:', erro);
-        nomeSuaCompanhia.textContent = '--';
-        nomeSuaCompanhia.title = '';
-        taxaSuaCompanhia.textContent = '--';
-        taxaSuaCompanhia.className = 'kpi-coluna-taxa';
+        elementoNomeSuaCompanhia.textContent = '--';
+        elementoNomeSuaCompanhia.title = '';
+        elementoTaxaSuaCompanhia.textContent = '--';
+        elementoTaxaSuaCompanhia.className = 'kpi-coluna-taxa';
 
-        nomeCompanhiaBenchmark.textContent = '--';
-        nomeCompanhiaBenchmark.title = '';
-        taxaCompanhiaBenchmark.textContent = '--';
-        taxaCompanhiaBenchmark.className = 'kpi-coluna-taxa';
+        elementoNomeBenchmark.textContent = '--';
+        elementoNomeBenchmark.title = '';
+        elementoTaxaBenchmark.textContent = '--';
+        elementoTaxaBenchmark.className = 'kpi-coluna-taxa';
       });
   }
 
   carregarKpiBenchmark();
+
+  function carregarKpiVolumeMedio() {
+    let companhiaId = sessionStorage.COMPANHIA_USUARIO;
+    let elementoVolumeCompanhia = document.getElementById('kpi-volume-companhia');
+    let elementoVolumeMercado = document.getElementById('kpi-volume-mercado');
+
+    fetch(`/api/kpis/volume-medio/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let mediaMercado = Number(json.dados.mediaMercado) || 0;
+        let mediaCompanhia = Number(json.dados.mediaCompanhia) || 0;
+        let classeCompanhia = mediaCompanhia >= mediaMercado ? 'positive' : 'negative';
+
+        elementoVolumeCompanhia.textContent = mediaCompanhia;
+        elementoVolumeCompanhia.className = `kpi-coluna-taxa ${classeCompanhia}`;
+
+        elementoVolumeMercado.textContent = mediaMercado;
+        elementoVolumeMercado.className = 'kpi-coluna-taxa';
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de volume médio:', erro);
+        elementoVolumeCompanhia.textContent = '--';
+        elementoVolumeCompanhia.className = 'kpi-coluna-taxa';
+
+        elementoVolumeMercado.textContent = '--';
+        elementoVolumeMercado.className = 'kpi-coluna-taxa';
+      });
+  }
+
+  carregarKpiVolumeMedio();
   const meses = [
     'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
     'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'

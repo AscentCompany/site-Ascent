@@ -61,6 +61,48 @@ function obterBenchmarkOcupacao(idCompanhia) {
         });
 }
 
+function obterVolumeMedioPassageiros(idCompanhia) {
+    let id = Number(idCompanhia);
+    if (isNaN(id) || id <= 0 || id % 1 !== 0) {
+        id = 0;
+    }
+
+    let sqlMercado = `
+        SELECT AVG(qtdPassageiros) AS mediaMercado
+        FROM voo
+        WHERE qtdPassageiros IS NOT NULL;
+    `;
+
+    let sqlCompanhia = `
+        SELECT AVG(qtdPassageiros) AS mediaCompanhia
+        FROM voo
+        WHERE fkCompanhia = ${id}
+          AND qtdPassageiros IS NOT NULL;
+    `;
+
+    let resposta = {
+        mediaMercado: null,
+        mediaCompanhia: null
+    };
+
+    return database.executar(sqlMercado)
+        .then(function (resultadoMercado) {
+            if (resultadoMercado.length > 0) {
+                resposta.mediaMercado = resultadoMercado[0].mediaMercado;
+            }
+
+            return database.executar(sqlCompanhia);
+        })
+        .then(function (resultadoCompanhia) {
+            if (resultadoCompanhia.length > 0) {
+                resposta.mediaCompanhia = resultadoCompanhia[0].mediaCompanhia;
+            }
+
+            return resposta;
+        });
+}
+
 module.exports = {
-    obterBenchmarkOcupacao
+    obterBenchmarkOcupacao,
+    obterVolumeMedioPassageiros
 };
