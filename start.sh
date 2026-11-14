@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+# Garante que o script funcione mesmo quando chamado de outro diretório
+# (ex.: pelo cron com /home/usuario/site-Ascent/start.sh).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+ENV_FILE="$SCRIPT_DIR/.env"
+COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
+PROJECT_NAME="ascent"
+export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
+
 echo "=== 1. Atualizando repositório e imagens Docker (pull) ==="
 git pull origin develop 2>/dev/null || git pull 2>/dev/null || true
 docker pull mysql:8.0
@@ -9,10 +19,11 @@ docker pull lucasveneroso/ascent:ascent-logs || true
 docker pull lucasveneroso/ascent:ascent-apachepoi || true
 
 echo "=== 2. Configurando ambiente (.env) ==="
-if [ ! -f .env ]; then
-cat << 'EOF' > .env
+if [ ! -f "$ENV_FILE" ]; then
+cat << 'EOF' > "$ENV_FILE"
 # =============================================================
 # Banco de Dados MySQL (Container mysql)
+# Dentro da rede Docker o host correto é "mysql".
 # =============================================================
 DB_HOST=mysql
 DB_PORT=3306
@@ -28,6 +39,8 @@ MYSQL_ROOT_PASSWORD=root
 APP_HOST=0.0.0.0
 APP_PORT=3333
 AMBIENTE_PROCESSO=producao
+# Endereço do serviço Java de notificações dentro da rede Docker
+NOTIFICADOR_URL=http://ascent-logs:8080
 
 # =============================================================
 # ascent-logs (Java — Notificações Slack/Email)
@@ -72,9 +85,9 @@ docker rm -f ascent-mysql mysql ascent-api ascent-logs ascent-apachepoi 2>/dev/n
 echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
 # Detecta se é "docker compose" (v2) ou "docker-compose" (v1), instala se necessário
 if docker compose version &>/dev/null; then
-  COMPOSE_CMD="docker compose"
+  COMPOSE=(docker compose)
 elif command -v docker-compose &>/dev/null; then
-  COMPOSE_CMD="docker-compose"
+  COMPOSE=(docker-compose)
 else
   echo ">> docker compose não encontrado. Instalando plugin..."
   DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
@@ -83,24 +96,54 @@ else
     -o "$DOCKER_CONFIG/cli-plugins/docker-compose"
   chmod +x "$DOCKER_CONFIG/cli-plugins/docker-compose"
   if docker compose version &>/dev/null; then
-    COMPOSE_CMD="docker compose"
+    COMPOSE=(docker compose)
     echo ">> Plugin instalado com sucesso!"
   else
     echo "ERRO: Não foi possível instalar docker compose. Abortando."
     exit 1
   fi
 fi
-echo ">> Usando: $COMPOSE_CMD"
-$COMPOSE_CMD down --remove-orphans 2>/dev/null || true
-$COMPOSE_CMD up -d --pull always
+
+# Sempre usa o compose do diretório do projeto e um nome de projeto fixo.
+# Isso evita o erro "no configuration file provided" quando o script roda
+# a partir de outro diretório e garante que a rede se chame ascent_ascent.
+compose() {
+  "${COMPOSE[@]}" --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
+}
+
+echo ">> Usando: ${COMPOSE[*]}"
+compose down --remove-orphans 2>/dev/null || true
+compose up -d --pull always
+
+echo "=== 4.1. Aguardando o MySQL ficar pronto ==="
+MYSQL_ID="$(compose ps -q mysql 2>/dev/null | head -n1)"
+if [ -n "$MYSQL_ID" ]; then
+  for _ in $(seq 1 60); do
+    STATUS="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$MYSQL_ID" 2>/dev/null || echo desconhecido)"
+    if [ "$STATUS" = "healthy" ] || [ "$STATUS" = "running" ]; then
+      echo ">> MySQL pronto (status: $STATUS)."
+      break
+    fi
+    sleep 2
+  done
+fi
+
+# Descobre dinamicamente a rede criada pelo compose (não depende do nome da pasta)
+NETWORK="$(docker inspect -f '{{range $nome, $_ := .NetworkSettings.Networks}}{{$nome}}{{end}}' "$MYSQL_ID" 2>/dev/null || true)"
+if [ -z "$NETWORK" ]; then
+  NETWORK="${PROJECT_NAME}_ascent"
+fi
+echo ">> Rede Docker usada pelos serviços Java: $NETWORK"
 
 echo "=== 5. Inicializando ascent-logs ==="
 docker run -d \
   --name ascent-logs \
-  --network ascent_ascent \
+  --network "$NETWORK" \
   --restart unless-stopped \
   -p 8080:8080 \
-  --env-file .env \
+  --env-file "$ENV_FILE" \
+  -e DB_HOST=mysql \
+  -e DB_PORT=3306 \
   lucasveneroso/ascent:ascent-logs || {
     echo ">> AVISO: Não foi possível iniciar ascent-logs (imagem não encontrada no Docker Hub)."
     echo "   O restante do sistema continua funcionando normalmente."
@@ -119,10 +162,12 @@ if [ "$IS_EC2" = true ]; then
     echo ">> Credenciais da LabRole obtidas via metadata da EC2."
     docker run -d \
       --name ascent-apachepoi \
-      --network ascent_ascent \
+      --network "$NETWORK" \
       --restart unless-stopped \
       -p 8081:8080 \
-      --env-file .env \
+      --env-file "$ENV_FILE" \
+      -e DB_HOST=mysql \
+      -e DB_PORT=3306 \
       -e AWS_ACCESS_KEY_ID="$EC2_KEY_ID" \
       -e AWS_SECRET_ACCESS_KEY="$EC2_SECRET" \
       -e AWS_SESSION_TOKEN="$EC2_TOKEN" \
@@ -134,10 +179,12 @@ if [ "$IS_EC2" = true ]; then
     echo ">> Aviso: não foi possível obter credenciais da LabRole. Usando .env."
     docker run -d \
       --name ascent-apachepoi \
-      --network ascent_ascent \
+      --network "$NETWORK" \
       --restart unless-stopped \
       -p 8081:8080 \
-      --env-file .env \
+      --env-file "$ENV_FILE" \
+      -e DB_HOST=mysql \
+      -e DB_PORT=3306 \
       lucasveneroso/ascent:ascent-apachepoi || {
         echo ">> AVISO: Não foi possível iniciar ascent-apachepoi (imagem não encontrada no Docker Hub)."
         echo "   O restante do sistema continua funcionando normalmente."
@@ -146,10 +193,12 @@ if [ "$IS_EC2" = true ]; then
 else
   docker run -d \
     --name ascent-apachepoi \
-    --network ascent_ascent \
+    --network "$NETWORK" \
     --restart unless-stopped \
     -p 8081:8080 \
-    --env-file .env \
+    --env-file "$ENV_FILE" \
+    -e DB_HOST=mysql \
+    -e DB_PORT=3306 \
     lucasveneroso/ascent:ascent-apachepoi || {
       echo ">> AVISO: Não foi possível iniciar ascent-apachepoi (imagem não encontrada no Docker Hub)."
       echo "   O restante do sistema continua funcionando normalmente."
@@ -157,7 +206,6 @@ else
 fi
 
 echo "=== 7. Configurando crontab (DuckDNS a cada minuto) ==="
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/setup-duckdns.sh" ]; then
   bash "$SCRIPT_DIR/setup-duckdns.sh"
 else

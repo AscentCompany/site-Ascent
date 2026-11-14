@@ -27,6 +27,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/ascent.sql:/docker-entrypoint-initdb.d/01-ascent.sql:ro
+    ports:
+      # Expõe o MySQL apenas no loopback da EC2.
+      # Permite que os serviços Java rodando FORA do Docker (IDE, java -jar)
+      # conectem em localhost:3306 sem abrir o banco para a internet.
+      - "127.0.0.1:${DB_PORT:-3306}:3306"
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
@@ -52,6 +57,9 @@ services:
       DB_DATABASE: ${DB_DATABASE}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Nome do serviço Java de notificações dentro da rede Docker.
+      # Sem isso a API tenta localhost:8080 e recebe ECONNREFUSED.
+      NOTIFICADOR_URL: http://ascent-logs:8080
     ports:
       - "${APP_PORT:-3333}:${APP_PORT:-3333}"
     networks:
