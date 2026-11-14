@@ -20,11 +20,15 @@ ascent-api/.env
 !start.sh
 !setup-duckdns.sh
 !run-importacao-s3.sh
+!start-logs.sh
 
 # Logs gerados em runtime
 *.log
 start.log
 dados/logs/
+
+# Marcador da importação única do apache-poi
+.apachepoi-executado
 
 # Dados persistidos do MySQL em /dados
 /dados/

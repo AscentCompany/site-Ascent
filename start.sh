@@ -135,89 +135,90 @@ if [ -z "$NETWORK" ]; then
 fi
 echo ">> Rede Docker usada pelos serviços Java: $NETWORK"
 
-echo "=== 5. Inicializando ascent-logs ==="
-docker run -d \
-  --name ascent-logs \
-  --network "$NETWORK" \
-  --restart unless-stopped \
-  -p 8080:8080 \
-  --env-file "$ENV_FILE" \
-  -e DB_HOST=mysql \
-  -e DB_PORT=3306 \
-  lucasveneroso/ascent:ascent-logs || {
+echo "=== 5. Inicializando ascent-logs (cron garante que continue rodando) ==="
+if [ -f "$SCRIPT_DIR/start-logs.sh" ]; then
+  bash "$SCRIPT_DIR/start-logs.sh" || {
     echo ">> AVISO: Não foi possível iniciar ascent-logs (imagem não encontrada no Docker Hub)."
     echo "   O restante do sistema continua funcionando normalmente."
   }
-
-echo "=== 6. Inicializando ascent-apachepoi ==="
-# Na EC2 com LabRole: passa as credenciais da instância automaticamente via IAM Role.
-# Localmente: usa as chaves definidas no .env.
-if [ "$IS_EC2" = true ]; then
-  ROLE_NAME=$(curl -s -m 2 http://169.254.169.254/latest/meta-data/iam/security-credentials/ 2>/dev/null)
-  if [ -n "$ROLE_NAME" ]; then
-    CREDS=$(curl -s -m 2 "http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE_NAME")
-    EC2_KEY_ID=$(echo "$CREDS" | grep -o '"AccessKeyId" : "[^"]*"' | cut -d'"' -f4)
-    EC2_SECRET=$(echo "$CREDS" | grep -o '"SecretAccessKey" : "[^"]*"' | cut -d'"' -f4)
-    EC2_TOKEN=$(echo "$CREDS" | grep -o '"Token" : "[^"]*"' | cut -d'"' -f4)
-    echo ">> Credenciais da LabRole obtidas via metadata da EC2."
-    docker run -d \
-      --name ascent-apachepoi \
-      --network "$NETWORK" \
-      --restart unless-stopped \
-      -p 8081:8080 \
-      --env-file "$ENV_FILE" \
-      -e DB_HOST=mysql \
-      -e DB_PORT=3306 \
-      -e AWS_ACCESS_KEY_ID="$EC2_KEY_ID" \
-      -e AWS_SECRET_ACCESS_KEY="$EC2_SECRET" \
-      -e AWS_SESSION_TOKEN="$EC2_TOKEN" \
-      lucasveneroso/ascent:ascent-apachepoi || {
-        echo ">> AVISO: Não foi possível iniciar ascent-apachepoi (imagem não encontrada no Docker Hub)."
-        echo "   O restante do sistema continua funcionando normalmente."
-      }
-  else
-    echo ">> Aviso: não foi possível obter credenciais da LabRole. Usando .env."
-    docker run -d \
-      --name ascent-apachepoi \
-      --network "$NETWORK" \
-      --restart unless-stopped \
-      -p 8081:8080 \
-      --env-file "$ENV_FILE" \
-      -e DB_HOST=mysql \
-      -e DB_PORT=3306 \
-      lucasveneroso/ascent:ascent-apachepoi || {
-        echo ">> AVISO: Não foi possível iniciar ascent-apachepoi (imagem não encontrada no Docker Hub)."
-        echo "   O restante do sistema continua funcionando normalmente."
-      }
-  fi
 else
-  docker run -d \
-    --name ascent-apachepoi \
-    --network "$NETWORK" \
-    --restart unless-stopped \
-    -p 8081:8080 \
-    --env-file "$ENV_FILE" \
-    -e DB_HOST=mysql \
-    -e DB_PORT=3306 \
-    lucasveneroso/ascent:ascent-apachepoi || {
-      echo ">> AVISO: Não foi possível iniciar ascent-apachepoi (imagem não encontrada no Docker Hub)."
-      echo "   O restante do sistema continua funcionando normalmente."
-    }
+  echo ">> AVISO: start-logs.sh não encontrado. ascent-logs não iniciado."
 fi
 
-echo "=== 7. Configurando crontab (DuckDNS a cada minuto) ==="
+echo "=== 6. Executando importação ANAC (ascent-apachepoi) uma única vez ==="
+# O apachepoi é um job: roda até terminar e não volta sozinho.
+# O marcador impede que ele seja executado novamente nas próximas execuções.
+APACHEPOI_MARKER="$SCRIPT_DIR/.apachepoi-executado"
+
+if [ -f "$APACHEPOI_MARKER" ]; then
+  echo ">> Importação já concluída anteriormente ($APACHEPOI_MARKER). Pulando."
+else
+  # Na EC2 com LabRole: passa as credenciais da instância automaticamente via IAM Role.
+  # Localmente: usa as chaves definidas no .env.
+  APACHEPOI_ENV=()
+  if [ "$IS_EC2" = true ]; then
+    ROLE_NAME=$(curl -s -m 2 http://169.254.169.254/latest/meta-data/iam/security-credentials/ 2>/dev/null)
+    if [ -n "$ROLE_NAME" ]; then
+      CREDS=$(curl -s -m 2 "http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE_NAME")
+      EC2_KEY_ID=$(echo "$CREDS" | grep -o '"AccessKeyId" : "[^"]*"' | cut -d'"' -f4)
+      EC2_SECRET=$(echo "$CREDS" | grep -o '"SecretAccessKey" : "[^"]*"' | cut -d'"' -f4)
+      EC2_TOKEN=$(echo "$CREDS" | grep -o '"Token" : "[^"]*"' | cut -d'"' -f4)
+      echo ">> Credenciais da LabRole obtidas via metadata da EC2."
+      APACHEPOI_ENV=(
+        -e AWS_ACCESS_KEY_ID="$EC2_KEY_ID"
+        -e AWS_SECRET_ACCESS_KEY="$EC2_SECRET"
+        -e AWS_SESSION_TOKEN="$EC2_TOKEN"
+      )
+    else
+      echo ">> Aviso: não foi possível obter credenciais da LabRole. Usando .env."
+    fi
+  fi
+
+  if docker run --rm \
+      --name ascent-apachepoi \
+      --network "$NETWORK" \
+      --env-file "$ENV_FILE" \
+      -e DB_HOST=mysql \
+      -e DB_PORT=3306 \
+      "${APACHEPOI_ENV[@]}" \
+      lucasveneroso/ascent:ascent-apachepoi; then
+    touch "$APACHEPOI_MARKER"
+    echo ">> Importação concluída. Ela não será executada novamente."
+  else
+    echo ">> AVISO: a importação falhou. Ela será tentada na próxima execução do start.sh."
+  fi
+fi
+
+echo "=== 7. Configurando crontab (DuckDNS e ascent-logs) ==="
 if [ -f "$SCRIPT_DIR/setup-duckdns.sh" ]; then
   bash "$SCRIPT_DIR/setup-duckdns.sh"
 else
   echo ">> AVISO: setup-duckdns.sh não encontrado. Crontab DuckDNS não configurado."
 fi
 
+# Cron do ascent-logs: ao reiniciar a máquina e a cada 5 minutos,
+# inicia o container caso ele esteja parado.
+LOGS_SCRIPT="$SCRIPT_DIR/start-logs.sh"
+if [ -f "$LOGS_SCRIPT" ]; then
+  chmod +x "$LOGS_SCRIPT" 2>/dev/null || true
+  CRON_LOGS_BOOT="@reboot /bin/bash $LOGS_SCRIPT >/dev/null 2>&1"
+  CRON_LOGS_INTERVAL="*/5 * * * * /bin/bash $LOGS_SCRIPT >/dev/null 2>&1"
+  (
+    crontab -l 2>/dev/null | grep -vF "$LOGS_SCRIPT"
+    echo "$CRON_LOGS_BOOT"
+    echo "$CRON_LOGS_INTERVAL"
+  ) | crontab -
+  echo ">> Cron do ascent-logs configurado (@reboot e a cada 5 minutos)."
+else
+  echo ">> AVISO: start-logs.sh não encontrado. Cron do ascent-logs não configurado."
+fi
+
 echo ""
 echo "=== Sistema Ascent iniciado com sucesso! ==="
 echo ""
 echo "  API:         http://<IP>:3333"
-echo "  Logs:        http://<IP>:8080"
-echo "  Apache POI:  http://<IP>:8081"
+echo "  Logs:        http://<IP>:8080 (mantido pelo cron)"
+echo "  Apache POI:  importação única (não fica rodando)"
 echo "  DuckDNS:     crontab a cada minuto (setup-duckdns.sh)"
 echo ""
 docker ps --filter "name=ascent" --filter "name=mysql" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
