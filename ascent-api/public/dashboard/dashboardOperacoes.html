@@ -90,11 +90,17 @@
 
       <article class="card kpi-card">
         <h2>Companhia com maior ocupação</h2>
-        <div class="kpi-card-main">
-          <div class="big">LATAM</div>
-        </div>
-        <div class="sub">
-          Latam: <strong class="positive">80% de ocupação</strong> · Sua companhia: <strong class="negative">30%</strong>
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome" id="kpi-nome-sua-companhia">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-taxa-sua-companhia">--%</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Maior ocupação</span>
+            <span class="kpi-coluna-nome" id="kpi-nome-benchmark">--</span>
+            <strong class="kpi-coluna-taxa positive" id="kpi-taxa-benchmark">--%</strong>
+          </div>
         </div>
       </article>
 
@@ -225,6 +231,61 @@
   if (window.innerWidth <= 900) document.body.classList.add('menu-fechado');
   btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
   overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
+
+  function carregarKpiBenchmark() {
+    let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let nomeSuaCompanhia = document.getElementById('kpi-nome-sua-companhia');
+    let taxaSuaCompanhia = document.getElementById('kpi-taxa-sua-companhia');
+    let nomeCompanhiaBenchmark = document.getElementById('kpi-nome-benchmark');
+    let taxaCompanhiaBenchmark = document.getElementById('kpi-taxa-benchmark');
+
+    fetch(`/api/kpis/benchmark/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let suaCompanhia = json.dados.suaCompanhia;
+        let benchmark = json.dados.benchmark;
+
+        let nomeSuaCompanhia = suaCompanhia.nome || 'Sua companhia';
+        let taxaSuaCompanhia = Number(suaCompanhia.taxaOcupacao) || 0;
+        let classeSuaCompanhia = taxaSuaCompanhia < 50 ? 'negative' : 'positive';
+
+        let nomeBenchmark = benchmark.nome || 'Sem dados';
+        let taxaBenchmark = Number(benchmark.taxaOcupacao) || 0;
+
+        nomeSuaCompanhia.textContent = nomeSuaCompanhia;
+        nomeSuaCompanhia.title = nomeSuaCompanhia;
+        taxaSuaCompanhia.textContent = `${taxaSuaCompanhia}%`;
+        taxaSuaCompanhia.className = `kpi-coluna-taxa ${classeSuaCompanhia}`;
+
+        nomeCompanhiaBenchmark.textContent = nomeBenchmark;
+        nomeCompanhiaBenchmark.title = nomeBenchmark;
+        taxaCompanhiaBenchmark.textContent = `${taxaBenchmark}%`;
+        taxaCompanhiaBenchmark.className = 'kpi-coluna-taxa positive';
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de ocupação:', erro);
+        nomeSuaCompanhia.textContent = '--';
+        nomeSuaCompanhia.title = '';
+        taxaSuaCompanhia.textContent = '--';
+        taxaSuaCompanhia.className = 'kpi-coluna-taxa';
+
+        nomeCompanhiaBenchmark.textContent = '--';
+        nomeCompanhiaBenchmark.title = '';
+        taxaCompanhiaBenchmark.textContent = '--';
+        taxaCompanhiaBenchmark.className = 'kpi-coluna-taxa';
+      });
+  }
+
+  carregarKpiBenchmark();
   const meses = [
     'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
     'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'

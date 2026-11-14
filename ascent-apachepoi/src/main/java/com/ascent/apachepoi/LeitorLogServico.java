@@ -35,7 +35,7 @@ public class LeitorLogServico {
         for (int i = logs.size() - 1; i >= 0; i--) {
             System.out.println(logs.get(i).formatarLog());
         }
-       
+
     }
 
 

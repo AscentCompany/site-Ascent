@@ -26,7 +26,7 @@ public class MainApp {
         carregarEnv();
         bd = new JdbcTemplate(new Conexao().getConexao());
 
-        String arquivo = "/home/lucasveneroso/Sptech/Pi/Ascent/output/anac_part_023.xlsx";
+        String arquivo = "/home/gwansttzin/Downloads/output/anac_part_022.xlsx";
         log("Lendo arquivo: " + arquivo);
 
         try {

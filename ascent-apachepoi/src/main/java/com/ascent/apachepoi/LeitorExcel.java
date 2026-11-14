@@ -165,10 +165,6 @@ public class LeitorExcel {
                                         }
                                     }
                                 } else {
-                                    if (resultado.linhasLidas >= 5) {
-                                        xml.close();
-                                        break;
-                                    }
                                     resultado.linhasEncontradas++;
                                     boolean linhaValida = processarLinha(currentRow, currentTypes, cabecalho, resultado);
                                     if (linhaValida) {
