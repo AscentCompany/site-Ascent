@@ -14,12 +14,13 @@ public class MainApp {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    private static JdbcTemplate      jdbcTemplate;
-    private static CompanhiaDao      companhiaDao;
-    private static AviaoDao          aviaoDao;
-    private static AeroportoDao      aeroportoDao;
-    private static VooDao            vooDao;
+    private static JdbcTemplate        jdbcTemplate;
+    private static CompanhiaDao        companhiaDao;
+    private static AviaoDao            aviaoDao;
+    private static AeroportoDao        aeroportoDao;
+    private static VooDao              vooDao;
     private static AeroportoDirecaoDao aeroportoDirecaoDao;
+    private static LogImportacaoDao    logImportacaoDao;
 
     // <editor-fold desc="Logs">
     private static void log(String msg) {
@@ -40,6 +41,7 @@ public class MainApp {
         aeroportoDao        = new AeroportoDao(jdbcTemplate);
         vooDao              = new VooDao(jdbcTemplate);
         aeroportoDirecaoDao = new AeroportoDirecaoDao(jdbcTemplate);
+        logImportacaoDao    = new LogImportacaoDao(jdbcTemplate);
 
         String bucket      = LeitorExcel.getEnvOrProp("AWS_BUCKET", "ascent-base-de-dados");
         String prefixo     = LeitorExcel.getEnvOrProp("AWS_PREFIXO_ARQUIVOS", "anac_part_");
@@ -69,6 +71,14 @@ public class MainApp {
             File   destino     = new File(tmpDir, nomeArquivo);
 
             log("────────────────────────────────────────────────");
+
+            // Verifica se o arquivo já foi importado com sucesso anteriormente
+            if (logImportacaoDao.jaFoiImportado(nomeArquivo)) {
+                log(String.format("[%d/%d] ✔ %s já importado anteriormente. Pulando.", i, totalPartes, nomeArquivo));
+                partesOk++;
+                continue;
+            }
+
             log(String.format("[%d/%d] Baixando %s ...", i, totalPartes, s3Uri));
 
             if (!baixarDoS3(s3Uri, destino.getAbsolutePath(), region)) {
