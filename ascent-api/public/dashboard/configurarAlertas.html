@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <link rel="stylesheet" href="../css/dashboardOperacoes.css">
   <link rel="stylesheet" href="../css/alertas.css">
+  <script src="../js/sidebarNav.js" defer></script>
 </head>
 <body>
   <script src="../js/sessao.js"></script>
@@ -179,22 +180,6 @@
     window.location.href = "/dashboard/dashboardOperacoes.html";
   }
 
-  const itensNav = [...document.querySelectorAll(".sidebar .nav-item")];
-  const indicador = document.getElementById("nav-indicador");
-
-  function posicionarIndicador() {
-    const atual = itensNav.findIndex(i => i.classList.contains("ativo"));
-    if (atual < 0) return;
-    indicador.style.transition = "none";
-    indicador.style.transform = "translateY(" + itensNav[atual].offsetTop + "px)";
-    indicador.style.opacity = 1;
-    indicador.offsetHeight;
-    indicador.style.transition = "";
-
-  }
-
-  window.addEventListener("load", posicionarIndicador);
-  window.addEventListener("resize", posicionarIndicador);
 
   function preencherAnos() {
     const ano = new Date().getFullYear();
