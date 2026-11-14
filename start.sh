@@ -69,6 +69,15 @@ echo "=== 3. Removendo containers antigos ==="
 # Remove todos os containers do projeto (incluindo ascent-mysql legado do start.sh anterior)
 docker rm -f ascent-mysql mysql ascent-api ascent-logs ascent-apachepoi 2>/dev/null || true
 
+# Garante que o diretório do banco no EBS secundário existe com permissões corretas
+if [ "$IS_EC2" = true ]; then
+  sudo mkdir -p /database/mysql
+  sudo chmod 777 /database/mysql
+else
+  mkdir -p /database/mysql
+fi
+echo ">> Diretório /database/mysql verificado."
+
 echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
 # Detecta se é "docker compose" (v2) ou "docker-compose" (v1), instala se necessário
 if docker compose version &>/dev/null; then
@@ -91,7 +100,8 @@ else
   fi
 fi
 echo ">> Usando: $COMPOSE_CMD"
-$COMPOSE_CMD down --remove-orphans 2>/dev/null || true
+# Usa stop em vez de down para não remover volumes nem dados do banco
+$COMPOSE_CMD stop 2>/dev/null || true
 $COMPOSE_CMD up -d --pull always
 
 echo "=== 5. Inicializando ascent-logs ==="

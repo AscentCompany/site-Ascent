@@ -718,10 +718,14 @@ body.menu-fechado .btn-menu {
   }
 
 
-  .btn-menu,
+  .btn-menu {
+    left: calc(var(--sidebar-w) - 14px);
+    top: 10px;
+    z-index: 35;
+  }
+
   body.menu-fechado .btn-menu {
     left: 10px;
-    top: 10px;
   }
 
   body:not(.menu-fechado) .overlay {
