@@ -13,16 +13,18 @@ docker pull "$IMAGEM"
 # Remove container anterior se existir
 docker rm -f "$CONTAINER" 2>/dev/null || true
 
-# Detecta qual rede usar: ascent_ascent (compose rodando) ou cria uma temporária
+# Detecta qual rede e host do banco usar
 if docker network ls --format '{{.Name}}' | grep -q '^ascent_ascent$'; then
     REDE="ascent_ascent"
-    echo ">> Usando rede existente: ascent_ascent"
+    DB_HOST="mysql"
+    echo ">> Rede encontrada: ascent_ascent | DB_HOST=mysql"
 else
+    # Compose não está rodando — tenta conectar via IP do host Docker
     REDE="ascent-s3-test"
+    DB_HOST=$(docker network inspect bridge --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}' 2>/dev/null || echo "172.17.0.1")
     docker network create "$REDE" 2>/dev/null || true
-    echo ">> Rede ascent_ascent não encontrada. Usando rede: $REDE"
-    echo ">> ATENÇÃO: o container vai tentar conectar ao banco via DB_HOST do .env."
-    echo ">>          Certifique-se que o MySQL está acessível nessa rede."
+    echo ">> Rede ascent_ascent não encontrada. Usando rede: $REDE | DB_HOST=$DB_HOST"
+    echo ">> ATENÇÃO: certifique-se que o MySQL está rodando e acessível."
 fi
 
 # Carrega .env
@@ -52,6 +54,7 @@ if [ "$IS_EC2" = true ]; then
         --name "$CONTAINER" \
         --network "$REDE" \
         --env-file .env \
+        -e DB_HOST="$DB_HOST" \
         -e AWS_ACCESS_KEY_ID="$EC2_KEY_ID" \
         -e AWS_SECRET_ACCESS_KEY="$EC2_SECRET" \
         -e AWS_SESSION_TOKEN="$EC2_TOKEN" \
@@ -61,6 +64,7 @@ else
         --name "$CONTAINER" \
         --network "$REDE" \
         --env-file .env \
+        -e DB_HOST="$DB_HOST" \
         "$IMAGEM"
 fi
 
