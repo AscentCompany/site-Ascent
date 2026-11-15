@@ -69,12 +69,12 @@
 
     <section class="kpis">
       <article class="card kpi-card">
-        <h2>Mês com maior procura</h2>
+        <h2 id="kpi-titulo-mes-maior-procura">Mês com maior ocupação</h2>
         <div class="kpi-card-main">
-          <div class="big">Janeiro</div>
+          <div class="big" id="kpi-mes-maior-procura">--</div>
         </div>
-        <div class="sub">
-          <strong class="positive">▲ 13,4% vs média</strong> · <strong class="positive">▲ 3,4% vs ano ant.</strong>
+        <div class="sub" id="kpi-sub-mes-maior-procura">
+          Carregando dados...
         </div>
       </article>
 
@@ -331,6 +331,69 @@
   }
 
   carregarKpiVolumeMedio();
+
+  function preencherVariacaoPp(elementoDestino, diferenca, textoComparacao, adicionarSeparador) {
+    if (adicionarSeparador) {
+      elementoDestino.append(' · ');
+    }
+
+    if (diferenca === null || diferenca === undefined || isNaN(Number(diferenca))) {
+      elementoDestino.append(`-- ${textoComparacao}`);
+      return;
+    }
+
+    let valor = Number(diferenca);
+    let seta = valor >= 0 ? '▲' : '▼';
+    let classe = valor >= 0 ? 'positive' : 'negative';
+    let valorFormatado = Math.abs(valor).toFixed(1).replace('.', ',');
+
+    let tagStrong = document.createElement('strong');
+    tagStrong.className = classe;
+    tagStrong.textContent = `${seta} ${valorFormatado} p.p.`;
+
+    elementoDestino.append(tagStrong, ` ${textoComparacao}`);
+  }
+
+  function carregarKpiMesMaiorProcura() {
+    let elementoTitulo = document.getElementById('kpi-titulo-mes-maior-procura');
+    let elementoMes = document.getElementById('kpi-mes-maior-procura');
+    let elementoSub = document.getElementById('kpi-sub-mes-maior-procura');
+
+    fetch('/api/kpis/mes-maior-procura')
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        if (elementoTitulo) {
+          elementoTitulo.textContent = json.dados.anoAnalisado
+            ? `Mês com maior ocupação (${json.dados.anoAnalisado})`
+            : 'Mês com maior ocupação';
+        }
+
+        elementoMes.textContent = json.dados.mesNome || 'Sem dados';
+        elementoSub.textContent = '';
+
+        preencherVariacaoPp(elementoSub, json.dados.vsMedia, 'vs média', false);
+        preencherVariacaoPp(elementoSub, json.dados.vsAnoAnterior, 'vs ano ant.', true);
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de mês com maior procura:', erro);
+        if (elementoTitulo) {
+          elementoTitulo.textContent = 'Mês com maior ocupação';
+        }
+        elementoMes.textContent = '--';
+        elementoSub.textContent = 'Não foi possível carregar os dados.';
+      });
+  }
+
+  carregarKpiMesMaiorProcura();
   const meses = [
     'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
     'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'

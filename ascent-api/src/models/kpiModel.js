@@ -102,7 +102,111 @@ function obterVolumeMedioPassageiros(idCompanhia) {
         });
 }
 
+function montarSqlMesesPorAno(expressaoAno) {
+    return `
+        SELECT
+            YEAR(ad.dia) AS ano,
+            MONTH(ad.dia) AS mes,
+            SUM(v.qtdPassageiros) AS totalPassageiros,
+            SUM(av.numAssentos) AS totalAssentos,
+            (SUM(v.qtdPassageiros) / NULLIF(SUM(av.numAssentos), 0)) * 100 AS taxaOcupacao
+        FROM voo v
+        JOIN aviao av ON av.idAviao = v.fkAviao
+        JOIN aeroportoDirecao ad ON ad.fkVoo = v.idVoo
+        WHERE ad.direcao = 'Partida'
+          AND YEAR(ad.dia) = ${expressaoAno}
+          AND ad.dia IS NOT NULL
+          AND v.qtdPassageiros IS NOT NULL
+          AND av.numAssentos > 0
+        GROUP BY YEAR(ad.dia), MONTH(ad.dia)
+        ORDER BY taxaOcupacao DESC;
+    `;
+}
+
+function obterMesMaiorProcura() {
+    let resposta = {
+        anoAnalisado: null,
+        meses: [],
+        mesAnoAnterior: null
+    };
+
+    return database.executar(montarSqlMesesPorAno("YEAR(CURDATE())"))
+        .then(function (resultadoMesesAtual) {
+            if (resultadoMesesAtual.length > 0) {
+                return resultadoMesesAtual;
+            }
+
+            let sqlUltimoAno = `
+                SELECT MAX(YEAR(ad.dia)) AS ultimoAno
+                FROM voo v
+                JOIN aviao av ON av.idAviao = v.fkAviao
+                JOIN aeroportoDirecao ad ON ad.fkVoo = v.idVoo
+                WHERE ad.direcao = 'Partida'
+                  AND ad.dia IS NOT NULL
+                  AND v.qtdPassageiros IS NOT NULL
+                  AND av.numAssentos > 0;
+            `;
+
+            return database.executar(sqlUltimoAno)
+                .then(function (resultadoAno) {
+                    if (resultadoAno.length === 0 || !resultadoAno[0].ultimoAno) {
+                        return [];
+                    }
+
+                    let ultimoAno = Number(resultadoAno[0].ultimoAno);
+                    if (isNaN(ultimoAno) || ultimoAno <= 0) {
+                        return [];
+                    }
+
+                    return database.executar(montarSqlMesesPorAno(ultimoAno));
+                });
+        })
+        .then(function (resultadoMeses) {
+            resposta.meses = resultadoMeses;
+
+            if (resultadoMeses.length === 0) {
+                return [];
+            }
+
+            let anoAnalisado = Number(resultadoMeses[0].ano);
+            let mesCampeao = Number(resultadoMeses[0].mes);
+
+            if (isNaN(anoAnalisado) || isNaN(mesCampeao) || mesCampeao < 1 || mesCampeao > 12) {
+                return [];
+            }
+
+            resposta.anoAnalisado = anoAnalisado;
+
+            let sqlMesAnoAnterior = `
+                SELECT
+                    YEAR(ad.dia) AS ano,
+                    SUM(v.qtdPassageiros) AS totalPassageiros,
+                    SUM(av.numAssentos) AS totalAssentos,
+                    (SUM(v.qtdPassageiros) / NULLIF(SUM(av.numAssentos), 0)) * 100 AS taxaOcupacao
+                FROM voo v
+                JOIN aviao av ON av.idAviao = v.fkAviao
+                JOIN aeroportoDirecao ad ON ad.fkVoo = v.idVoo
+                WHERE ad.direcao = 'Partida'
+                  AND YEAR(ad.dia) = ${anoAnalisado - 1}
+                  AND MONTH(ad.dia) = ${mesCampeao}
+                  AND ad.dia IS NOT NULL
+                  AND v.qtdPassageiros IS NOT NULL
+                  AND av.numAssentos > 0
+                GROUP BY YEAR(ad.dia);
+            `;
+
+            return database.executar(sqlMesAnoAnterior);
+        })
+        .then(function (resultadoAnoAnterior) {
+            if (resultadoAnoAnterior.length > 0) {
+                resposta.mesAnoAnterior = resultadoAnoAnterior[0];
+            }
+            return resposta;
+        });
+}
+
 module.exports = {
     obterBenchmarkOcupacao,
-    obterVolumeMedioPassageiros
+    obterVolumeMedioPassageiros,
+    obterMesMaiorProcura
 };

@@ -1,6 +1,6 @@
 var kpiModel = require("../models/kpiModel");
 
-function calcularTaxaArredondada(registro) {
+function calcularTaxaExata(registro) {
     if (!registro) {
         return 0;
     }
@@ -13,7 +13,7 @@ function calcularTaxaArredondada(registro) {
             return 0;
         }
 
-        return Math.round((totalPassageiros / totalAssentos) * 100);
+        return (totalPassageiros / totalAssentos) * 100;
     }
 
     let taxa = Number(registro.taxaOcupacao);
@@ -21,7 +21,11 @@ function calcularTaxaArredondada(registro) {
         return 0;
     }
 
-    return Math.round(taxa);
+    return taxa;
+}
+
+function calcularTaxaArredondada(registro) {
+    return Math.round(calcularTaxaExata(registro));
 }
 
 function buscarDadosKpiBenchmark(req, res) {
@@ -120,7 +124,86 @@ function buscarDadosKpiVolumeMedio(req, res) {
         });
 }
 
+function buscarDadosKpiMesMaiorProcura(req, res) {
+    let nomesMeses = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+
+    kpiModel.obterMesMaiorProcura()
+        .then(function (resultado) {
+            let anoAnalisado = resultado.anoAnalisado || null;
+            let meses = resultado.meses || [];
+            let mesAnoAnterior = resultado.mesAnoAnterior || null;
+
+            if (meses.length === 0) {
+                return res.json({
+                    sucesso: true,
+                    dados: {
+                        anoAnalisado: null,
+                        mesNome: "Sem dados",
+                        taxaOcupacao: 0,
+                        vsMedia: null,
+                        vsAnoAnterior: null
+                    }
+                });
+            }
+
+            let mesCampeaoRow = meses[0];
+            let mesNumero = Number(mesCampeaoRow.mes);
+            let mesNome = nomesMeses[mesNumero - 1] || "Sem dados";
+            let taxaMesCampeao = calcularTaxaExata(mesCampeaoRow);
+
+            let somaPassageiros = 0;
+            let somaAssentos = 0;
+            for (let i = 0; i < meses.length; i++) {
+                somaPassageiros += Number(meses[i].totalPassageiros) || 0;
+                somaAssentos += Number(meses[i].totalAssentos) || 0;
+            }
+
+            let vsMedia = null;
+            if (somaAssentos > 0) {
+                let taxaMediaGeral = (somaPassageiros / somaAssentos) * 100;
+                vsMedia = Number((taxaMesCampeao - taxaMediaGeral).toFixed(1));
+            }
+
+            let vsAnoAnterior = null;
+            if (mesAnoAnterior) {
+                let temAssentos = Number(mesAnoAnterior.totalAssentos) > 0;
+                let temTaxa = mesAnoAnterior.totalAssentos === undefined
+                    && mesAnoAnterior.taxaOcupacao !== null
+                    && mesAnoAnterior.taxaOcupacao !== undefined
+                    && !isNaN(Number(mesAnoAnterior.taxaOcupacao));
+
+                if (temAssentos || temTaxa) {
+                    let taxaAnoAnterior = calcularTaxaExata(mesAnoAnterior);
+                    vsAnoAnterior = Number((taxaMesCampeao - taxaAnoAnterior).toFixed(1));
+                }
+            }
+
+            res.json({
+                sucesso: true,
+                dados: {
+                    anoAnalisado: anoAnalisado,
+                    mesNome: mesNome,
+                    taxaOcupacao: Math.round(taxaMesCampeao),
+                    vsMedia: vsMedia,
+                    vsAnoAnterior: vsAnoAnterior
+                }
+            });
+        })
+        .catch(function (erro) {
+            console.error("Erro ao buscar mês com maior procura:", erro);
+            res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar dados da KPI de mês com maior procura.",
+                erro: erro.sqlMessage || erro.message || erro
+            });
+        });
+}
+
 module.exports = {
     buscarDadosKpiBenchmark,
-    buscarDadosKpiVolumeMedio
+    buscarDadosKpiVolumeMedio,
+    buscarDadosKpiMesMaiorProcura
 };

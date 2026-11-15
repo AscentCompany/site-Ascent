@@ -10,4 +10,8 @@ router.get("/volume-medio/:idCompanhia", function (req, res) {
     kpiController.buscarDadosKpiVolumeMedio(req, res);
 });
 
+router.get("/mes-maior-procura", function (req, res) {
+    kpiController.buscarDadosKpiMesMaiorProcura(req, res);
+});
+
 module.exports = router;
