@@ -485,7 +485,7 @@ body.menu-fechado .btn-menu {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--orange);
+  color: #000;
 }
 
 .recomendacoes-titulo i {
@@ -621,7 +621,7 @@ body.menu-fechado .btn-menu {
 /* ---------- CHART CARDS ---------- */
 .chart-title {
   font-family: var(--heading-font);
-  color: var(--orange);
+  color: #000;
   text-align: center;
   font-weight: 400;
   font-size: 20px;
