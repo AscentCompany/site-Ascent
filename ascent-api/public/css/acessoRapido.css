@@ -204,7 +204,7 @@ body.menu-fechado .main {
 /* Grid de 6 botões 3 colunas x 2 linhas */
 .acesso-grid {
   display: grid;
-  grid-template-columns: repeat(3, 215px);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 215px));
   justify-content: center;
   gap: 28px 32px;
 }
