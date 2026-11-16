@@ -422,6 +422,12 @@ body.menu-fechado .btn-menu {
   max-height: fit-content;
 }
 
+.card-evolucao .chart-title,
+.card-mensal .chart-title {
+  text-align: left;
+  margin-bottom: 8px;
+}
+
 .card-mensal {
   grid-column: 1;
   grid-row: 4;
