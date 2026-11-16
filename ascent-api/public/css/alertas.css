@@ -30,15 +30,32 @@
 }
 
 .sino-btn {
-  background: none;
-  border: none;
+  background: transparent;
+  border: 1.5px solid var(--al-orange);
+  border-radius: 8px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--al-orange);
-  font-size: 22px;
-  transition: transform .15s;
+  font-size: 15px;
+  width: 32px;
+  height: 31px;
+  padding: 0;
+  transition: background .2s ease, color .2s ease;
 }
-.sino-btn:hover { transform: scale(1.1); }
+
+.sino-btn i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.sino-btn:hover {
+  background: var(--al-orange);
+  color: #fff;
+}
 
 #sino-badge {
   position: absolute;

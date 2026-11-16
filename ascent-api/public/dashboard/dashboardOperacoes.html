@@ -46,6 +46,7 @@
         <div class="nav-item ativo"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
         <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
         <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
+        <div class="nav-item"><a href="./centralRecomendacoes.html">Central de Recomendações</a></div>
         <div class="nav-item" id="nav-configurar-op" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
         <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
         <div class="nav-item"><a href="./faq.html">FAQ</a></div>
@@ -121,6 +122,59 @@
       </article>
     </section>
 
+    <!-- PAINEL DE RECOMENDAÇÕES -->
+    <section class="painel-recomendacoes">
+      <div class="card card-recomendacoes">
+        <div class="recomendacoes-header">
+          <div class="recomendacoes-titulo">
+            <span>Painel de Recomendações</span>
+          </div>
+          <a href="./centralRecomendacoes.html" class="recomendacoes-link">Ver todas</a>
+        </div>
+
+        <div class="recomendacoes-grid" id="lista-recomendacoes">
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Reduzir frequência em VIX - CGB</span>
+                <span class="rec-sub">ocupação de 74%</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-media">Média</span>
+          </div>
+
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Aumentar capacidade em CGH - REC</span>
+                <span class="rec-sub">ocupação de 96,7%</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-alta">Alta</span>
+          </div>
+
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Antecipar reforço de voos para dezembro</span>
+                <span class="rec-sub">maior ocupação do ano</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-baixa">Baixa</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <main class="main">
 
       <section class="card card-evolucao">
@@ -181,7 +235,7 @@
             <h3 class="titulo-menores">Top 5 Menores Ocupações</h3>
 
             <div class="linha-rota">
-              <span>ES - MT</span>
+              <span>VIX - CGB</span>
               <span>248</span>
               <span class="ocupacao baixa">74,0%</span>
             </div>
@@ -453,7 +507,19 @@
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            boxWidth: 12,
+            boxHeight: 12,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: { size: 11 },
+            color: '#555'
+          }
+        },
         tooltip: {
           callbacks: {
             label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} passageiros (Capacidade: ${ctx.parsed.x})`

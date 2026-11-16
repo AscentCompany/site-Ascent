@@ -35,6 +35,22 @@ function fecharPainel() {
   if (painel) painel.style.display = "none";
 }
 
+document.addEventListener("click", function(event) {
+  const wrapper = document.getElementById("sino-wrapper");
+  const painel = document.getElementById("painel-alertas");
+  if (wrapper && painel && painel.style.display === "block") {
+    if (!wrapper.contains(event.target)) {
+      fecharPainel();
+    }
+  }
+});
+
+document.addEventListener("keydown", function(event) {
+  if (event.key === "Escape") {
+    fecharPainel();
+  }
+});
+
 
 function carregarPainel() {
   fetch("/alertas/listar/" + idCompanhia)
