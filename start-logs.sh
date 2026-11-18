@@ -2,23 +2,29 @@
 # =============================================================
 # start-logs.sh — Garante que o ascent-logs esteja rodando.
 #
-# Pensado para ser chamado pelo cron (ex.: a cada 5 minutos):
-#   */5 * * * * /bin/bash /caminho/site-Ascent/start-logs.sh >/dev/null 2>&1
-#
-# Se o container estiver parado, ele é iniciado;
-# se não existir, é criado.
+# Chamado no boot (cron @reboot) ou manualmente. É seguro repetir:
+#   - uma execução por vez (flock);
+#   - se o container existe e está parado, inicia;
+#   - se não existe (ou sumiu no meio), cria com restart: unless-stopped.
 # =============================================================
-set -e
+set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 ENV_FILE="$SCRIPT_DIR/.env"
 CONTAINER="ascent-logs"
+IMAGEM="lucasveneroso/ascent:ascent-logs"
+LOCK_FILE="$SCRIPT_DIR/.start-logs.lock"
 
 if [ ! -f "$ENV_FILE" ]; then
   echo "ERRO: arquivo .env não encontrado em $SCRIPT_DIR"
   exit 1
+fi
+
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  exit 0
 fi
 
 # Já está rodando? Não faz nada.
@@ -38,16 +44,32 @@ fi
 
 if docker inspect "$CONTAINER" >/dev/null 2>&1; then
   echo ">> Iniciando container $CONTAINER..."
-  docker start "$CONTAINER" >/dev/null
-else
-  echo ">> Criando container $CONTAINER na rede $NETWORK..."
-  docker run -d \
-    --name "$CONTAINER" \
-    --network "$NETWORK" \
-    --restart no \
-    -p 8080:8080 \
-    --env-file "$ENV_FILE" \
-    -e DB_HOST=mysql \
-    -e DB_PORT=3306 \
-    lucasveneroso/ascent:ascent-logs >/dev/null
+  # Se o container sumir entre o inspect e o start, recria abaixo.
+  if ! docker start "$CONTAINER" >/dev/null 2>&1; then
+    docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+  fi
+fi
+
+if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null)" != "true" ]; then
+  if ! docker image inspect "$IMAGEM" >/dev/null 2>&1; then
+    docker pull "$IMAGEM" >/dev/null 2>&1 || true
+  fi
+  if docker image inspect "$IMAGEM" >/dev/null 2>&1; then
+    echo ">> Criando container $CONTAINER na rede $NETWORK..."
+    docker run -d \
+      --name "$CONTAINER" \
+      --network "$NETWORK" \
+      --restart unless-stopped \
+      -p 8080:8080 \
+      --env-file "$ENV_FILE" \
+      -e DB_HOST=mysql \
+      -e DB_PORT=3306 \
+      "$IMAGEM" >/dev/null || {
+        echo ">> AVISO: não foi possível criar $CONTAINER."
+        exit 0
+      }
+  else
+    echo ">> AVISO: imagem $IMAGEM indisponível. ascent-logs não iniciado."
+    exit 0
+  fi
 fi

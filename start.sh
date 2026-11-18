@@ -10,13 +10,32 @@ ENV_FILE="$SCRIPT_DIR/.env"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 PROJECT_NAME="ascent"
 export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
+APACHEPOI_IMAGE="${APACHEPOI_IMAGE:-lucasveneroso/ascent:ascent-apachepoi-s3}"
+
+# Uma execução por vez (cron + manual não podem se atropelar).
+LOCK_FILE="$SCRIPT_DIR/.start.lock"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  echo ">> Outra execução do start.sh já está em andamento. Nada a fazer."
+  exit 0
+fi
+
+# Nunca mexe na stack enquanto a importação ANAC estiver rodando.
+if [ "$(docker inspect -f '{{.State.Running}}' ascent-apachepoi 2>/dev/null)" = "true" ]; then
+  echo ">> Importação ANAC em andamento (ascent-apachepoi). Nenhuma alteração será feita."
+  exit 0
+fi
 
 echo "=== 1. Atualizando repositório e imagens Docker (pull) ==="
 git pull origin develop 2>/dev/null || git pull 2>/dev/null || true
 docker pull mysql:8.0
 docker pull lucasveneroso/ascent:ascent-api || true
 docker pull lucasveneroso/ascent:ascent-logs || true
-docker pull lucasveneroso/ascent:ascent-apachepoi || true
+# A imagem do apachepoi é um job pontual. Só baixa se ainda não existir
+# localmente, para um `docker pull` de tag antiga não sobrescrever o build fix.
+if ! docker image inspect "$APACHEPOI_IMAGE" >/dev/null 2>&1; then
+  docker pull "$APACHEPOI_IMAGE" || true
+fi
 
 echo "=== 2. Configurando ambiente (.env) ==="
 if [ ! -f "$ENV_FILE" ]; then
@@ -78,9 +97,21 @@ if curl -s -m 2 http://169.254.169.254/latest/meta-data/ 2>/dev/null | grep -q '
     echo ">> Ambiente AWS EC2 detectado! O ascent-apachepoi usará a IAM Role (LabRole) da máquina."
 fi
 
-echo "=== 3. Removendo containers antigos ==="
-# Remove todos os containers do projeto (incluindo ascent-mysql legado do start.sh anterior)
-docker rm -f ascent-mysql mysql ascent-api ascent-logs ascent-apachepoi 2>/dev/null || true
+echo "=== 3. Removendo apenas containers legados (fora do compose) ==="
+# ascent-mysql e ascent-api são gerenciados pelo compose e têm
+# restart: unless-stopped. NÃO são removidos aqui: fazer isso a cada
+# execução derrubava a stack inteira (e a importação em andamento).
+# Só remove um eventual container "mysql" antigo, criado por versões
+# anteriores do start.sh, que não pertence a este projeto compose.
+for antigo in mysql; do
+  if docker inspect "$antigo" >/dev/null 2>&1; then
+    dono="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$antigo" 2>/dev/null || true)"
+    if [ -z "$dono" ]; then
+      echo ">> Removendo container legado: $antigo"
+      docker rm -f "$antigo" >/dev/null 2>&1 || true
+    fi
+  fi
+done
 
 echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
 # Detecta se é "docker compose" (v2) ou "docker-compose" (v1), instala se necessário
@@ -112,8 +143,9 @@ compose() {
 }
 
 echo ">> Usando: ${COMPOSE[*]}"
-compose down --remove-orphans 2>/dev/null || true
-compose up -d --pull always
+# "up -d" já é idempotente: só recria o que mudou. Não usamos "down"
+# porque ele derrubava MySQL/API (e a rede) a cada execução.
+compose up -d --remove-orphans
 
 echo "=== 4.1. Aguardando o MySQL ficar pronto ==="
 MYSQL_ID="$(compose ps -q mysql 2>/dev/null | head -n1)"
@@ -147,71 +179,41 @@ fi
 
 echo "=== 6. Executando importação ANAC (ascent-apachepoi) uma única vez ==="
 # O apachepoi é um job: roda até terminar e não volta sozinho.
-# O marcador impede que ele seja executado novamente nas próximas execuções.
+# O runner (importar-anac.sh) cuida de lock, retomada e log persistente.
 APACHEPOI_MARKER="$SCRIPT_DIR/.apachepoi-executado"
 
 if [ -f "$APACHEPOI_MARKER" ]; then
   echo ">> Importação já concluída anteriormente ($APACHEPOI_MARKER). Pulando."
+elif [ "$(docker inspect -f '{{.State.Running}}' ascent-apachepoi 2>/dev/null)" = "true" ]; then
+  echo ">> Importação já está rodando. Pulando."
+elif bash "$SCRIPT_DIR/importar-anac.sh"; then
+  touch "$APACHEPOI_MARKER"
+  echo ">> Importação concluída. Ela não será executada novamente."
 else
-  # Na EC2 com LabRole: passa as credenciais da instância automaticamente via IAM Role.
-  # Localmente: usa as chaves definidas no .env.
-  APACHEPOI_ENV=()
-  if [ "$IS_EC2" = true ]; then
-    ROLE_NAME=$(curl -s -m 2 http://169.254.169.254/latest/meta-data/iam/security-credentials/ 2>/dev/null)
-    if [ -n "$ROLE_NAME" ]; then
-      CREDS=$(curl -s -m 2 "http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE_NAME")
-      EC2_KEY_ID=$(echo "$CREDS" | grep -o '"AccessKeyId" : "[^"]*"' | cut -d'"' -f4)
-      EC2_SECRET=$(echo "$CREDS" | grep -o '"SecretAccessKey" : "[^"]*"' | cut -d'"' -f4)
-      EC2_TOKEN=$(echo "$CREDS" | grep -o '"Token" : "[^"]*"' | cut -d'"' -f4)
-      echo ">> Credenciais da LabRole obtidas via metadata da EC2."
-      APACHEPOI_ENV=(
-        -e AWS_ACCESS_KEY_ID="$EC2_KEY_ID"
-        -e AWS_SECRET_ACCESS_KEY="$EC2_SECRET"
-        -e AWS_SESSION_TOKEN="$EC2_TOKEN"
-      )
-    else
-      echo ">> Aviso: não foi possível obter credenciais da LabRole. Usando .env."
-    fi
-  fi
-
-  if docker run --rm \
-      --name ascent-apachepoi \
-      --network "$NETWORK" \
-      --env-file "$ENV_FILE" \
-      -e DB_HOST=mysql \
-      -e DB_PORT=3306 \
-      "${APACHEPOI_ENV[@]}" \
-      lucasveneroso/ascent:ascent-apachepoi; then
-    touch "$APACHEPOI_MARKER"
-    echo ">> Importação concluída. Ela não será executada novamente."
-  else
-    echo ">> AVISO: a importação falhou. Ela será tentada na próxima execução do start.sh."
-  fi
+  echo ">> AVISO: a importação falhou ou ficou incompleta. Será retomada na próxima execução."
 fi
 
-echo "=== 7. Configurando crontab (DuckDNS e ascent-logs) ==="
+echo "=== 7. Configurando crontab (DuckDNS, start.sh e ascent-logs) ==="
 if [ -f "$SCRIPT_DIR/setup-duckdns.sh" ]; then
   bash "$SCRIPT_DIR/setup-duckdns.sh"
 else
   echo ">> AVISO: setup-duckdns.sh não encontrado. Crontab DuckDNS não configurado."
 fi
 
-# Cron do ascent-logs: ao reiniciar a máquina e a cada 5 minutos,
-# inicia o container caso ele esteja parado.
-LOGS_SCRIPT="$SCRIPT_DIR/start-logs.sh"
-if [ -f "$LOGS_SCRIPT" ]; then
-  chmod +x "$LOGS_SCRIPT" 2>/dev/null || true
-  CRON_LOGS_BOOT="@reboot /bin/bash $LOGS_SCRIPT >/dev/null 2>&1"
-  CRON_LOGS_INTERVAL="*/5 * * * * /bin/bash $LOGS_SCRIPT >/dev/null 2>&1"
-  (
-    crontab -l 2>/dev/null | grep -vF "$LOGS_SCRIPT"
-    echo "$CRON_LOGS_BOOT"
-    echo "$CRON_LOGS_INTERVAL"
-  ) | crontab -
-  echo ">> Cron do ascent-logs configurado (@reboot e a cada 5 minutos)."
-else
-  echo ">> AVISO: start-logs.sh não encontrado. Cron do ascent-logs não configurado."
-fi
+# NÃO agendar start.sh/start-logs.sh de 5 em 5 minutos: isso derrubava a
+# stack e matava a importação em andamento. Os containers têm
+# restart: unless-stopped, então @reboot é suficiente.
+chmod +x "$SCRIPT_DIR/start.sh" "$SCRIPT_DIR/start-logs.sh" "$SCRIPT_DIR/importar-anac.sh" 2>/dev/null || true
+CRON_BOOT="@reboot /bin/bash $SCRIPT_DIR/start.sh >> $SCRIPT_DIR/start.log 2>&1"
+CRON_LOGS_BOOT="@reboot /bin/bash $SCRIPT_DIR/start-logs.sh >/dev/null 2>&1"
+(
+  crontab -l 2>/dev/null \
+    | grep -vF "$SCRIPT_DIR/start.sh" \
+    | grep -vF "$SCRIPT_DIR/start-logs.sh"
+  echo "$CRON_BOOT"
+  echo "$CRON_LOGS_BOOT"
+) | crontab -
+echo ">> Crontab configurado: apenas @reboot (sem ciclos de 5 minutos)."
 
 echo ""
 echo "=== Sistema Ascent iniciado com sucesso! ==="
