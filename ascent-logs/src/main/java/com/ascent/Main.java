@@ -130,7 +130,7 @@ public class Main {
     }
 
     public static void exibirTodosOsLogs(){
-        List<Log> logs = bd.query("SELECT * FROM logsServico ORDER BY dataHora DESC", new BeanPropertyRowMapper<>(Log.class));
+        List<Log> logs = bd.query("SELECT idLogServico AS logId, categoria, servico, mensagem, dataHora, origemCadastro, fkUsuario FROM logsServico ORDER BY dataHora DESC", new BeanPropertyRowMapper<>(Log.class));
 
         if (logs.isEmpty()){
             System.out.println("Nenhum log encontrado.");
@@ -141,7 +141,8 @@ public class Main {
             System.out.println(log.getDataHora()
                     + " " + log.getCategoria()
                     + " [" + log.getServico() + "] - " + log.getMensagem()
-                    + " [id=" + log.getLogId()
+                    + " [LogID=" + (log.getLogId() != null ? log.getLogId() : "N/A")
+                    + ", AutorID=" + (log.getFkUsuario() != null ? log.getFkUsuario() : "SISTEMA")
                     + ", origem=" + log.getOrigemCadastro() + "]");
         }
 

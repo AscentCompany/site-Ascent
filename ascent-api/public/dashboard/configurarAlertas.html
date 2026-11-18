@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <link rel="stylesheet" href="../css/dashboardOperacoes.css">
   <link rel="stylesheet" href="../css/alertas.css">
+  <script src="../js/sidebarNav.js" defer></script>
 </head>
 <body>
   <script src="../js/sessao.js"></script>
@@ -40,6 +41,7 @@
       <div class="nav-item"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
       <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
       <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
+      <div class="nav-item"><a href="./centralRecomendacoes.html">Central de Recomendações</a></div>
       <div class="nav-item ativo"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
       <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
       <div class="nav-item"><a href="./faq.html">FAQ</a></div>
@@ -48,7 +50,7 @@
     <button class="logout" type="button" onclick="limparSessao()">SAIR</button>
   </aside>
 
-  <div style="margin-left: var(--sidebar-w); transition: margin-left .3s ease;">
+  <main class="config-main">
     <div class="config-wrapper">
 
       <div class="config-header">
@@ -70,7 +72,7 @@
       </div>
 
     </div>
-  </div>
+  </main>
 
   <div class="modal-overlay-alerta" id="modal-overlay" style="display:none;">
     <div class="modal-regra">
@@ -179,22 +181,6 @@
     window.location.href = "/dashboard/dashboardOperacoes.html";
   }
 
-  const itensNav = [...document.querySelectorAll(".sidebar .nav-item")];
-  const indicador = document.getElementById("nav-indicador");
-
-  function posicionarIndicador() {
-    const atual = itensNav.findIndex(i => i.classList.contains("ativo"));
-    if (atual < 0) return;
-    indicador.style.transition = "none";
-    indicador.style.transform = "translateY(" + itensNav[atual].offsetTop + "px)";
-    indicador.style.opacity = 1;
-    indicador.offsetHeight;
-    indicador.style.transition = "";
-
-  }
-
-  window.addEventListener("load", posicionarIndicador);
-  window.addEventListener("resize", posicionarIndicador);
 
   function preencherAnos() {
     const ano = new Date().getFullYear();

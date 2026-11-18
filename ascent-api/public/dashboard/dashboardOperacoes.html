@@ -13,6 +13,7 @@
     href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
   <link rel="stylesheet" href="../css/dashboardOperacoes.css">
   <link rel="stylesheet" href="../css/alertas.css">
+  <script src="../js/sidebarNav.js" defer></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 </head>
 <body>
@@ -45,6 +46,7 @@
         <div class="nav-item ativo"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
         <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
         <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
+        <div class="nav-item"><a href="./centralRecomendacoes.html">Central de Recomendações</a></div>
         <div class="nav-item" id="nav-configurar-op" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
         <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
         <div class="nav-item"><a href="./faq.html">FAQ</a></div>
@@ -67,57 +69,126 @@
     </div>
 
     <section class="kpis">
-      <article class="card kpi-gradient kpi-region">
-        <h2>Taxa de Ocupação Média</h2>
-        <div class="kpi-text-icon">
-          <i class="fas fa-plane" style="transform: rotate(300deg);"></i>
-          <div class="big">78,4%</div>
+      <article class="card kpi-card">
+        <h2 id="kpi-titulo-mes-maior-procura">Mês com maior ocupação</h2>
+        <div class="kpi-card-main">
+          <div class="big" id="kpi-mes-maior-procura">--</div>
         </div>
-        <div class="sub">Passageiros + 57,8 M assentos</div>
+        <div class="sub" id="kpi-sub-mes-maior-procura">
+          Carregando dados...
+        </div>
       </article>
 
-      <article class="card kpi-gradient kpi-mes">
-        <h2>mês com maior procura</h2>
-        <div class="kpi-text-icon">
-          <i class="fas fa-calendar"></i>
-          <div class="big">Dezembro</div>
+      <article class="card kpi-card">
+        <h2>Volume médio de passageiros</h2>
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome">Passageiros p/ voo</span>
+            <strong class="kpi-coluna-taxa" id="kpi-volume-companhia">--</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Mercado</span>
+            <span class="kpi-coluna-nome">Passageiros p/ voo</span>
+            <strong class="kpi-coluna-taxa" id="kpi-volume-mercado">--</strong>
+          </div>
         </div>
-        <div class="sub">Pico histórico de demanda</div>
       </article>
 
-      <article class="card kpi-gradient kpi-mes">
-        <h2>Rota com menor ocupação</h2>
-        <div class="kpi-text-icon">
-          <i class="fas fa-map-marker-alt"></i>
-          <div class="big">Es - Mt</div>
+      <article class="card kpi-card">
+        <h2>Companhia com maior ocupação</h2>
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome" id="kpi-nome-sua-companhia">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-taxa-sua-companhia">--%</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Maior ocupação</span>
+            <span class="kpi-coluna-nome" id="kpi-nome-benchmark">--</span>
+            <strong class="kpi-coluna-taxa positive" id="kpi-taxa-benchmark">--%</strong>
+          </div>
         </div>
-        <div class="sub">4% inferior às demais rotas ofertadas</div>
       </article>
 
-      <article class="card kpi-gradient kpi-region">
-        <h2>Rotas Críticas</h2>
-        <div class="kpi-text-icon">
-          <i class="fas fa-triangle-exclamation"></i>
-          <div class="big">12,6%</div>
+      <article class="card kpi-card">
+        <h2>Taxa de ocupação média</h2>
+        <div class="kpi-card-main">
+          <div class="big">40%</div>
         </div>
-        <div class="sub">18 rotas com ocupação abaixo do limite</div>
+        <div class="sub">
+          <strong class="positive">▲ 2,4 p.p.</strong> vs período anterior · <strong class="positive">▲ 1,1 p.p.</strong> vs ano ant.
+        </div>
       </article>
+    </section>
+
+    <!-- PAINEL DE RECOMENDAÇÕES -->
+    <section class="painel-recomendacoes">
+      <div class="card card-recomendacoes">
+        <div class="recomendacoes-header">
+          <div class="recomendacoes-titulo">
+            <span>Painel de Recomendações</span>
+          </div>
+          <a href="./centralRecomendacoes.html" class="recomendacoes-link">Ver todas</a>
+        </div>
+
+        <div class="recomendacoes-grid" id="lista-recomendacoes">
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Reduzir frequência em VIX - CGB</span>
+                <span class="rec-sub">ocupação de 74%</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-media">Média</span>
+          </div>
+
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Aumentar capacidade em CGH - REC</span>
+                <span class="rec-sub">ocupação de 96,7%</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-alta">Alta</span>
+          </div>
+
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Antecipar reforço de voos para dezembro</span>
+                <span class="rec-sub">maior ocupação do ano</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-baixa">Baixa</span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <main class="main">
 
       <section class="card card-evolucao">
-        <h2 class="chart-title">Relação de ocupação de assentos</h2>
+        <h2 class="chart-title">CAPACIDADE DO AVIÃO VS. OCUPAÇÃO REAL</h2>
 
-        <div class="chart-placeholder">
-          <canvas id="grafico-evolucao" style="height: 200px;"></canvas>
+        <div class="chart-placeholder" style="position: relative; height: 210px;">
+          <canvas id="grafico-evolucao"></canvas>
         </div>
       </section>
 
       <section class="card card-mensal">
-        <h2 class="chart-title">Análise Anual de Procura Histórica</h2>
+        <h2 class="chart-title">ANÁLISE DE PROCURA HISTÓRICA</h2>
 
-        <div class="grafico-container" style="height: 200px;">
+        <div class="grafico-container" style="position: relative; height: 210px;">
           <canvas id="grafico-mensal"></canvas>
         </div>
       </section>
@@ -164,7 +235,7 @@
             <h3 class="titulo-menores">Top 5 Menores Ocupações</h3>
 
             <div class="linha-rota">
-              <span>ES - MT</span>
+              <span>VIX - CGB</span>
               <span>248</span>
               <span class="ocupacao baixa">74,0%</span>
             </div>
@@ -220,165 +291,354 @@
   if (window.innerWidth <= 900) document.body.classList.add('menu-fechado');
   btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
   overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
-  const itensNav = [...document.querySelectorAll('.sidebar .nav-item')];
-  const indicador = document.getElementById('nav-indicador');
-  const indiceAtivo = () => itensNav.findIndex(i => i.classList.contains('ativo'));
-  const topoDe = i => `translateY(${itensNav[i].offsetTop}px)`;
-  function posicionarIndicador() {
-    const atual = indiceAtivo();
-    if (atual < 0) return;
-    const guardado = sessionStorage.getItem('navAnterior');
-    const ant = guardado === null ? atual : Number(guardado);
-    sessionStorage.removeItem('navAnterior');
-    indicador.style.transition = 'none';
-    indicador.style.transform = topoDe(itensNav[ant] ? ant : atual);
-    indicador.style.opacity = 1;
-    indicador.offsetHeight;
-    indicador.style.transition = '';
-    indicador.style.transform = topoDe(atual);
-  }
-  window.addEventListener('load', posicionarIndicador);
-  window.addEventListener('resize', () => {
-    indicador.style.transition = 'none';
-    indicador.style.transform = topoDe(indiceAtivo());
-  });
-  itensNav.forEach(item => {
-    item.addEventListener('click', () => {
-      if (item.classList.contains('ativo')) return;
-      if (item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
-    });
-  });
 
+  function carregarKpiBenchmark() {
+    let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoNomeSuaCompanhia = document.getElementById('kpi-nome-sua-companhia');
+    let elementoTaxaSuaCompanhia = document.getElementById('kpi-taxa-sua-companhia');
+    let elementoNomeBenchmark = document.getElementById('kpi-nome-benchmark');
+    let elementoTaxaBenchmark = document.getElementById('kpi-taxa-benchmark');
+
+    fetch(`/api/kpis/benchmark/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let suaCompanhia = json.dados.suaCompanhia;
+        let benchmark = json.dados.benchmark;
+
+        let nomeSuaCompanhia = suaCompanhia.nome || 'Sua companhia';
+        let taxaSuaCompanhia = Number(suaCompanhia.taxaOcupacao) || 0;
+        let classeSuaCompanhia = taxaSuaCompanhia < 50 ? 'negative' : 'positive';
+
+        let nomeBenchmark = benchmark.nome || 'Sem dados';
+        let taxaBenchmark = Number(benchmark.taxaOcupacao) || 0;
+
+        elementoNomeSuaCompanhia.textContent = nomeSuaCompanhia;
+        elementoNomeSuaCompanhia.title = nomeSuaCompanhia;
+        elementoTaxaSuaCompanhia.textContent = `${taxaSuaCompanhia}%`;
+        elementoTaxaSuaCompanhia.className = `kpi-coluna-taxa ${classeSuaCompanhia}`;
+
+        elementoNomeBenchmark.textContent = nomeBenchmark;
+        elementoNomeBenchmark.title = nomeBenchmark;
+        elementoTaxaBenchmark.textContent = `${taxaBenchmark}%`;
+        elementoTaxaBenchmark.className = 'kpi-coluna-taxa positive';
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de ocupação:', erro);
+        elementoNomeSuaCompanhia.textContent = '--';
+        elementoNomeSuaCompanhia.title = '';
+        elementoTaxaSuaCompanhia.textContent = '--';
+        elementoTaxaSuaCompanhia.className = 'kpi-coluna-taxa';
+
+        elementoNomeBenchmark.textContent = '--';
+        elementoNomeBenchmark.title = '';
+        elementoTaxaBenchmark.textContent = '--';
+        elementoTaxaBenchmark.className = 'kpi-coluna-taxa';
+      });
+  }
+
+  carregarKpiBenchmark();
+
+  function carregarKpiVolumeMedio() {
+    let companhiaId = sessionStorage.COMPANHIA_USUARIO;
+    let elementoVolumeCompanhia = document.getElementById('kpi-volume-companhia');
+    let elementoVolumeMercado = document.getElementById('kpi-volume-mercado');
+
+    fetch(`/api/kpis/volume-medio/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let mediaMercado = Number(json.dados.mediaMercado) || 0;
+        let mediaCompanhia = Number(json.dados.mediaCompanhia) || 0;
+        let classeCompanhia = mediaCompanhia >= mediaMercado ? 'positive' : 'negative';
+
+        elementoVolumeCompanhia.textContent = mediaCompanhia;
+        elementoVolumeCompanhia.className = `kpi-coluna-taxa ${classeCompanhia}`;
+
+        elementoVolumeMercado.textContent = mediaMercado;
+        elementoVolumeMercado.className = 'kpi-coluna-taxa';
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de volume médio:', erro);
+        elementoVolumeCompanhia.textContent = '--';
+        elementoVolumeCompanhia.className = 'kpi-coluna-taxa';
+
+        elementoVolumeMercado.textContent = '--';
+        elementoVolumeMercado.className = 'kpi-coluna-taxa';
+      });
+  }
+
+  carregarKpiVolumeMedio();
+
+  function preencherVariacaoPp(elementoDestino, diferenca, textoComparacao, adicionarSeparador) {
+    if (adicionarSeparador) {
+      elementoDestino.append(' · ');
+    }
+
+    if (diferenca === null || diferenca === undefined || isNaN(Number(diferenca))) {
+      elementoDestino.append(`-- ${textoComparacao}`);
+      return;
+    }
+
+    let valor = Number(diferenca);
+    let seta = valor >= 0 ? '▲' : '▼';
+    let classe = valor >= 0 ? 'positive' : 'negative';
+    let valorFormatado = Math.abs(valor).toFixed(1).replace('.', ',');
+
+    let tagStrong = document.createElement('strong');
+    tagStrong.className = classe;
+    tagStrong.textContent = `${seta} ${valorFormatado} p.p.`;
+
+    elementoDestino.append(tagStrong, ` ${textoComparacao}`);
+  }
+
+  function carregarKpiMesMaiorProcura() {
+    let elementoTitulo = document.getElementById('kpi-titulo-mes-maior-procura');
+    let elementoMes = document.getElementById('kpi-mes-maior-procura');
+    let elementoSub = document.getElementById('kpi-sub-mes-maior-procura');
+
+    fetch('/api/kpis/mes-maior-procura')
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        if (elementoTitulo) {
+          elementoTitulo.textContent = json.dados.anoAnalisado
+            ? `Mês com maior ocupação (${json.dados.anoAnalisado})`
+            : 'Mês com maior ocupação';
+        }
+
+        elementoMes.textContent = json.dados.mesNome || 'Sem dados';
+        elementoSub.textContent = '';
+
+        preencherVariacaoPp(elementoSub, json.dados.vsMedia, 'vs média', false);
+        preencherVariacaoPp(elementoSub, json.dados.vsAnoAnterior, 'vs ano ant.', true);
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de mês com maior procura:', erro);
+        if (elementoTitulo) {
+          elementoTitulo.textContent = 'Mês com maior ocupação';
+        }
+        elementoMes.textContent = '--';
+        elementoSub.textContent = 'Não foi possível carregar os dados.';
+      });
+  }
+
+  carregarKpiMesMaiorProcura();
   const meses = [
     'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
     'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'
   ];
 
-  // GRÁFICO 1 — OCUPAÇÃO DE ASSENTOS
-  new Chart(document.getElementById('grafico-evolucao'), {
-    type: 'bar',
+  // GRÁFICO 1 — CAPACIDADE DO AVIÃO VS. OCUPAÇÃO REAL (SCATTER)
+  const pontosLaranja = [
+    { x: 92, y: 58 }, { x: 94, y: 68 }, { x: 96, y: 78 },
+    { x: 102, y: 54 }, { x: 104, y: 64 }, { x: 106, y: 76 }, { x: 108, y: 92 },
+    { x: 114, y: 64 }, { x: 116, y: 74 }, { x: 118, y: 92 }, { x: 120, y: 100 },
+    { x: 124, y: 58 }, { x: 126, y: 68 }, { x: 130, y: 92 }, { x: 132, y: 100 },
+    { x: 138, y: 84 }, { x: 140, y: 94 }, { x: 142, y: 104 }, { x: 144, y: 114 }, { x: 146, y: 124 },
+    { x: 148, y: 88 }, { x: 152, y: 108 }, { x: 154, y: 118 },
+    { x: 160, y: 94 }, { x: 162, y: 106 }, { x: 164, y: 118 }, { x: 166, y: 136 }, { x: 168, y: 148 },
+    { x: 170, y: 86 }, { x: 172, y: 98 }, { x: 174, y: 112 },
+    { x: 184, y: 102 }, { x: 186, y: 116 }, { x: 192, y: 160 },
+    { x: 194, y: 104 }, { x: 200, y: 142 }, { x: 202, y: 156 }, { x: 206, y: 185 },
+    { x: 210, y: 128 }, { x: 212, y: 144 }, { x: 216, y: 176 }, { x: 218, y: 192 }
+  ];
 
+  const pontosCinza = [
+    { x: 88, y: 44 }, { x: 90, y: 52 },
+    { x: 112, y: 56 },
+    { x: 128, y: 76 }, { x: 134, y: 108 },
+    { x: 136, y: 70 },
+    { x: 150, y: 98 }, { x: 156, y: 132 },
+    { x: 158, y: 84 },
+    { x: 176, y: 124 }, { x: 178, y: 142 }, { x: 180, y: 152 },
+    { x: 182, y: 90 }, { x: 188, y: 138 }, { x: 190, y: 150 },
+    { x: 196, y: 116 }, { x: 198, y: 126 }, { x: 204, y: 170 },
+    { x: 208, y: 114 }, { x: 214, y: 162 }
+  ];
+
+  new Chart(document.getElementById('grafico-evolucao'), {
+    type: 'scatter',
     data: {
-      labels: meses,
       datasets: [
         {
-          label: 'Assentos Disponíveis',
-          data: [60, 55, 50, 35, 50, 66, 70, 50, 40, 50, 50, 100],
-          backgroundColor: '#ffadb4',
-          borderRadius: 1,
-          barPercentage: 0.85,
-          categoryPercentage: 0.75
+          label: 'Ocupação Real',
+          data: pontosLaranja,
+          backgroundColor: '#ff6a00',
+          borderColor: '#ff6a00',
+          pointRadius: 4.5,
+          pointHoverRadius: 6
         },
         {
-          label: 'Assentos Ocupados',
-          data: [50, 47, 30, 25, 50, 60, 66, 45, 40, 40, 44, 70],
-          backgroundColor: '#ff9b73',
-          borderRadius: 1,
-          barPercentage: 0.85,
-          categoryPercentage: 0.75
+          label: 'Capacidade / Referência',
+          data: pontosCinza,
+          backgroundColor: '#b5b5b5',
+          borderColor: '#b5b5b5',
+          pointRadius: 4.5,
+          pointHoverRadius: 6
         }
       ]
     },
-
     options: {
       responsive: true,
       maintainAspectRatio: false,
-
       plugins: {
         legend: {
+          display: true,
           position: 'top',
+          align: 'end',
           labels: {
+            boxWidth: 12,
+            boxHeight: 12,
             usePointStyle: true,
             pointStyle: 'circle',
-            boxWidth: 6,
-            boxHeight: 6,
-            padding: 8,
-            font: { size: 8 }
+            font: { size: 11 },
+            color: '#555'
           }
         },
         tooltip: {
-          mode: 'index',
-          intersect: false
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} passageiros (Capacidade: ${ctx.parsed.x})`
+          }
         }
       },
-
       scales: {
         x: {
+          type: 'linear',
+          min: 70,
+          max: 220,
           grid: { display: false },
-          ticks: { font: { size: 8 } },
-          border: { display: false }
+          border: { display: false },
+          ticks: {
+            stepSize: 40,
+            callback: valor => [80, 120, 160, 200].includes(valor) ? valor : null,
+            color: '#777',
+            font: { size: 10 }
+          },
+          title: {
+            display: true,
+            text: 'Capacidade do Avião',
+            color: '#555',
+            font: { size: 10, weight: '600' }
+          }
         },
         y: {
           beginAtZero: true,
-          max: 100,
+          min: 0,
+          max: 210,
+          grid: { color: '#ececec' },
+          border: { display: false },
           ticks: {
-            stepSize: 20,
-            font: { size: 8 },
-            callback: valor => `${valor} mil`
+            stepSize: 100,
+            callback: valor => [0, 100, 200].includes(valor) ? valor : null,
+            color: '#777',
+            font: { size: 10 }
           },
-          grid: {
-            color: '#eeeeee'
-          },
-          border: { display: false }
+          title: {
+            display: true,
+            text: 'Nº de Passageiros',
+            color: '#555',
+            font: { size: 10, weight: '600' }
+          }
         }
       }
     }
   });
 
-  // GRÁFICO 2 — PROCURA HISTÓRICA
+  // GRÁFICO 2 — ANÁLISE DE PROCURA HISTÓRICA
   new Chart(document.getElementById('grafico-mensal'), {
     type: 'bar',
-
     data: {
       labels: meses,
-      datasets: [{
-        label: 'Procura histórica',
-        data: [60, 50, 47, 20, 50, 60, 66, 45, 40, 43, 45, 70],
-
-        backgroundColor: [
-          '#5486ff', '#a487f6', '#f2b960', '#ffdc4d',
-          '#ed6981', '#d95cc2', '#56cccc', '#70c65c',
-          '#8caf32', '#b5a027', '#e4a126', '#ffb36f'
-        ],
-
-        borderRadius: 3,
-        borderSkipped: false,
-        categoryPercentage: 0.8,
-        barPercentage: 0.9
-      }]
+      datasets: [
+        {
+          label: 'Demanda',
+          data: [75, 82, 88, 92, 100, 116, 120, 110, 107, 118, 132, 160],
+          backgroundColor: '#ff6a00',
+          borderRadius: 4,
+          barPercentage: 0.52,
+          categoryPercentage: 0.8,
+          grouped: false,
+          order: 1
+        },
+        {
+          label: 'Capacidade',
+          data: [125, 130, 136, 140, 145, 150, 155, 148, 145, 152, 162, 180],
+          backgroundColor: '#dfe3e8',
+          borderRadius: 4,
+          barPercentage: 0.85,
+          categoryPercentage: 0.8,
+          grouped: false,
+          order: 2
+        }
+      ]
     },
-
     options: {
       responsive: true,
       maintainAspectRatio: false,
-
+      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            boxWidth: 12,
+            boxHeight: 12,
+            usePointStyle: true,
+            pointStyle: 'rectRounded',
+            font: { size: 11 },
+            color: '#555'
+          }
+        },
         tooltip: {
           callbacks: {
-            label: contexto => `${contexto.raw} mil`
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} passageiros`
           }
         }
       },
-
       scales: {
         x: {
           grid: { display: false },
-          ticks: { font: { size: 8 } },
-          border: { display: false }
+          border: { display: false },
+          ticks: { font: { size: 10 }, color: '#777' }
         },
         y: {
           beginAtZero: true,
-          max: 70,
+          min: 0,
+          max: 200,
+          grid: { color: '#ececec' },
+          border: { display: false },
           ticks: {
-            stepSize: 10,
-            font: { size: 8 },
-            callback: valor => `${valor} mil`
-          },
-          grid: {
-            color: '#eeeeee'
-          },
-          border: { display: false }
+            stepSize: 100,
+            callback: valor => [0, 100, 200].includes(valor) ? valor : null,
+            color: '#777',
+            font: { size: 10 }
+          }
         }
       }
     }

@@ -7,11 +7,26 @@
     <link rel="stylesheet" href="css/home.css">
     <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="css/cruds.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    <link rel="stylesheet" href="css/dashboardOperacoes.css">
+    <script src="js/sidebarNav.js" defer></script>
 
 </head>
 <body>
     <script src="js/sessao.js"></script>
     <script>validarSessao();</script>
+    <script>
+        const sidebarState = sessionStorage.getItem("gestaoSidebarState");
+        if (sidebarState !== null) {
+            sessionStorage.removeItem("gestaoSidebarState");
+            document.body.classList.toggle("menu-fechado", sidebarState === "closed");
+        } else if (window.innerWidth <= 900) {
+            document.body.classList.add("menu-fechado");
+        }
+    </script>
 <div class="modal-overlay" id="modalCadastro" style="display: none;">
     <div class="modal-content formulario">
         <span class="fechar-modal" onclick="fecharModal()">X</span>
@@ -37,13 +52,14 @@
 </div>
 
 
-<div class="page-wrapper">
-
-    <div class="sidebar">
-        <div class="logo-container logo-container-usuario">
-            <a href="dashboard/acessoRapido.html">
-                <img src="assets/icon/logo.png" alt="Logo da Ascent" />
-            </a>
+<div class="app">
+    <button class="btn-menu" id="btn-menu" aria-label="Abrir ou fechar menu">
+        <i class="fi fi-rr-menu-burger"></i>
+    </button>
+    <div class="overlay" id="overlay"></div>
+    <aside class="sidebar">
+        <div class="logo">
+            <a href="dashboard/acessoRapido.html"><img src="assets/icon/logo2.png" alt="Ascent"></a>
         </div>
         <div class="profile">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,12 +67,19 @@
             </svg>
             <span id="nome-usuario"></span>
         </div>
-        <nav class="sidebar-menu">
-            <button class="menu-btn" onclick="window.location.href='usuarios.html'">Gerenciar Organização</button>
-            <button class="menu-btn" onclick="window.location.href='cargos.html'">Gerenciar Cargos</button>
-            <button class="menu-btn active" onclick="window.location.href='permissoes.html'">Gerenciar Permissões</button>
+        <nav class="nav">
+            <span class="nav-indicador" id="nav-indicador"></span>
+            <div class="nav-item"><a href="dashboard/dashboardRotas.html">Dashboard - rotas</a></div>
+            <div class="nav-item"><a href="dashboard/dashboardOperacoes.html">Dashboard - operações</a></div>
+            <div class="nav-item ativo"><a href="usuarios.html">Gestão</a></div>
+            <div class="nav-item"><a href="dashboard/centralAlertas.html">Central de Alertas</a></div>
+            <div class="nav-item"><a href="dashboard/centralRecomendacoes.html">Central de Recomendações</a></div>
+            <div class="nav-item" id="nav-configurar-gestao" style="display:none;"><a href="dashboard/configurarAlertas.html">Configurar Alertas</a></div>
+            <div class="nav-item"><a href="dashboard/perfil.html">Perfil</a></div>
+            <div class="nav-item"><a href="dashboard/faq.html">FAQ</a></div>
         </nav>
-    </div>
+        <button class="logout" type="button" onclick="limparSessao()">SAIR</button>
+    </aside>
 
     <main class="container-gerenciar">
 
@@ -67,6 +90,12 @@
             </div>
             <button class="btn-novo-usuario" onclick="abrirModal()">+ Nova Permissão</button>
         </div>
+
+        <nav class="gestao-nav" aria-label="Navegação da gestão">
+            <a href="usuarios.html">Gerenciar Organização</a>
+            <a href="cargos.html">Gerenciar Cargos</a>
+            <a class="ativo" href="permissoes.html" aria-current="page">Gerenciar Permissões</a>
+        </nav>
 
         <div class="cartao-gerenciar">
 
@@ -88,7 +117,17 @@
 <script>
 
     document.getElementById("nome-usuario").textContent = sessionStorage.NOME_USUARIO || "Usuário";
+    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
+        document.getElementById("nav-configurar-gestao").style.display = "";
+    }
+
+    const btnMenu = document.getElementById("btn-menu");
+    const overlay = document.getElementById("overlay");
+    btnMenu.addEventListener("click", () => document.body.classList.toggle("menu-fechado"));
+    overlay.addEventListener("click", () => document.body.classList.add("menu-fechado"));
+
     let funcionalidadesEscolhidas = [];
+    let idUsuarioLogado = sessionStorage.ID_USUARIO;
 
     function abrirModal() {
         document.getElementById("modalCadastro").style.display = "flex";
@@ -181,7 +220,8 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 nomePermissaoServer: nomePermissao,
-                funcionalidadesServer: idsParaEnviar
+                funcionalidadesServer: idsParaEnviar,
+                fkUsuarioAcao: idUsuarioLogado
             })
         }).then(res => {
             if(res.ok) {
@@ -264,7 +304,7 @@
                 }
 
                 if(confirm(mensagem)) {
-                    fetch(`/permissoes/deletar/${idPermissao}`, {
+                    fetch(`/permissoes/deletar/${idPermissao}?fkUsuarioAcao=${idUsuarioLogado}`, {
                         method: "DELETE"
                     }).then(res => {
                         if(res.ok) {
@@ -295,7 +335,8 @@
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    funcionalidadesServer: funcSelecionadas
+                    funcionalidadesServer: funcSelecionadas,
+                    fkUsuarioAcao: idUsuarioLogado
                 })
             }).then(res => {
                 if (res.ok) {

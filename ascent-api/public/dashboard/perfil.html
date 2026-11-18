@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
     <link rel="stylesheet" href="../css/perfil.css">
+    <script src="../js/sidebarNav.js" defer></script>
 </head>
 <body>
   <script src="../js/sessao.js"></script>
@@ -41,6 +42,8 @@
         <div class="nav-item "><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
         <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
         <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
+        <div class="nav-item"><a href="./centralRecomendacoes.html">Central de Recomendações</a></div>
+        <div class="nav-item" id="nav-configurar-perfil" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
         <div class="nav-item ativo"><a href="./perfil.html">Perfil</a></div>
         <div class="nav-item"><a href="./faq.html">FAQ</a></div>
       </nav>
@@ -125,40 +128,9 @@
     overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
   }
 
-  const itensNav = [...document.querySelectorAll('.sidebar .nav-item')];
-  const indicador = document.getElementById('nav-indicador');
-  const indiceAtivo = () => itensNav.findIndex(i => i.classList.contains('ativo'));
-  const topoDe = i => `translateY(${itensNav[i].offsetTop}px)`;
-
-  function posicionarIndicador() {
-    const atual = indiceAtivo();
-    if (atual < 0 || !indicador) return;
-    const guardado = sessionStorage.getItem('navAnterior');
-    const ant = guardado === null ? atual : Number(guardado);
-    sessionStorage.removeItem('navAnterior');
-    
-    indicador.style.transition = 'none';
-    indicador.style.transform = topoDe(itensNav[ant] ? ant : atual);
-    indicador.style.opacity = 1;
-    indicador.offsetHeight;
-    indicador.style.transition = '';
-    indicador.style.transform = topoDe(atual);
+  if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
+    document.getElementById('nav-configurar-perfil').style.display = '';
   }
-
-  window.addEventListener('load', posicionarIndicador);
-  window.addEventListener('resize', () => {
-    const atual = indiceAtivo();
-    if (atual < 0 || !indicador) return;
-    indicador.style.transition = 'none';
-    indicador.style.transform = topoDe(atual);
-  });
-
-  itensNav.forEach(item => {
-    item.addEventListener('click', () => {
-      if (item.classList.contains('ativo')) return;
-      if (item.querySelector('a')) sessionStorage.setItem('navAnterior', indiceAtivo());
-    });
-  });
 </script>
 
 </body>

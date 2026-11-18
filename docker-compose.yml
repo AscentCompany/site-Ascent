@@ -25,7 +25,7 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - mysql_data:/var/lib/mysql
+      - /dados/mysql:/var/lib/mysql
       - ./database/ascent.sql:/docker-entrypoint-initdb.d/01-ascent.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
@@ -60,7 +60,3 @@ services:
 networks:
   ascent:
     driver: bridge
-
-volumes:
-  mysql_data:
-    driver: local
