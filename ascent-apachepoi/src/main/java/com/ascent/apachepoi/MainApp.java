@@ -2,25 +2,19 @@ package com.ascent.apachepoi;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainApp {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    private static JdbcTemplate        jdbcTemplate;
-    private static CompanhiaDao        companhiaDao;
-    private static AviaoDao            aviaoDao;
-    private static AeroportoDao        aeroportoDao;
-    private static VooDao              vooDao;
-    private static AeroportoDirecaoDao aeroportoDirecaoDao;
-    private static LogImportacaoDao    logImportacaoDao;
+    private static JdbcTemplate     jdbcTemplate;
+    private static LogImportacaoDao logImportacaoDao;
 
     // <editor-fold desc="Logs">
     private static void log(String msg) {
@@ -35,13 +29,9 @@ public class MainApp {
     public static void main(String[] args) {
         carregarEnv();
 
-        jdbcTemplate        = new JdbcTemplate(new Conexao().getConexao());
-        companhiaDao        = new CompanhiaDao(jdbcTemplate);
-        aviaoDao            = new AviaoDao(jdbcTemplate);
-        aeroportoDao        = new AeroportoDao(jdbcTemplate);
-        vooDao              = new VooDao(jdbcTemplate);
-        aeroportoDirecaoDao = new AeroportoDirecaoDao(jdbcTemplate);
-        logImportacaoDao    = new LogImportacaoDao(jdbcTemplate);
+        DataSource dataSource = new Conexao().getConexao();
+        jdbcTemplate     = new JdbcTemplate(dataSource);
+        logImportacaoDao = new LogImportacaoDao(jdbcTemplate);
 
         String bucket      = LeitorExcel.getEnvOrProp("AWS_BUCKET", "ascent-base-de-dados");
         String prefixo     = LeitorExcel.getEnvOrProp("AWS_PREFIXO_ARQUIVOS", "anac_part_");
@@ -59,63 +49,119 @@ public class MainApp {
             System.exit(1);
         }
 
+        // Falha cedo e com mensagem clara quando as credenciais estão inválidas.
+        // Sem isso o job tentava os 23 arquivos, falhava em todos e saía com 0,
+        // parecendo "concluído" sem ter importado nada.
+        if (!acessoS3Valido(bucket, String.format("%s%03d.xlsx", prefixo, 1), region)) {
+            logErro("Sem acesso ao S3. Verifique AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY," +
+                    " AWS_SESSION_TOKEN e AWS_REGION no .env (credenciais expiradas são a causa mais comum).");
+            System.exit(2);
+        }
+
         File tmpDir = new File("/tmp/ascent-s3");
         tmpDir.mkdirs();
+
+        // Uma única conexão/caches para todos os arquivos.
+        ImportadorDados importador;
+        try {
+            importador = new ImportadorDados(dataSource);
+        } catch (Exception e) {
+            logErro("Falha ao abrir conexão de importação: " + e.getMessage());
+            System.exit(2);
+            return;
+        }
 
         int partesOk   = 0;
         int partesErro = 0;
 
-        for (int i = 1; i <= totalPartes; i++) {
-            String nomeArquivo = String.format("%s%03d.xlsx", prefixo, i);
-            String s3Uri       = String.format("s3://%s/%s", bucket, nomeArquivo);
-            File   destino     = new File(tmpDir, nomeArquivo);
+        try {
+            for (int i = 1; i <= totalPartes; i++) {
+                String nomeArquivo = String.format("%s%03d.xlsx", prefixo, i);
+                String s3Uri       = String.format("s3://%s/%s", bucket, nomeArquivo);
+                File   destino     = new File(tmpDir, nomeArquivo);
 
-            log("────────────────────────────────────────────────");
+                log("────────────────────────────────────────────────");
 
-            // Verifica se o arquivo já foi importado com sucesso anteriormente
-            if (logImportacaoDao.jaFoiImportado(nomeArquivo)) {
-                log(String.format("[%d/%d] ✔ %s já importado anteriormente. Pulando.", i, totalPartes, nomeArquivo));
-                partesOk++;
-                continue;
+                // Arquivo já gravado (LIDO ou PARCIALMENTE_LIDO) não é reprocessado.
+                if (logImportacaoDao.jaFoiImportado(nomeArquivo)) {
+                    log(String.format("[%d/%d] ✔ %s já importado anteriormente. Pulando.", i, totalPartes, nomeArquivo));
+                    partesOk++;
+                    continue;
+                }
+
+                // Importação interrompida: apaga o que ficou gravado daquele arquivo
+                // antes de recomeçar. Isso evita voos duplicados.
+                Long pendente = logImportacaoDao.buscarIdInicialPendente(nomeArquivo);
+                long idInicial;
+                if (pendente != null) {
+                    log(String.format("[%d/%d] Retomando %s — removendo dados parciais (idVoo > %d)...",
+                            i, totalPartes, nomeArquivo, pendente));
+                    importador.limparParcial(pendente);
+                    idInicial = pendente;
+                } else {
+                    idInicial = importador.maiorIdVoo();
+                }
+
+                logImportacaoDao.iniciarArquivo(nomeArquivo, idInicial);
+
+                log(String.format("[%d/%d] Baixando %s ...", i, totalPartes, s3Uri));
+
+                if (!baixarDoS3(s3Uri, destino.getAbsolutePath(), region)) {
+                    logImportacaoDao.marcarErro(nomeArquivo, "Falha ao baixar do S3.");
+                    logErro("Falha ao baixar " + nomeArquivo + ". Pulando.");
+                    partesErro++;
+                    continue;
+                }
+
+                log(String.format("[%d/%d] Arquivo baixado (%.1f MB). Lendo e inserindo...",
+                        i, totalPartes, destino.length() / 1_048_576.0));
+
+                try {
+                    importador.iniciarArquivo();
+
+                    LeitorExcel leitor = new LeitorExcel();
+                    LeitorExcel.ResultadoLeitura resultado = leitor.ler(destino, importador);
+                    importador.finalizar();
+
+                    log(String.format("[%d/%d] Leitura concluída — %d encontradas | %d válidas | %d rejeitadas | status: %s",
+                            i, totalPartes,
+                            resultado.getLinhasEncontradas(),
+                            resultado.getLinhasLidas(),
+                            resultado.getLinhasRejeitadas(),
+                            resultado.getStatusLeitura()));
+
+                    log(String.format("[%d/%d] ✔ %d companhias | %d aviões | %d aeroportos | %d voos | %d direções",
+                            i, totalPartes,
+                            importador.getCompanhiasDistintas(),
+                            importador.getAvioesDistintos(),
+                            importador.getAeroportosDistintos(),
+                            importador.getVoosInseridos(),
+                            importador.getDirecoesInseridas()));
+
+                    // Só fecha o arquivo depois que os dados foram gravados.
+                    logImportacaoDao.concluirArquivo(nomeArquivo, resultado);
+
+                    partesOk++;
+
+                } catch (Exception e) {
+                    try {
+                        importador.reverter();
+                    } catch (Exception ex) {
+                        logErro("Falha ao reverter lote pendente: " + ex.getMessage());
+                    }
+                    try {
+                        logImportacaoDao.marcarErro(nomeArquivo, e.getMessage());
+                    } catch (Exception ex) {
+                        logErro("Falha ao registrar o erro no banco: " + ex.getMessage());
+                    }
+                    logErro(String.format("[%d/%d] Falha ao processar %s: %s", i, totalPartes, nomeArquivo, e.getMessage()));
+                    partesErro++;
+                } finally {
+                    destino.delete();
+                }
             }
-
-            log(String.format("[%d/%d] Baixando %s ...", i, totalPartes, s3Uri));
-
-            if (!baixarDoS3(s3Uri, destino.getAbsolutePath(), region)) {
-                logErro("Falha ao baixar " + nomeArquivo + ". Pulando.");
-                partesErro++;
-                continue;
-            }
-
-            log(String.format("[%d/%d] Arquivo baixado (%.1f MB). Lendo...", i, totalPartes, destino.length() / 1_048_576.0));
-
-            try {
-                LeitorExcel leitor = new LeitorExcel();
-                LeitorExcel.ResultadoLeitura resultado = leitor.extrairDeArquivo(destino);
-
-                log(String.format("[%d/%d] Leitura concluída — %d encontradas | %d válidas | %d rejeitadas | status: %s",
-                        i, totalPartes,
-                        resultado.getLinhasEncontradas(),
-                        resultado.getLinhasLidas(),
-                        resultado.getLinhasRejeitadas(),
-                        resultado.getStatusLeitura()));
-
-                registrarLogLeitura(resultado);
-
-                log(String.format("[%d/%d] Inserindo no banco...", i, totalPartes));
-                int[] contadores = inserirDadosNoBanco(resultado);
-                log(String.format("[%d/%d] ✔ %d companhias | %d aviões | %d aeroportos | %d voos | %d direções",
-                        i, totalPartes,
-                        contadores[0], contadores[1], contadores[2], contadores[3], contadores[4]));
-
-                partesOk++;
-
-            } catch (Exception e) {
-                logErro(String.format("[%d/%d] Falha ao processar %s: %s", i, totalPartes, nomeArquivo, e.getMessage()));
-                partesErro++;
-            } finally {
-                destino.delete();
-            }
+        } finally {
+            importador.fechar();
         }
 
         log("────────────────────────────────────────────────");
@@ -124,141 +170,11 @@ public class MainApp {
         log("╚══════════════════════════════════════════════╝");
 
         tmpDir.delete();
-    }
 
-    // Insere todos os dados de um ResultadoLeitura no banco usando os DAOs
-    private static int[] inserirDadosNoBanco(LeitorExcel.ResultadoLeitura resultado) {
-        // Caches para evitar consultas repetidas ao banco
-        List<Integer> cacheCompChave = new ArrayList<>();
-        List<Integer> cacheCompId   = new ArrayList<>();
-        List<String>  cacheAvChave  = new ArrayList<>();
-        List<Integer> cacheAvId     = new ArrayList<>();
-        List<String>  cacheAeroChave = new ArrayList<>();
-        List<Integer> cacheAeroId   = new ArrayList<>();
-
-        // --- Companhias ---
-        for (Companhia c : resultado.getCompanhias()) {
-            if (c.getCodCompanhia() == null) continue;
-            if (indexOf(cacheCompChave, c.getCodCompanhia()) != -1) continue;
-
-            Integer id = companhiaDao.findIdByCodCompanhia(c.getCodCompanhia());
-            if (id == null) id = companhiaDao.save(c);
-            if (id != null) {
-                cacheCompChave.add(c.getCodCompanhia());
-                cacheCompId.add(id);
-            }
-        }
-
-        // --- Aviões ---
-        for (Aviao a : resultado.getAvioes()) {
-            if (a.getModelo() == null || a.getModelo().isBlank()) continue;
-            if (indexOf(cacheAvChave, a.getModelo()) != -1) continue;
-
-            Integer id = aviaoDao.findIdByModelo(a.getModelo());
-            if (id == null) id = aviaoDao.save(a);
-            if (id != null) {
-                cacheAvChave.add(a.getModelo());
-                cacheAvId.add(id);
-            }
-        }
-
-        // --- Aeroportos ---
-        for (Aeroporto a : resultado.getAeroportos()) {
-            String chave = (a.getIcao() != null && !a.getIcao().isBlank()) ? a.getIcao() : a.getNomeAeroporto();
-            if (chave == null) continue;
-            if (indexOf(cacheAeroChave, chave) != -1) continue;
-
-            Integer id = aeroportoDao.findIdByNomeOuIcao(a.getNomeAeroporto(), a.getIcao());
-            if (id == null) id = aeroportoDao.save(a);
-            if (id != null) {
-                cacheAeroChave.add(chave);
-                cacheAeroId.add(id);
-            }
-        }
-
-        Integer compPadrao = cacheCompId.isEmpty() ? null : cacheCompId.get(0);
-        Integer avPadrao   = cacheAvId.isEmpty()   ? aviaoDao.findAny() : cacheAvId.get(0);
-
-        // --- Voos ---
-        int voosInseridos = 0;
-        List<Voo>              voos    = resultado.getVoos();
-        List<Companhia>        comps   = resultado.getCompanhias();
-        List<Aviao>            avioes  = resultado.getAvioes();
-
-        for (int i = 0; i < voos.size(); i++) {
-            Voo       v = voos.get(i);
-            Companhia c = i < comps.size()  ? comps.get(i)  : null;
-            Aviao     a = i < avioes.size() ? avioes.get(i) : null;
-
-            int idxC = (c != null && c.getCodCompanhia() != null) ? indexOf(cacheCompChave, c.getCodCompanhia()) : -1;
-            int idxA = (a != null && a.getModelo() != null)       ? indexOf(cacheAvChave,   a.getModelo())       : -1;
-
-            v.setFkCompanhia(idxC != -1 ? cacheCompId.get(idxC) : compPadrao);
-            v.setFkAviao    (idxA != -1 ? cacheAvId.get(idxA)   : avPadrao);
-
-            Integer idVoo = vooDao.save(v);
-            if (idVoo != null) {
-                v.setIdVoo(idVoo);
-                voosInseridos++;
-            }
-        }
-
-        // --- AeroportoDirecoes ---
-        int direcoesInseridas = 0;
-        List<AeroportoDirecao> direcoes  = resultado.getAeroportoDirecoes();
-        List<Aeroporto>        aeroportos = resultado.getAeroportos();
-
-        for (int i = 0; i < direcoes.size(); i++) {
-            AeroportoDirecao ad   = direcoes.get(i);
-            Aeroporto        aero = i < aeroportos.size() ? aeroportos.get(i) : null;
-            int idxVoo = i / 2;
-            if (idxVoo >= voos.size()) break;
-
-            Voo voo = voos.get(idxVoo);
-            if (voo.getIdVoo() == null) continue;
-
-            if (aero == null) continue;
-            String chave = (aero.getIcao() != null && !aero.getIcao().isBlank()) ? aero.getIcao() : aero.getNomeAeroporto();
-            int idxAero = indexOf(cacheAeroChave, chave);
-            if (idxAero == -1) continue;
-
-            ad.setFkAeroporto(cacheAeroId.get(idxAero));
-            ad.setFkVoo(voo.getIdVoo());
-
-            try {
-                aeroportoDirecaoDao.save(ad);
-                direcoesInseridas++;
-            } catch (Exception ignored) {}
-        }
-
-        return new int[]{cacheCompChave.size(), cacheAvChave.size(), cacheAeroChave.size(), voosInseridos, direcoesInseridas};
-    }
-
-    private static void registrarLogLeitura(LeitorExcel.ResultadoLeitura resultado) {
-        String categoria = switch (resultado.getStatusLeitura()) {
-            case "LIDO"              -> "INFO";
-            case "PARCIALMENTE_LIDO" -> "WARN";
-            default                  -> "ERROR";
-        };
-        String mensagem = String.format("Leitura %s: %d encontradas, %d lidas, %d rejeitadas.",
-                resultado.getStatusLeitura(),
-                resultado.getLinhasEncontradas(),
-                resultado.getLinhasLidas(),
-                resultado.getLinhasRejeitadas());
-        try {
-            jdbcTemplate.update(
-                    "INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro," +
-                    " nomeArquivo, statusLeitura, linhasEncontradas, linhasLidas, linhasRejeitadas, detalheErro)" +
-                    " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                    categoria, "importacao", mensagem, LocalDateTime.now(), "Java",
-                    resultado.getNomeArquivo(),
-                    resultado.getStatusLeitura(),
-                    resultado.getLinhasEncontradas(),
-                    resultado.getLinhasLidas(),
-                    resultado.getLinhasRejeitadas(),
-                    resultado.getDetalheErro());
-        } catch (Exception e) {
-            logErro("Falha ao registrar log no banco: " + e.getMessage());
+        // Exit code != 0 quando nada foi importado ou quando algo falhou, para o
+        // start.sh não marcar a importação como concluída por engano.
+        if (partesErro > 0 || partesOk == 0) {
+            System.exit(1);
         }
     }
 
@@ -282,6 +198,34 @@ public class MainApp {
         }
     }
 
+    /**
+     * Faz um HEAD no primeiro arquivo para validar credenciais, região e permissão
+     * antes de começar. É o mesmo acesso que o import usa, então o diagnóstico é fiel.
+     */
+    private static boolean acessoS3Valido(String bucket, String chave, String region) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                    "aws", "s3api", "head-object",
+                    "--bucket", bucket, "--key", chave, "--region", region);
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            StringBuilder saida = new StringBuilder();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                String linha;
+                while ((linha = br.readLine()) != null) saida.append(linha).append("\n");
+            }
+            int exit = p.waitFor();
+            if (exit != 0) {
+                logErro("Diagnóstico do S3: " + saida.toString().trim());
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            logErro("Erro ao executar aws cli: " + e.getMessage());
+            return false;
+        }
+    }
+
     private static boolean awsCliDisponivel() {
         try {
             Process p = new ProcessBuilder("aws", "--version").redirectErrorStream(true).start();
@@ -294,13 +238,6 @@ public class MainApp {
     // </editor-fold>
 
     // <editor-fold desc="Helpers">
-    private static <T> int indexOf(List<T> lista, T valor) {
-        for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i) != null && lista.get(i).equals(valor)) return i;
-        }
-        return -1;
-    }
-
     private static void carregarEnv() {
         File f = new File(".env");
         if (!f.exists()) f = new File("../.env");

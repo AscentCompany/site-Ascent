@@ -27,7 +27,9 @@ public class Conexao {
         DriverManagerDataSource driver = new DriverManagerDataSource();
         driver.setDriverClassName("com.mysql.cj.jdbc.Driver");
         driver.setUrl(String.format(
-                "jdbc:mysql://%s:%s/%s?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=5000",
+                "jdbc:mysql://%s:%s/%s?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" +
+                "&rewriteBatchedStatements=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048" +
+                "&connectTimeout=5000",
                 host, port, database));
         driver.setUsername(user);
         driver.setPassword(password);

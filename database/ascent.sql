@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS logsServico (
   linhasEncontradas INT NULL DEFAULT NULL,
   linhasLidas INT NULL DEFAULT NULL,
   linhasRejeitadas INT NULL DEFAULT NULL,
-  detalheErro TEXT NULL DEFAULT NULL
+  detalheErro TEXT NULL DEFAULT NULL,
+  idInicialVoo BIGINT NULL DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS permissao (
