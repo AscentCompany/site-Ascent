@@ -1,4 +1,5 @@
 var cargoModel = require("../models/cargoModel");
+const logModel = require("../models/logModel");
 
 function verificarPermissaoAdmin(req, res) {
     var idCompanhia = req.params.idCompanhia;
@@ -33,6 +34,7 @@ function cadastrar(req, res) {
             var idNovoCargo = resultadoUltimo[0].idNovoCargo;
 
             if (permissoes.length === 0) {
+                logModel.registrarLog("GESTÃO DE CARGO", "CADASTRO", `Cadastrou o cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
                 res.json({ mensagem: "Cargo salvo sem permissões" });
                 return;
             }
@@ -43,15 +45,20 @@ function cadastrar(req, res) {
                     .then(() => {
                         salvos++;
                         if (salvos === permissoes.length) {
+                            logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "CADASTRO", `Cadastrou o cargo ${nomeCargo} com permissões ${permissoes[i]}`, "cargos.html", fkUsuarioAcao);
                             res.json({ mensagem: "Cargo e permissões cadastrados!" });
                         }
                     })
                     .catch(erro => {
+                        logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "CADASTRO_ERRO", `Falha ao cadastrar a permissões ${permissoes[i]} ao cargo ${nomeCargo}`, "cargo.html", fkUsuarioAcao);
                         console.log("Erro ao salvar permissão:", erro);
                     });
             }
         })
-        .catch(erro => res.status(500).json(erro.sqlMessage));
+        .catch(erro => {
+            logModel.registrarLog("GESTÃO DE CARGO", "CADASTRO_ERRO", `Falha ao cadastrar cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
+            res.status(500).json(erro.sqlMessage)
+        });
 }
 
 function deletar(req, res) {
@@ -60,13 +67,16 @@ function deletar(req, res) {
     // primeiro deleta na associativa, depois o cargo
     cargoModel.deletarCargoPermissoes(idCargo)
         .then(() => {
+            ("GESTÃO DE CARGO", "EXCLUSAO", `Excluiu o cargo ${nomeCargo} da Tabela CargoPermissão`, "cargos.html", fkUsuarioAcao);
             return cargoModel.deletarCargo(idCargo);
         })
         .then(resultado => {
+            ("GESTÃO DE CARGO", "EXCLUSAO", `Excluiu o cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
             res.json(resultado);
         })
         .catch(erro => {
             console.log(erro);
+            ("GESTÃO DE CARGO", "EXCLUSAO_ERRO", `Falha ao excluir o cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
             res.status(500).json(erro.sqlMessage);
         });
 }
@@ -79,6 +89,7 @@ function atualizar(req, res) {
         .then(() => {
 
             if (permissoes.length === 0) {
+                logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "EDICAO", `Removeu as permissões do cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
                 res.json({ mensagem: "Todas as permissões foram removidas." });
                 return;
             }
@@ -89,15 +100,20 @@ function atualizar(req, res) {
                     .then(() => {
                         salvos++;
                         if (salvos === permissoes.length) {
+                            logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "EDICAO", `Atualizou as permissões do cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
                             res.json({ mensagem: "Permissões atualizadas!" });
                         }
                     })
                     .catch(erro => {
+                        logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "EDICAO_ERRO", `Falha ao atualizar as permissões do cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
                         console.log("Erro ao salvar permissão:", erro);
                     });
             }
         })
-        .catch(erro => res.status(500).json(erro.sqlMessage));
+        .catch(erro => {
+            logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "EDICAO_ERRO", `Falha ao remover as permissões do cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
+            res.status(500).json(erro.sqlMessage)
+        });
 }
 
 module.exports = {
