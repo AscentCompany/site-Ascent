@@ -4,7 +4,7 @@
 #
 # Independente do start.sh. Pré-requisitos:
 #   1. Stack no ar: ./start.sh
-#   2. Dados base:  ./inserir-dados.sh  (já chamado pelo start.sh)
+#   2. Dados base:  garantidos pelo ./start.sh
 #   3. Na EC2: LabRole com acesso ao bucket S3
 #      Fora da EC2: AWS_* válidas no .env (session token não pode estar expirado)
 #

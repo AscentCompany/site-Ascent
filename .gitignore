@@ -58,13 +58,8 @@ logs/
 /dados/
 dados/
 
-# Shell scripts locais (apenas scripts oficiais são versionados)
+# Shell scripts locais (apenas os 3 scripts oficiais são versionados)
 *.sh
 !start.sh
 !setup-duckdns.sh
-!run-importacao-s3.sh
-!start-logs.sh
-!inserir-dados.sh
 !apache-po.sh
-!apache-poi.sh
-!importar-anac.sh
