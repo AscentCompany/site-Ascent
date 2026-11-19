@@ -1,8 +1,15 @@
 #!/bin/bash
 set -e
 
-# Garante que o script funcione mesmo quando chamado de outro diretório
-# (ex.: pelo cron com /home/usuario/site-Ascent/start.sh).
+# =============================================================
+# start.sh — Atualiza imagens Docker, sobe MySQL + API + logs
+#            e configura o DuckDNS.
+#
+# NÃO roda Apache POI nem importa ANAC.
+#   Schema/seed : ./inserir-dados.sh
+#   Importação  : ./importar-anac.sh
+# =============================================================
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
@@ -10,9 +17,7 @@ ENV_FILE="$SCRIPT_DIR/.env"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 PROJECT_NAME="ascent"
 export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
-APACHEPOI_IMAGE="${APACHEPOI_IMAGE:-lucasveneroso/ascent:ascent-apachepoi-s3}"
 
-# Uma execução por vez (cron + manual não podem se atropelar).
 LOCK_FILE="$SCRIPT_DIR/.start.lock"
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
@@ -20,22 +25,11 @@ if ! flock -n 9; then
   exit 0
 fi
 
-# Nunca mexe na stack enquanto a importação ANAC estiver rodando.
-if [ "$(docker inspect -f '{{.State.Running}}' ascent-apachepoi 2>/dev/null)" = "true" ]; then
-  echo ">> Importação ANAC em andamento (ascent-apachepoi). Nenhuma alteração será feita."
-  exit 0
-fi
-
-echo "=== 1. Atualizando repositório e imagens Docker (pull) ==="
+echo "=== 1. Atualizando repositório e imagens Docker ==="
 git pull origin develop 2>/dev/null || git pull 2>/dev/null || true
 docker pull mysql:8.0
 docker pull lucasveneroso/ascent:ascent-api || true
 docker pull lucasveneroso/ascent:ascent-logs || true
-# A imagem do apachepoi é um job pontual. Só baixa se ainda não existir
-# localmente, para um `docker pull` de tag antiga não sobrescrever o build fix.
-if ! docker image inspect "$APACHEPOI_IMAGE" >/dev/null 2>&1; then
-  docker pull "$APACHEPOI_IMAGE" || true
-fi
 
 echo "=== 2. Configurando ambiente (.env) ==="
 if [ ! -f "$ENV_FILE" ]; then
@@ -58,7 +52,6 @@ MYSQL_ROOT_PASSWORD=root
 APP_HOST=0.0.0.0
 APP_PORT=3333
 AMBIENTE_PROCESSO=producao
-# Endereço do serviço Java de notificações dentro da rede Docker
 NOTIFICADOR_URL=http://ascent-logs:8080
 
 # =============================================================
@@ -70,7 +63,7 @@ EMAIL_REMETENTE=exemplo@gmail.com
 SENHA_APP=exemplo_senha
 
 # =============================================================
-# ascent-apachepoi (Java — Leitura S3 ANAC)
+# ascent-apachepoi (Java — Leitura S3 ANAC) — usado por importar-anac.sh
 # =============================================================
 AWS_REGION=us-east-1
 AWS_BUCKET=ascent-base-de-dados
@@ -79,8 +72,7 @@ AWS_TOTAL_PARTES=23
 AWS_ARQUIVO_ANAC=anac_part_001.xlsx
 AUTO_IMPORT=true
 
-# Credenciais AWS — preencha com os valores do Vocareum/AWS Academy
-# (Na EC2 com LabRole as chaves podem ficar vazias; a role cuida da autenticação)
+# Na EC2 com LabRole deixe as chaves vazias.
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_SESSION_TOKEN=
@@ -90,19 +82,14 @@ else
   echo ".env já existe. Usando configurações existentes."
 fi
 
-# Detecta se está rodando dentro de uma instância EC2 da AWS
-IS_EC2=false
-if curl -s -m 2 http://169.254.169.254/latest/meta-data/ 2>/dev/null | grep -q 'ami-id'; then
-    IS_EC2=true
-    echo ">> Ambiente AWS EC2 detectado! O ascent-apachepoi usará a IAM Role (LabRole) da máquina."
+# Garante DB_HOST=mysql no .env (evita ascent-mysql / localhost quebrando containers).
+if grep -q '^DB_HOST=' "$ENV_FILE"; then
+  sed -i 's/^DB_HOST=.*/DB_HOST=mysql/' "$ENV_FILE"
+else
+  echo "DB_HOST=mysql" >> "$ENV_FILE"
 fi
 
 echo "=== 3. Removendo apenas containers legados (fora do compose) ==="
-# ascent-mysql e ascent-api são gerenciados pelo compose e têm
-# restart: unless-stopped. NÃO são removidos aqui: fazer isso a cada
-# execução derrubava a stack inteira (e a importação em andamento).
-# Só remove um eventual container "mysql" antigo, criado por versões
-# anteriores do start.sh, que não pertence a este projeto compose.
 for antigo in mysql; do
   if docker inspect "$antigo" >/dev/null 2>&1; then
     dono="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$antigo" 2>/dev/null || true)"
@@ -113,8 +100,11 @@ for antigo in mysql; do
   fi
 done
 
-echo "=== 4. Subindo MySQL e ascent-api via docker compose ==="
-# Detecta se é "docker compose" (v2) ou "docker-compose" (v1), instala se necessário
+echo "=== 4. Preparando volume do MySQL ==="
+# Sem este diretório o compose pode falhar ou subir MySQL sem persistência.
+sudo mkdir -p /dados/mysql 2>/dev/null || mkdir -p /dados/mysql 2>/dev/null || true
+
+echo "=== 5. Subindo MySQL e ascent-api via docker compose ==="
 if docker compose version &>/dev/null; then
   COMPOSE=(docker compose)
 elif command -v docker-compose &>/dev/null; then
@@ -135,19 +125,14 @@ else
   fi
 fi
 
-# Sempre usa o compose do diretório do projeto e um nome de projeto fixo.
-# Isso evita o erro "no configuration file provided" quando o script roda
-# a partir de outro diretório e garante que a rede se chame ascent_ascent.
 compose() {
   "${COMPOSE[@]}" --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
 }
 
 echo ">> Usando: ${COMPOSE[*]}"
-# "up -d" já é idempotente: só recria o que mudou. Não usamos "down"
-# porque ele derrubava MySQL/API (e a rede) a cada execução.
 compose up -d --remove-orphans
 
-echo "=== 4.1. Aguardando o MySQL ficar pronto ==="
+echo "=== 5.1. Aguardando o MySQL ficar pronto ==="
 MYSQL_ID="$(compose ps -q mysql 2>/dev/null | head -n1)"
 if [ -n "$MYSQL_ID" ]; then
   for _ in $(seq 1 60); do
@@ -160,50 +145,35 @@ if [ -n "$MYSQL_ID" ]; then
   done
 fi
 
-# Descobre dinamicamente a rede criada pelo compose (não depende do nome da pasta)
-NETWORK="$(docker inspect -f '{{range $nome, $_ := .NetworkSettings.Networks}}{{$nome}}{{end}}' "$MYSQL_ID" 2>/dev/null || true)"
-if [ -z "$NETWORK" ]; then
-  NETWORK="${PROJECT_NAME}_ascent"
-fi
-echo ">> Rede Docker usada pelos serviços Java: $NETWORK"
-
-echo "=== 5. Inicializando ascent-logs (cron garante que continue rodando) ==="
-if [ -f "$SCRIPT_DIR/start-logs.sh" ]; then
-  bash "$SCRIPT_DIR/start-logs.sh" || {
-    echo ">> AVISO: Não foi possível iniciar ascent-logs (imagem não encontrada no Docker Hub)."
-    echo "   O restante do sistema continua funcionando normalmente."
+echo "=== 6. Garantindo schema + dados iniciais no MySQL ==="
+# Volume /dados/mysql já existente → initdb.d NÃO roda. Por isso o seed é explícito.
+if [ -f "$SCRIPT_DIR/inserir-dados.sh" ]; then
+  bash "$SCRIPT_DIR/inserir-dados.sh" || {
+    echo ">> AVISO: inserir-dados.sh falhou. Rode manualmente depois."
   }
 else
-  echo ">> AVISO: start-logs.sh não encontrado. ascent-logs não iniciado."
+  echo ">> AVISO: inserir-dados.sh não encontrado."
 fi
 
-echo "=== 6. Executando importação ANAC (ascent-apachepoi) uma única vez ==="
-# O apachepoi é um job: roda até terminar e não volta sozinho.
-# O runner (importar-anac.sh) cuida de lock, retomada e log persistente.
-APACHEPOI_MARKER="$SCRIPT_DIR/.apachepoi-executado"
-
-if [ -f "$APACHEPOI_MARKER" ]; then
-  echo ">> Importação já concluída anteriormente ($APACHEPOI_MARKER). Pulando."
-elif [ "$(docker inspect -f '{{.State.Running}}' ascent-apachepoi 2>/dev/null)" = "true" ]; then
-  echo ">> Importação já está rodando. Pulando."
-elif bash "$SCRIPT_DIR/importar-anac.sh"; then
-  touch "$APACHEPOI_MARKER"
-  echo ">> Importação concluída. Ela não será executada novamente."
+echo "=== 7. Inicializando ascent-logs ==="
+if [ -f "$SCRIPT_DIR/start-logs.sh" ]; then
+  bash "$SCRIPT_DIR/start-logs.sh" || {
+    echo ">> AVISO: Não foi possível iniciar ascent-logs."
+  }
 else
-  echo ">> AVISO: a importação falhou ou ficou incompleta. Será retomada na próxima execução."
+  echo ">> AVISO: start-logs.sh não encontrado."
 fi
 
-echo "=== 7. Configurando crontab (DuckDNS, start.sh e ascent-logs) ==="
+echo "=== 8. Configurando DuckDNS + crontab @reboot ==="
 if [ -f "$SCRIPT_DIR/setup-duckdns.sh" ]; then
   bash "$SCRIPT_DIR/setup-duckdns.sh"
 else
-  echo ">> AVISO: setup-duckdns.sh não encontrado. Crontab DuckDNS não configurado."
+  echo ">> AVISO: setup-duckdns.sh não encontrado."
 fi
 
-# NÃO agendar start.sh/start-logs.sh de 5 em 5 minutos: isso derrubava a
-# stack e matava a importação em andamento. Os containers têm
-# restart: unless-stopped, então @reboot é suficiente.
-chmod +x "$SCRIPT_DIR/start.sh" "$SCRIPT_DIR/start-logs.sh" "$SCRIPT_DIR/importar-anac.sh" 2>/dev/null || true
+chmod +x "$SCRIPT_DIR/start.sh" "$SCRIPT_DIR/start-logs.sh" \
+  "$SCRIPT_DIR/inserir-dados.sh" "$SCRIPT_DIR/importar-anac.sh" 2>/dev/null || true
+
 CRON_BOOT="@reboot /bin/bash $SCRIPT_DIR/start.sh >> $SCRIPT_DIR/start.log 2>&1"
 CRON_LOGS_BOOT="@reboot /bin/bash $SCRIPT_DIR/start-logs.sh >/dev/null 2>&1"
 (
@@ -213,14 +183,15 @@ CRON_LOGS_BOOT="@reboot /bin/bash $SCRIPT_DIR/start-logs.sh >/dev/null 2>&1"
   echo "$CRON_BOOT"
   echo "$CRON_LOGS_BOOT"
 ) | crontab -
-echo ">> Crontab configurado: apenas @reboot (sem ciclos de 5 minutos)."
+echo ">> Crontab: apenas @reboot (DuckDNS fica no setup-duckdns.sh)."
 
 echo ""
-echo "=== Sistema Ascent iniciado com sucesso! ==="
+echo "=== Sistema Ascent iniciado ==="
 echo ""
-echo "  API:         http://<IP>:3333"
-echo "  Logs:        http://<IP>:8080 (mantido pelo cron)"
-echo "  Apache POI:  importação única (não fica rodando)"
-echo "  DuckDNS:     crontab a cada minuto (setup-duckdns.sh)"
+echo "  API:          http://<IP>:3333"
+echo "  Logs:         http://<IP>:8080"
+echo "  DuckDNS:      crontab a cada minuto"
+echo "  Seed MySQL:   ./inserir-dados.sh"
+echo "  Import ANAC:  ./importar-anac.sh"
 echo ""
 docker ps --filter "name=ascent" --filter "name=mysql" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
