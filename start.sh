@@ -108,8 +108,14 @@ fi
 
 echo "=== 4. Preparando volume do MySQL (Persistência no EBS em /dados/mysql) ==="
 # Garante a existência do diretório no EBS sem apagar arquivos existentes
-sudo mkdir -p /dados/mysql 2>/dev/null || mkdir -p /dados/mysql 2>/dev/null || true
-sudo chmod 777 /dados/mysql 2>/dev/null || chmod 777 /dados/mysql 2>/dev/null || true
+if [ "$IS_EC2" = true ]; then
+  sudo mkdir -p /dados/mysql
+  sudo chmod 777 /dados/mysql 2>/dev/null || true
+else
+  sudo mkdir -p /dados/mysql 2>/dev/null || mkdir -p /dados/mysql 2>/dev/null || true
+  sudo chmod 777 /dados/mysql 2>/dev/null || chmod 777 /dados/mysql 2>/dev/null || true
+fi
+echo ">> Diretório /dados/mysql verificado."
 
 echo "=== 5. Subindo MySQL e ascent-api via docker compose ==="
 if docker compose version &>/dev/null; then
