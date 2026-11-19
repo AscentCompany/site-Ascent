@@ -1,9 +1,13 @@
 let database = require("../../database/config");
 let http = require("http");
+let fs = require("fs");
 
 
 function notificarAlertas(rotas, faixaOcupacao) {
-    let NOTIFICADOR_URL = process.env.NOTIFICADOR_URL || "http://localhost:8080";
+    // Dentro do Docker o notificador atende pelo nome do container/serviço;
+    // fora do Docker (desenvolvimento) usamos localhost.
+    let NOTIFICADOR_URL = process.env.NOTIFICADOR_URL
+        || (fs.existsSync("/.dockerenv") ? "http://ascent-logs:8080" : "http://localhost:8080");
 
     rotas.forEach(function (rt) {
         let icone = rt.severidade === "critico" ? "🔴" : "🟡";

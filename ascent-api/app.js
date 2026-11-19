@@ -20,6 +20,7 @@ var usuarioRouter = require("./src/routes/usuarios");
 var cargoRouter = require("./src/routes/cargos");
 var permissaoRouter = require("./src/routes/permissoes");
 var alertaRouter = require("./src/routes/alertas");
+var kpiRouter = require("./src/routes/kpis");
 
 
 app.use(express.json());
@@ -33,6 +34,7 @@ app.use("/usuarios", usuarioRouter);
 app.use("/cargos", cargoRouter);
 app.use("/permissoes", permissaoRouter);
 app.use("/alertas", alertaRouter);
+app.use("/api/kpis", kpiRouter);
 
 app.listen(PORTA_APP, function () {
     console.log(`

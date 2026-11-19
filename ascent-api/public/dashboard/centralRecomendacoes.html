@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ascent – Central de Recomendações</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="../css/dashboardOperacoes.css">
+  <link rel="stylesheet" href="../css/centralRecomendacoes.css">
+  <script src="../js/sidebarNav.js" defer></script>
+</head>
+
+<body>
+  <script src="../js/sessao.js"></script>
+  <script>validarSessao();</script>
+
+  <div class="app">
+
+    <!-- BOTÃO ABRIR/FECHAR MENU -->
+    <button class="btn-menu" id="btn-menu" onclick="document.body.classList.toggle('menu-fechado')" aria-label="Abrir ou fechar menu">
+      <i class="fi fi-rr-menu-burger"></i>
+    </button>
+    <div class="overlay" id="overlay" onclick="document.body.classList.add('menu-fechado')"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">
+        <a href="./acessoRapido.html"><img src="../assets/icon/logo2.png" alt="Ascent"></a>
+      </div>
+
+      <div class="profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        <span id="nome-usuario"></span>
+      </div>
+
+      <nav class="nav">
+        <span class="nav-indicador" id="nav-indicador"></span>
+        <div class="nav-item"><a href="./dashboardRotas.html">Dashboard - rotas</a></div>
+        <div class="nav-item"><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
+        <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
+        <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
+        <div class="nav-item ativo"><a href="./centralRecomendacoes.html">Central de Recomendações</a></div>
+        <div class="nav-item" id="nav-configurar" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
+        <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
+        <div class="nav-item"><a href="./faq.html">FAQ</a></div>
+      </nav>
+
+      <button class="logout" type="button" onclick="limparSessao()">SAIR</button>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="recomendacoes-main">
+      <div class="recomendacoes-wrapper">
+
+        <!-- CABEÇALHO -->
+        <header class="recomendacoes-topo">
+          <a href="javascript:history.back()" class="btn-voltar">
+            ← Voltar ao painel
+          </a>
+          <h1 class="central-titulo">CENTRAL DE RECOMENDAÇÕES</h1>
+          <p class="central-subtitulo">Insights e ações para otimizar suas operações</p>
+        </header>
+        <!-- BLOCO DE CONTEÚDO PRINCIPAL -->
+        <div class="recomendacoes-bloco-central">
+          <!-- FILTROS DE PRIORIDADE -->
+          <div class="filtros-prioridade">
+            <button class="filtro-btn ativo" data-prioridade="todas" type="button">Todas</button>
+            <button class="filtro-btn" data-prioridade="alta" type="button">Alta</button>
+            <button class="filtro-btn" data-prioridade="media" type="button">Média</button>
+            <button class="filtro-btn" data-prioridade="baixa" type="button">Baixa</button>
+          </div>
+
+          <!-- TABELA DE RECOMENDAÇÕES -->
+          <section class="tabela-recomendacoes">
+          <div class="tabela-thead">
+            <span>RECOMENDAÇÃO</span>
+            <span>MOTIVO</span>
+            <span style="text-align: right;">PRIORIDADE</span>
+          </div>
+
+          <div id="lista-recomendacoes">
+            <!-- Item 1 -->
+            <article class="linha-recomendacao" data-prioridade="alta">
+              <div class="col-rec">
+                <span class="rec-titulo">Reforçar GRU - GIG em junho</span>
+                <span class="rec-desc">Planejar assentos adicionais para acompanhar a demanda de junho.</span>
+              </div>
+              <div class="col-motivo">
+                demanda 14% acima da média
+              </div>
+              <div class="col-prioridade">
+                <span class="rec-tag tag-alta">Alta</span>
+              </div>
+            </article>
+
+            <!-- Item 2 -->
+            <article class="linha-recomendacao" data-prioridade="media">
+              <div class="col-rec">
+                <span class="rec-titulo">Revisar frequência para VIX (Vitória)</span>
+                <span class="rec-desc">Reavaliar horários antes de ajustar a oferta nessa cidade.</span>
+              </div>
+              <div class="col-motivo">
+                queda de 15% na procura
+              </div>
+              <div class="col-prioridade">
+                <span class="rec-tag tag-media">Média</span>
+              </div>
+            </article>
+
+            <!-- Item 3 -->
+            <article class="linha-recomendacao" data-prioridade="baixa">
+              <div class="col-rec">
+                <span class="rec-titulo">Ampliar voos turísticos em julho</span>
+                <span class="rec-desc">Monitorar reservas para identificar oportunidades de reforço.</span>
+              </div>
+              <div class="col-motivo">
+                pico de procura
+              </div>
+              <div class="col-prioridade">
+                <span class="rec-tag tag-baixa">Baixa</span>
+              </div>
+            </article>
+
+            <!-- Item 4 -->
+            <article class="linha-recomendacao" data-prioridade="media">
+              <div class="col-rec">
+                <span class="rec-titulo">Reduzir frequência em VIX - CGB</span>
+                <span class="rec-desc">Revisar a oferta da rota nos horários de menor procura.</span>
+              </div>
+              <div class="col-motivo">
+                ocupação de 74%
+              </div>
+              <div class="col-prioridade">
+                <span class="rec-tag tag-media">Média</span>
+              </div>
+            </article>
+
+            <!-- Item 5 -->
+            <article class="linha-recomendacao" data-prioridade="alta">
+              <div class="col-rec">
+                <span class="rec-titulo">Aumentar capacidade em CGH - REC</span>
+                <span class="rec-desc">Considerar aeronaves maiores nos voos de maior demanda.</span>
+              </div>
+              <div class="col-motivo">
+                ocupação de 96,7%
+              </div>
+              <div class="col-prioridade">
+                <span class="rec-tag tag-alta">Alta</span>
+              </div>
+            </article>
+
+            <!-- Item 6 -->
+            <article class="linha-recomendacao" data-prioridade="baixa">
+              <div class="col-rec">
+                <span class="rec-titulo">Antecipar reforço de voos para dezembro</span>
+                <span class="rec-desc">Preparar capacidade extra antes da alta de fim de ano.</span>
+              </div>
+              <div class="col-motivo">
+                maior ocupação do ano
+              </div>
+              <div class="col-prioridade">
+                <span class="rec-tag tag-baixa">Baixa</span>
+              </div>
+            </article>
+          </div>
+
+          <div class="rec-vazio" id="rec-vazio">
+            Nenhuma recomendação encontrada para esta prioridade.
+          </div>
+        </section>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    document.getElementById("nome-usuario").textContent = sessionStorage.NOME_USUARIO || "Usuário";
+
+    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
+      const el = document.getElementById("nav-configurar");
+      if (el) el.style.display = "";
+    }
+
+    if (window.innerWidth <= 900) {
+      document.body.classList.add("menu-fechado");
+    }
+
+    // Filtros de prioridade
+    const botoesFiltro = document.querySelectorAll(".filtro-btn");
+    const linhas = document.querySelectorAll(".linha-recomendacao");
+    const vazioMsg = document.getElementById("rec-vazio");
+
+    botoesFiltro.forEach(btn => {
+      btn.addEventListener("click", () => {
+        botoesFiltro.forEach(b => b.classList.remove("ativo"));
+        btn.classList.add("ativo");
+
+        const prioridadeEscolhida = btn.dataset.prioridade;
+        let visiveis = 0;
+
+        linhas.forEach(linha => {
+          if (prioridadeEscolhida === "todas" || linha.dataset.prioridade === prioridadeEscolhida) {
+            linha.classList.remove("oculta");
+            visiveis++;
+          } else {
+            linha.classList.add("oculta");
+          }
+        });
+
+        vazioMsg.style.display = visiveis === 0 ? "block" : "none";
+      });
+    });
+  </script>
+</body>
+</html>

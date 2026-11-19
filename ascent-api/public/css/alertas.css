@@ -30,15 +30,32 @@
 }
 
 .sino-btn {
-  background: none;
-  border: none;
+  background: transparent;
+  border: 1.5px solid var(--al-orange);
+  border-radius: 8px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--al-orange);
-  font-size: 22px;
-  transition: transform .15s;
+  font-size: 15px;
+  width: 32px;
+  height: 31px;
+  padding: 0;
+  transition: background .2s ease, color .2s ease;
 }
-.sino-btn:hover { transform: scale(1.1); }
+
+.sino-btn i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.sino-btn:hover {
+  background: var(--al-orange);
+  color: #fff;
+}
 
 #sino-badge {
   position: absolute;
@@ -363,6 +380,13 @@ to {
 }
 body.menu-fechado .central-main { margin-left: 0; }
 
+.config-main {
+  min-width: 0;
+  margin-left: var(--sidebar-w);
+  transition: margin-left .3s ease;
+}
+body.menu-fechado .config-main { margin-left: 0; }
+
 .central-wrapper { padding: 32px 28px; }
 .central-titulo {
   font-size: 26px;
@@ -490,7 +514,9 @@ body.menu-fechado .central-main { margin-left: 0; }
 
 @media (max-width: 900px) {
   .central-main,
-  body.menu-fechado .central-main {
+  body.menu-fechado .central-main,
+  .config-main,
+  body.menu-fechado .config-main {
     margin-left: 0;
   }
 
@@ -830,6 +856,7 @@ body.menu-fechado .central-main { margin-left: 0; }
 
 .personalizado-campos {
   display: none;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   padding: 12px;
@@ -837,7 +864,7 @@ body.menu-fechado .central-main { margin-left: 0; }
   border: 1.5px solid var(--al-border);
   border-radius: 7px;
 }
-.personalizado-campos.visivel { display: flex; }
+.personalizado-campos.visivel { display: grid; }
 .personalizado-campos label {
   font-size: 11px;
   font-weight: 800;
@@ -915,3 +942,91 @@ body.menu-fechado .central-main { margin-left: 0; }
   font-weight: 600;
 }
 .msg-erro-modal.visivel { display: block; }
+
+@media (max-width: 900px) {
+  .config-wrapper {
+    padding: 56px 20px 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .config-wrapper {
+    padding: 56px 14px 20px;
+  }
+
+  .config-titulo {
+    font-size: clamp(22px, 7vw, 26px);
+  }
+
+  .config-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-criar-regra {
+    align-self: flex-start;
+  }
+
+  .regras-thead {
+    display: none;
+  }
+
+  .regra-linha {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+    padding: 14px;
+  }
+
+  .regra-desc,
+  .regra-janela {
+    grid-column: 1 / -1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .regra-acoes {
+    grid-column: 2;
+    flex-wrap: wrap;
+  }
+
+  .modal-overlay-alerta {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .modal-regra {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    margin: auto;
+    overflow-y: auto;
+  }
+
+  .modal-regra-header,
+  .modal-regra-body,
+  .modal-regra-footer {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .modal-regra-header h2 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .modal-regra-footer {
+    flex-wrap: wrap;
+  }
+
+  .personalizado-campos {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .personalizado-campos select {
+    width: 100%;
+    min-width: 0;
+  }
+}

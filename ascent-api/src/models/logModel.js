@@ -5,7 +5,7 @@ function registrarLog(categoria, servico, mensagem, origemCadastro, fkUsuario) {
 
     let instrucaoSql = `
         INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro, fkUsuario)
-        VALUES ('${categoria}', '${servico}', '${mensagemTratada}', NOW(), '${origemCadastro}', ${fkUsuarioVal});
+        VALUES ('${categoria}', '${servico}', '${mensagem}', NOW(), '${origemCadastro}', ${fkUsuarioVal});
     `;
 
     console.log("Executando a instrução SQL de Log: \n" + instrucaoSql);

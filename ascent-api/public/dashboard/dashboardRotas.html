@@ -46,6 +46,7 @@
         <div class="nav-item "><a href="./dashboardOperacoes.html">Dashboard - operações</a></div>
         <div class="nav-item"><a href="../usuarios.html">Gestão</a></div>
         <div class="nav-item"><a href="./centralAlertas.html">Central de Alertas</a></div>
+        <div class="nav-item"><a href="./centralRecomendacoes.html">Central de Recomendações</a></div>
         <div class="nav-item" id="nav-configurar-rot" style="display:none;"><a href="./configurarAlertas.html">Configurar Alertas</a></div>
         <div class="nav-item"><a href="./perfil.html">Perfil</a></div>
         <div class="nav-item"><a href="./faq.html">FAQ</a></div>
@@ -68,41 +69,98 @@
     </div>
 
     <section class="kpis">
-      <article class="card kpi-gradient kpi-region">
+      <article class="card kpi-card">
         <h2>Rota com maior incidência</h2>
-        <div class="kpi-text-icon">
-          <i class="fas fa-plane" style="transform: rotate(300deg);"></i>
-          <div class="big">SP -> RJ</div>
+        <div class="kpi-card-main">
+          <div class="big">GRU - GIG</div>
         </div>
-        <div class="sub">75% da procura geral no período (75/100)</div>
+        <div class="sub">
+          <strong class="positive">▲ 75%</strong> da procura geral · <strong class="positive">▲ 4,8%</strong> vs. ano ant.
+        </div>
       </article>
 
-      <article class="card kpi-gradient kpi-mes">
-        <h2>Cidade com mais baixa procura</h2>
-        <div class="kpi-text-icon">
-          <i class="fas fa-map-marker-alt"></i>
-          <div class="big">Vitória(ES)</div>
+      <article class="card kpi-card">
+        <h2>Aeroporto com mais baixa procura</h2>
+        <div class="kpi-card-main">
+          <div class="big">VIX <span class="unit">(Vitória)</span></div>
         </div>
-        <div class="sub">Queda de 15% na procura em relação ao ano passado (30 / 85)</div>
+        <div class="sub">
+          <strong class="negative">▼ Queda de 15%</strong> na procura vs. ano ant. (30 / 85)
+        </div>
       </article>
 
-      <article class="card kpi-gradient kpi-mes">
-        <h2>hub com maior circulação</h2>
-        <div class="kpi-text-icon">
-          <i class="fas fa-map-marker-alt"></i>
-          <div class="big">GRU (Guarulhos)</div>
+      <article class="card kpi-card">
+        <h2>Hub com maior circulação</h2>
+        <div class="kpi-card-main">
+          <div class="big">GRU <span class="unit">(Guarulhos)</span></div>
         </div>
-        <div class="sub">77% dos Voos passaram por esse aeroporto no período (77 / 100) </div>
+        <div class="sub">
+          <strong class="positive">▲ 77%</strong> dos voos passaram por esse aeroporto (77 / 100)
+        </div>
       </article>
 
-      <article class="card kpi-gradient kpi-region">
+      <article class="card kpi-card">
         <h2>Mês com maior procura de voos</h2>
-        <div class="kpi-text-icon">
-          <i class="fas fa-calendar-alt"></i>
+        <div class="kpi-card-main">
           <div class="big">Junho</div>
         </div>
-        <div class="sub">14% da procura geral no período (14/100)</div>
+        <div class="sub">
+          <strong class="positive">▲ 14%</strong> da procura geral · <strong class="positive">▲ 3,4%</strong> vs. ano ant.
+        </div>
       </article>
+    </section>
+
+    <!-- PAINEL DE RECOMENDAÇÕES -->
+    <section class="painel-recomendacoes">
+      <div class="card card-recomendacoes">
+        <div class="recomendacoes-header">
+          <div class="recomendacoes-titulo">
+            <span>Painel de Recomendações</span>
+          </div>
+          <a href="./centralRecomendacoes.html" class="recomendacoes-link">Ver todas</a>
+        </div>
+
+        <div class="recomendacoes-grid" id="lista-recomendacoes">
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Reforçar GRU - GIG em junho</span>
+                <span class="rec-sub">demanda 14% acima da média</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-alta">Alta</span>
+          </div>
+
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Revisar frequência para VIX (Vitória)</span>
+                <span class="rec-sub">queda de 15% na procura</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-media">Média</span>
+          </div>
+
+          <div class="recomendacao-item">
+            <div class="rec-info">
+              <div class="rec-icon">
+                <i class="fa-regular fa-clock"></i>
+              </div>
+              <div class="rec-textos">
+                <span class="rec-titulo">Ampliar voos turísticos em julho</span>
+                <span class="rec-sub">pico de procura</span>
+              </div>
+            </div>
+            <span class="rec-tag tag-baixa">Baixa</span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <main class="main">
@@ -110,16 +168,16 @@
       <section class="card card-evolucao">
         <h2 class="chart-title">DEMANDA POR TIPO DE VOOS</h2>
 
-        <div class="chart-placeholder" style="position: relative; height: 200px;">
+        <div class="chart-placeholder" style="position: relative; height: 210px;">
           <canvas id="grafico-linhas"></canvas>
         </div>
       </section>
 
       <section class="card card-mensal">
-        <h2 class="chart-title">QUANTIDADE DE VOOS POR MÊS</h2>
+        <h2 class="chart-title">DEMANDA POR TIPO DE VOOS POR HORÁRIO</h2>
 
-        <div class="grafico-container" style="position: relative; height: 200px;">
-          <canvas id="grafico-mensal"></canvas>
+        <div class="grafico-container" style="position: relative; height: 210px;">
+          <canvas id="grafico-horario"></canvas>
         </div>
       </section>
 
@@ -152,7 +210,7 @@
 
   const meses = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
-  /*1) Demanda por tipo de voos (linhas)*/
+  /* 1) Demanda por tipo de voos (linhas) */
   new Chart(document.getElementById('grafico-linhas'), {
     type: 'line',
     data: {
@@ -160,21 +218,27 @@
       datasets: [
         {
           label: 'Comerciais',
-          data: [4200, 3000, 4800, 3900, 3300, 3500, 3600, 3700, 3500, 4100, 4200, 2800],
-          borderColor: '#b5b5b5',
-          backgroundColor: '#b5b5b5',
-          tension: 0.4,
-          pointRadius: 0,
-          borderWidth: 2
+          data: [3800, 4000, 4100, 4300, 4600, 4700, 4600, 4400, 4700, 4900, 5100, 5400],
+          borderColor: '#9ea4ac',
+          backgroundColor: '#9ea4ac',
+          tension: 0,
+          pointRadius: 4.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#9ea4ac',
+          pointBorderColor: '#9ea4ac',
+          borderWidth: 2.5
         },
         {
           label: 'Turísticos',
-          data: [5000, 5100, 2600, 2000, 2200, 4800, 6200, 3300, 1800, 1000, 1400, 6800],
+          data: [2000, 2300, 2400, 2700, 3200, 4700, 5700, 4200, 3400, 3200, 3500, 4000],
           borderColor: '#ff6a00',
           backgroundColor: '#ff6a00',
-          tension: 0.4,
-          pointRadius: 0,
-          borderWidth: 2
+          tension: 0,
+          pointRadius: 4.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#ff6a00',
+          pointBorderColor: '#ff6a00',
+          borderWidth: 2.5
         }
       ]
     },
@@ -186,52 +250,131 @@
         legend: {
           position: 'top',
           align: 'end',
-          labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, font: { size: 9 } }
+          labels: {
+            boxWidth: 8,
+            boxHeight: 8,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: { size: 10 },
+            color: '#555'
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} passageiros`
+          }
         }
       },
       scales: {
         x: {
           grid: { display: false },
-          ticks: { font: { size: 9 } },
-          title: { display: true, text: 'Meses do Ano', font: { size: 10, weight: '700' } }
+          border: { display: false },
+          ticks: { font: { size: 10 }, color: '#777' }
         },
         y: {
           beginAtZero: true,
+          min: 0,
+          max: 7000,
           grid: { color: '#ececec' },
-          ticks: { font: { size: 9 } },
-          title: { display: true, text: 'Passageiros Transportados', font: { size: 10, weight: '700' } }
+          border: { display: false },
+          ticks: {
+            stepSize: 2000,
+            font: { size: 10 },
+            color: '#777',
+            callback: valor => valor.toLocaleString('pt-BR')
+          },
+          title: {
+            display: true,
+            text: 'Passageiros Transportados',
+            font: { size: 10, weight: '600' },
+            color: '#555'
+          }
         }
       }
     }
   });
 
-  /*2) Quantidade de voos por mês (colunas coloridas)*/
-  new Chart(document.getElementById('grafico-mensal'), {
-    type: 'bar',
+  /* 2) Demanda por tipo de voos por horário */
+  const horarios = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+
+  new Chart(document.getElementById('grafico-horario'), {
+    type: 'line',
     data: {
-      labels: meses,
-      datasets: [{
-        label: 'Voos',
-        data: [60, 45, 78, 30, 40, 60, 80, 78, 80, 60, 30, 78],
-        backgroundColor: [
-          '#4f7df3', '#7f9cf5', '#f5b861', '#ffd84d', '#ec6b7c', '#ec7fc4',
-          '#4fd1c5', '#5cc97f', '#4fbf6a', '#8f9a14', '#f5a742', '#ffad6b'
-        ],
-        borderRadius: 4,
-        maxBarThickness: 45
-      }]
+      labels: horarios,
+      datasets: [
+        {
+          label: 'Comerciais',
+          data: [1200, 2100, 5100, 6000, 5400, 3000],
+          borderColor: '#9ea4ac',
+          backgroundColor: '#9ea4ac',
+          tension: 0,
+          pointRadius: 4.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#9ea4ac',
+          pointBorderColor: '#9ea4ac',
+          borderWidth: 2.5
+        },
+        {
+          label: 'Turísticos',
+          data: [800, 1300, 2800, 4500, 4100, 2500],
+          borderColor: '#ff6a00',
+          backgroundColor: '#ff6a00',
+          tension: 0,
+          pointRadius: 4.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#ff6a00',
+          pointBorderColor: '#ff6a00',
+          borderWidth: 2.5
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: {
+            boxWidth: 8,
+            boxHeight: 8,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: { size: 10 },
+            color: '#555'
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} passageiros`
+          }
+        }
+      },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { font: { size: 10 }, color: '#777' }
+        },
         y: {
           beginAtZero: true,
-          max: 80,
-          ticks: { stepSize: 20, font: { size: 10 } },
-          grid: { color: '#ececec' }
+          min: 0,
+          max: 7000,
+          grid: { color: '#ececec' },
+          border: { display: false },
+          ticks: {
+            stepSize: 2000,
+            font: { size: 10 },
+            color: '#777',
+            callback: valor => valor.toLocaleString('pt-BR')
+          },
+          title: {
+            display: true,
+            text: 'Quantidade de passageiros',
+            font: { size: 10, weight: '600' },
+            color: '#555'
+          }
         }
       }
     }
@@ -241,7 +384,7 @@
   new Chart(document.getElementById('grafico-barras'), {
     type: 'bar',
     data: {
-      labels: ['SP - BA', 'CE - RJ', 'SP - RJ', 'AM - MT', 'SP - RE', 'PR - SP', 'SP - DF', 'ES - MT', 'RS - SP'],
+      labels: ['SSA - GRU', 'FOR - GIG', 'GRU - GIG', 'MAO - CGB', 'CGH - REC', 'CWB - GRU', 'BSB - CGH', 'VIX - CGB', 'POA - GRU'],
       datasets: [{
         label: 'Demanda',
         data: [10000, 4500, 12000, 3000, 5000, 2000, 2000, 2000, 7000],

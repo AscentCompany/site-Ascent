@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS logsServico (
   linhasEncontradas INT NULL DEFAULT NULL,
   linhasLidas INT NULL DEFAULT NULL,
   linhasRejeitadas INT NULL DEFAULT NULL,
-  detalheErro TEXT NULL DEFAULT NULL
+  detalheErro TEXT NULL DEFAULT NULL,
+  idInicialVoo BIGINT NULL DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS permissao (
@@ -108,7 +109,6 @@ CREATE TABLE IF NOT EXISTS funcPermissao (
   CONSTRAINT chkFkPermissao_fp FOREIGN KEY (fkPermissao) REFERENCES permissao(idPermissao),
   PRIMARY KEY (fkFuncionalidade, fkPermissao)
 );
-
 
 CREATE TABLE IF NOT EXISTS regraAlerta (
   idRegraAlerta INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
@@ -139,33 +139,3 @@ CREATE TABLE IF NOT EXISTS alerta (
   CONSTRAINT chkFkCompanhia_alerta FOREIGN KEY (fkCompanhia) REFERENCES companhia(idCompanhia),
   dataCriacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-INSERT INTO companhia (codCompanhia, nomeCompanhia, paisCompanhia, razaoSocial, cnpj) VALUES 
-(1001, 'Ascent Airlines', 'Brasil', 'Ascent Linhas Aéreas S.A.', '12.345.678/0001-99');
-
-
-INSERT INTO cargo (cargo, fkCompanhia) VALUES 
-('Administrador', 1),
-('Gestor de Operações Aereas', 1),
-('Analista de Planejamento de Rotas', 1);
-
-
-INSERT INTO usuario (nome, cpf, email, senha, fkCompanhia, fkCargo) VALUES 
-('Camila', '111.222.333-44', 'camila@ascent.com', 'camila', 1, 1),
-('Givoanna', '111.222.333-55', 'giovanna@ascent.com', 'giovanna', 1, 1),
-('Gustavo', '111.333.444-77', 'gustavo@ascent.com', 'gustavo', 1, 2),
-('Lucas', '111.222.333-88', 'lucas@ascent.com', 'lucas', 1, 2),
-('Matheus', '111.222.333-99', 'matheus@ascent.com', 'matheus', 1, 3),
-('Thamyres', '111.222.333-00', 'thamyres@ascent.com', 'thamyres', 1, 3);
-
-INSERT INTO permissao (nomePermissao) VALUES 
-('Adicionar Usuário'),
-('Editar Usuário'),
-('Excluir Usuário'),
-('Gerenciar Cargos');
-
-INSERT INTO funcionalidade (nomeFuncionalidade) VALUES 
-('Acessar Dashboard'),
-('Exportar Relatórios'),
-('Visualizar Gráficos de Ocupação'),
-('Configurações Avançadas');

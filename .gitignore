@@ -19,10 +19,20 @@ ascent-api/.env
 # Exceção: start.sh é versionado — necessário para deploy na nuvem
 !start.sh
 !setup-duckdns.sh
+!run-importacao-s3.sh
+!start-logs.sh
+!importar-anac.sh
 
 # Logs gerados em runtime
 *.log
 start.log
+dados/logs/
+
+# Locks de execução
+*.lock
+
+# Marcador da importação única do apache-poi
+.apachepoi-executado
 
 # Dados persistidos do MySQL em /dados
 /dados/
