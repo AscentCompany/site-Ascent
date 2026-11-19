@@ -134,15 +134,22 @@ elif docker ps --filter "name=ascent" --filter "name=mysql" -q 2>/dev/null | gre
 fi
 
 if [ "$COMPOSE_ATIVO" = true ]; then
-  echo ">> Compose detectado de pé. Derrubando containers sem apagar dados/volumes..."
-  compose down
-  docker rm -f ascent-logs 2>/dev/null || true
+  echo ">> Compose/containers detectados de pé. Derrubando serviços sem apagar dados/volumes..."
+  compose down 2>/dev/null || true
   echo ">> Compose derrubado com sucesso. Dados preservados em /dados/mysql."
 else
   echo ">> O compose não está de pé no momento. Prosseguindo..."
   compose down 2>/dev/null || true
-  docker rm -f ascent-logs 2>/dev/null || true
 fi
+
+# Remove com segurança containers remanescentes para evitar conflito de nome no Docker daemon
+# (Dados em /dados/mysql continuam 100% preservados no host/EBS)
+for c in ascent-mysql ascent-api ascent-logs mysql; do
+  if docker inspect "$c" >/dev/null 2>&1; then
+    echo ">> Removendo container remanescente '$c' (volumes preservados)..."
+    docker rm -f "$c" >/dev/null 2>&1 || true
+  fi
+done
 
 echo "=== 5. Atualizando imagens Docker (pull) ==="
 echo ">> Baixando imagens atualizadas..."
