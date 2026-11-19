@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================
-# importar-anac.sh — Lê os Excel ANAC (Apache POI) e grava no MySQL.
+# apache-po.sh — Lê os Excel ANAC (Apache POI) e grava no MySQL.
 #
 # Independente do start.sh. Pré-requisitos:
 #   1. Stack no ar: ./start.sh

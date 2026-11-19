@@ -7,7 +7,7 @@ set -e
 #
 # NÃO roda Apache POI nem importa ANAC.
 #   Schema/seed : ./inserir-dados.sh
-#   Importação  : ./importar-anac.sh
+#   Importação  : ./apache-po.sh
 # =============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -63,7 +63,7 @@ EMAIL_REMETENTE=exemplo@gmail.com
 SENHA_APP=exemplo_senha
 
 # =============================================================
-# ascent-apachepoi (Java — Leitura S3 ANAC) — usado por importar-anac.sh
+# ascent-apachepoi (Java — Leitura S3 ANAC) — usado por apache-po.sh
 # =============================================================
 AWS_REGION=us-east-1
 AWS_BUCKET=ascent-base-de-dados
@@ -89,20 +89,27 @@ else
   echo "DB_HOST=mysql" >> "$ENV_FILE"
 fi
 
-echo "=== 3. Removendo apenas containers legados (fora do compose) ==="
-for antigo in mysql; do
-  if docker inspect "$antigo" >/dev/null 2>&1; then
-    dono="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$antigo" 2>/dev/null || true)"
-    if [ -z "$dono" ]; then
-      echo ">> Removendo container legado: $antigo"
-      docker rm -f "$antigo" >/dev/null 2>&1 || true
-    fi
+echo "=== 3. Verificando status dos serviços e preservando dados ==="
+for servico in ascent-mysql ascent-api ascent-logs; do
+  if docker inspect "$servico" >/dev/null 2>&1; then
+    st="$(docker inspect -f '{{if .State.Running}}rodando (uptime: {{.State.StartedAt}}){{else}}parado{{end}}' "$servico" 2>/dev/null || echo desconhecido)"
+    echo ">> Serviço '$servico' detectado: $st. Dados e volumes preservados."
   fi
 done
 
-echo "=== 4. Preparando volume do MySQL ==="
-# Sem este diretório o compose pode falhar ou subir MySQL sem persistência.
+# Remove apenas container legado solto chamado 'mysql' (se não fizer parte do compose) para evitar conflito de porta
+if docker inspect mysql >/dev/null 2>&1; then
+  dono="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' mysql 2>/dev/null || true)"
+  if [ -z "$dono" ]; then
+    echo ">> Removendo container legado órfão 'mysql' sem projeto compose (dados em volumes não são afetados)."
+    docker rm -f mysql >/dev/null 2>&1 || true
+  fi
+fi
+
+echo "=== 4. Preparando volume do MySQL (Persistência no EBS em /dados/mysql) ==="
+# Garante a existência do diretório no EBS sem apagar arquivos existentes
 sudo mkdir -p /dados/mysql 2>/dev/null || mkdir -p /dados/mysql 2>/dev/null || true
+sudo chmod 777 /dados/mysql 2>/dev/null || chmod 777 /dados/mysql 2>/dev/null || true
 
 echo "=== 5. Subindo MySQL e ascent-api via docker compose ==="
 if docker compose version &>/dev/null; then
@@ -172,7 +179,7 @@ else
 fi
 
 chmod +x "$SCRIPT_DIR/start.sh" "$SCRIPT_DIR/start-logs.sh" \
-  "$SCRIPT_DIR/inserir-dados.sh" "$SCRIPT_DIR/importar-anac.sh" 2>/dev/null || true
+  "$SCRIPT_DIR/inserir-dados.sh" "$SCRIPT_DIR/apache-po.sh" 2>/dev/null || true
 
 CRON_BOOT="@reboot /bin/bash $SCRIPT_DIR/start.sh >> $SCRIPT_DIR/start.log 2>&1"
 CRON_LOGS_BOOT="@reboot /bin/bash $SCRIPT_DIR/start-logs.sh >/dev/null 2>&1"
@@ -192,6 +199,6 @@ echo "  API:          http://<IP>:3333"
 echo "  Logs:         http://<IP>:8080"
 echo "  DuckDNS:      crontab a cada minuto"
 echo "  Seed MySQL:   ./inserir-dados.sh"
-echo "  Import ANAC:  ./importar-anac.sh"
+echo "  Import ANAC:  ./apache-po.sh"
 echo ""
 docker ps --filter "name=ascent" --filter "name=mysql" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"

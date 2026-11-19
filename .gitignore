@@ -1,38 +1,70 @@
-# IDEs
+# =============================================================
+# .gitignore — Ascent
+# =============================================================
+
+# IDEs e Editores
 .idea/
 *.iml
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+ehthumbs.db
 
 # Java / Maven
 target/
 **/target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
 
-# Node
-ascent-api/node_modules
-ascent-api/.env
+# Node.js
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Variáveis de ambiente (nunca commitar)
+# Variáveis de Ambiente e Credenciais (NUNCA commitar)
 .env
 **/.env
+*.env.local
+*.env.*.local
+!*.env.example
 
-# Shell scripts locais (não versionados)
+# Logs de Execução e Runtime
+*.log
+*.log.*
+start.log
+importacao.log
+dados/logs/
+logs/
+
+# Locks de Execução e Marcadores
+*.lock
+.*.lock
+.apachepoi-executado
+
+# Dados persistidos e Diretórios Locais
+/dados/
+dados/
+
+# Shell scripts locais (apenas scripts oficiais são versionados)
 *.sh
-# Exceção: start.sh é versionado — necessário para deploy na nuvem
 !start.sh
 !setup-duckdns.sh
 !run-importacao-s3.sh
 !start-logs.sh
+!inserir-dados.sh
+!apache-po.sh
+!apache-poi.sh
 !importar-anac.sh
-
-# Logs gerados em runtime
-*.log
-start.log
-dados/logs/
-
-# Locks de execução
-*.lock
-
-# Marcador da importação única do apache-poi
-.apachepoi-executado
-
-# Dados persistidos do MySQL em /dados
-/dados/

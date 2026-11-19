@@ -1,4 +1,4 @@
 #!/bin/bash
-# Compatibilidade: redireciona para importar-anac.sh
+# Compatibilidade: redireciona para apache-po.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec bash "$SCRIPT_DIR/importar-anac.sh" "$@"
+exec bash "$SCRIPT_DIR/apache-po.sh" "$@"
