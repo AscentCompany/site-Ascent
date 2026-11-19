@@ -103,6 +103,13 @@ done
 echo "=== 4. Preparando volume do MySQL ==="
 # Sem este diretório o compose pode falhar ou subir MySQL sem persistência.
 sudo mkdir -p /dados/mysql 2>/dev/null || mkdir -p /dados/mysql 2>/dev/null || true
+# Garante que o diretório do banco no EBS secundário existe
+if [ "$IS_EC2" = true ]; then
+  sudo mkdir -p /dados/mysql
+else
+  mkdir -p /dados/mysql
+fi
+echo ">> Diretório /dados/mysql verificado."
 
 echo "=== 5. Subindo MySQL e ascent-api via docker compose ==="
 if docker compose version &>/dev/null; then
