@@ -9,6 +9,9 @@
 #   mysql       → banco de dados (apenas rede interna)
 #   ascent-api  → Node.js API + frontend (porta 3333)
 #
+# Serviços Java (ascent-logs e ascent-apachepoi) são gerenciados via scripts:
+#   start.sh         → sobe stack (MySQL + API + logs), aplica schema e DuckDNS
+#   apache-po.sh     → Apache POI / S3 ANAC
 # Serviços Java (ascent-logs e ascent-apachepoi) NÃO estão aqui.
 #   start.sh         → MySQL + API + logs + DuckDNS
 #   inserir-dados.sh → schema + seed (volume existente)
