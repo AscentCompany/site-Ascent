@@ -122,16 +122,35 @@ else
 fi
 echo ">> Diretório /dados/mysql verificado."
 
-echo "=== 4. Derrubando containers antigos sem apagar dados/volumes ==="
-compose down 2>/dev/null || true
-docker rm -f ascent-logs mysql 2>/dev/null || true
+echo "=== 4. Validando se o compose está de pé ==="
+COMPOSE_ATIVO=false
+
+# Valida se há containers do compose rodando ou com status ativo
+RUNNING_CONTAINERS="$(compose ps --services --filter "status=running" 2>/dev/null || compose ps -q 2>/dev/null || true)"
+if [ -n "$RUNNING_CONTAINERS" ]; then
+  COMPOSE_ATIVO=true
+elif docker ps --filter "name=ascent" --filter "name=mysql" -q 2>/dev/null | grep -q .; then
+  COMPOSE_ATIVO=true
+fi
+
+if [ "$COMPOSE_ATIVO" = true ]; then
+  echo ">> Compose detectado de pé. Derrubando containers sem apagar dados/volumes..."
+  compose down
+  docker rm -f ascent-logs 2>/dev/null || true
+  echo ">> Compose derrubado com sucesso. Dados preservados em /dados/mysql."
+else
+  echo ">> O compose não está de pé no momento. Prosseguindo..."
+  compose down 2>/dev/null || true
+  docker rm -f ascent-logs 2>/dev/null || true
+fi
 
 echo "=== 5. Atualizando imagens Docker (pull) ==="
+echo ">> Baixando imagens atualizadas..."
 compose pull || true
 docker pull lucasveneroso/ascent:ascent-logs || true
 docker pull "${APACHEPOI_IMAGE:-lucasveneroso/ascent:ascent-apachepoi-s3}" || true
 
-echo "=== 6. Subindo MySQL e ascent-api via docker compose ==="
+echo "=== 6. Subindo containers atualizados via docker compose ==="
 compose up -d --remove-orphans
 
 echo "=== 7. Aguardando o MySQL ficar pronto ==="
