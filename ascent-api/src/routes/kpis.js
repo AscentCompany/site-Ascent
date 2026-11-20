@@ -14,4 +14,8 @@ router.get("/mes-maior-procura", function (req, res) {
     kpiController.buscarDadosKpiMesMaiorProcura(req, res);
 });
 
+router.get("/ocupacao-media/:idCompanhia", function (req, res) {
+    kpiController.buscarDadosKpiOcupacaoMedia(req, res);
+});
+
 module.exports = router;
