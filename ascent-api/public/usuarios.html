@@ -277,7 +277,9 @@
                 fecharModal();
                 listarUsuarios();
             } else {
-                alert("Erro ao cadastrar funcionário.");
+                res.text().then(mensagem => {
+                    alert(mensagem || "Não foi possível cadastrar o funcionário.");
+                });
             }
         }).catch(err => {
             console.error("Erro na requisição:", err);

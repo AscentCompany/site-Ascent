@@ -98,7 +98,12 @@
       var senhaVar = senha.value;
 
       if (emailVar == "" || senhaVar == "") {
-        console.log("Por favor, preencha todos os campos!!")
+        alert("Por favor, preencha o e-mail e a senha.");
+        return false;
+      }
+
+      if (!email.checkValidity()) {
+        alert("Informe um e-mail válido.");
         return false;
       }
 
@@ -144,16 +149,14 @@
           });
 
         } else {
-
-          console.log("Houve um erro ao tentar realizar o login!");
-
           resposta.text().then(texto => {
-            console.error(texto);
+            alert(texto || "Não foi possível realizar o login. Verifique seus dados e tente novamente.");
           });
         }
 
       }).catch(function (erro) {
-        console.log(erro);
+        console.error(erro);
+        alert("Erro de conexão com o servidor. Tente novamente mais tarde.");
       })
 
       return false;
