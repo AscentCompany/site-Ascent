@@ -240,7 +240,7 @@
                 select.innerHTML = '<option value="">Selecione uma funcionalidade...</option>';
 
                 for(let i = 0; i < funcionalidades.length; i++) {
-                    select.innerHTML += `<option value="${funcionalidades[i].idFuncionalidade}">${funcionalidades[i].nome}</option>`;
+                    select.innerHTML += `<option value="${funcionalidades[i].idFuncionalidade}">${funcionalidades[i].nomeFuncionalidade || funcionalidades[i].nome}</option>`;
                 }
             });
     }

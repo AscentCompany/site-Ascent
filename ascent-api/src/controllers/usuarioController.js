@@ -68,25 +68,71 @@ function cadastrar(req, res) {
     } else if (idCompanhia == undefined) {
         res.status(400).send("Sua companhia está undefined!");
     } else {
+        // O frontend envia o codCompanhia (código de negócio).
+        // Resolvemos para o idCompanhia (PK) antes de qualquer operação.
+        var cargoModel = require("../models/cargoModel");
+        var permissaoModel = require("../models/permissaoModel");
 
-        usuarioModel.cadastrar(nome, email, senha, idCompanhia)
-            .then(
-                function (resultado) {
-                    var novoIdUsuario = resultado.insertId || null;
-                    logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO", `Novo usuário ${nome} (${email}) cadastrado na companhia ${idCompanhia}`, "cadastro.html", novoIdUsuario);
-                    res.json(resultado);
+        usuarioModel.buscarIdPorCodigo(idCompanhia)
+            .then(resultado => {
+                if (!resultado || resultado.length === 0) {
+                    return res.status(404).send("Companhia não encontrada. Verifique o código informado.");
                 }
-            ).catch(
-                function (erro) {
-                    logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO_ERRO", `Falha ao cadastrar usuário ${email}`, "cadastro.html", null);
-                    console.log(erro);
-                    console.log(
-                        "\nHouve um erro ao realizar o cadastro! Erro: ",
-                        erro.sqlMessage
-                    );
-                    res.status(500).json(erro.sqlMessage);
-                }
-            );
+                var idCompanhiaReal = resultado[0].idCompanhia;
+
+                return cargoModel.listarCargos(idCompanhiaReal)
+                    .then(cargosResultado => {
+                        if (cargosResultado.length === 0) {
+                            // Primeiro cadastro da companhia: provisiona a estrutura de cargos padrão
+                            // 1. Cria o cargo Administrador
+                            return cargoModel.cadastrarCargo("Administrador", idCompanhiaReal)
+                                .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
+                                .then(ultCargo => {
+                                    var idCargoAdmin = ultCargo[0].idNovoCargo;
+
+                                    // 2. Vincula todas as permissões ao Administrador
+                                    return permissaoModel.listarPermissoes()
+                                        .then(permissoes => {
+                                            var promises = permissoes.map(p =>
+                                                cargoModel.cadastrarCargoPermissao(idCargoAdmin, p.idPermissao || p)
+                                            );
+                                            return Promise.all(promises);
+                                        })
+                                        // 3. Cria os demais cargos operacionais padrão da companhia
+                                        .then(() => cargoModel.cadastrarCargo("Gestor de Operações Aéreas", idCompanhiaReal))
+                                        .then(() => cargoModel.cadastrarCargo("Analista de Planejamento de Rotas", idCompanhiaReal))
+                                        // 4. Cadastra o 1º usuário com o cargo Administrador
+                                        .then(() => usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, idCargoAdmin));
+                                });
+                        }
+
+                        // Próximos usuários da companhia: cadastra com o cargo padrão (Analista de Planejamento de Rotas)
+                        return usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal);
+                    });
+            })
+            .then(function (resultado) {
+                var novoIdUsuario = resultado.insertId || null;
+                logModel.registrarLog(
+                    "GESTÃO DE USUÁRIO",
+                    "CADASTRO",
+                    `Novo usuário ${nome} (${email}) cadastrado na companhia ${idCompanhia}`,
+                    "cadastro.html",
+                    novoIdUsuario
+                );
+                res.json(resultado);
+            })
+            .catch(function (erro) {
+                logModel.registrarLog(
+                    "GESTÃO DE USUÁRIO",
+                    "CADASTRO_ERRO",
+                    `Falha ao cadastrar usuário ${email}`,
+                    "cadastro.html",
+                    null
+                );
+                console.log(erro);
+                console.log("\nHouve um erro ao realizar o cadastro! Erro: ", erro.sqlMessage || erro);
+                res.status(500).json(erro.sqlMessage || "Erro interno");
+            });
     }
 }
 

@@ -127,53 +127,69 @@
 
       // Verificando se há algum campo em branco
       if (
-              nomeVar == "" ||
-              emailVar == "" ||
-              senhaVar == "" ||
-              confirmacaoSenhaVar == "" ||
-              idCompanhiaVar == ""
-
+        nomeVar == "" ||
+        emailVar == "" ||
+        senhaVar == "" ||
+        confirmacaoSenhaVar == "" ||
+        idCompanhiaVar == ""
       ) {
-        console.log("Por favor, Preencha todos os campos!!")
+        alert("Por favor, preencha todos os campos!");
         return false;
       }
 
-      // Enviando o valor da nova input
-
-      if(validarSenha() && validarEmail()){
-        fetch("/usuarios/cadastrar", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            // crie um atributo que recebe o valor recuperado aqui
-            // Agora vá para o arquivo routes/usuario.js
-            nomeServer: nomeVar,
-            emailServer: emailVar,
-            senhaServer: senhaVar,
-            idCompanhiaServer: idCompanhiaVar
-          }),
-        })
-                .then(function (resposta) {
-                  console.log("resposta: ", resposta);
-
-                  if (resposta.ok) {
-
-                    limparFormulario();
-
-                    setTimeout(() => {
-                      window.location = "login.html";
-                    }, "2000");
-
-                  } else {
-                    throw "Houve um erro ao tentar realizar o cadastro!";
-                  }
-                })
-                .catch(function (resposta) {
-                  console.log(`#ERRO: ${resposta}`);
-                });
+      if (!validarEmail()) {
+        alert("Por favor, insira um e-mail válido com '@' e '.com' ou '.school'!");
+        return false;
       }
+
+      if (senhaVar !== confirmacaoSenhaVar) {
+        alert("As senhas informadas não coincidem!");
+        return false;
+      }
+
+      if (!validarSenha()) {
+        alert("A senha não atende a todos os requisitos de segurança!");
+        return false;
+      }
+
+      fetch("/usuarios/cadastrar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nomeServer: nomeVar,
+          emailServer: emailVar,
+          senhaServer: senhaVar,
+          idCompanhiaServer: idCompanhiaVar
+        }),
+      })
+        .then(function (resposta) {
+          console.log("resposta: ", resposta);
+
+          if (resposta.ok) {
+            limparFormulario();
+            window.location.href = "login.html";
+          } else {
+            resposta.text().then(function (texto) {
+              let mensagem = texto;
+              try {
+                let jsonErro = JSON.parse(texto);
+                if (typeof jsonErro === "string") {
+                  mensagem = jsonErro;
+                } else if (jsonErro && jsonErro.mensagem) {
+                  mensagem = jsonErro.mensagem;
+                }
+              } catch (e) {}
+
+              alert(mensagem || "Houve um erro ao tentar realizar o cadastro!");
+            });
+          }
+        })
+        .catch(function (erro) {
+          console.log(`#ERRO: ${erro}`);
+          alert("Erro de conexão com o servidor. Tente novamente mais tarde.");
+        });
 
 
 

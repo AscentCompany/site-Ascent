@@ -279,13 +279,15 @@
             idsParaEnviar.push(permissoesEscolhidas[i].id);
         }
 
+        let idUsuarioLogado = Number(sessionStorage.ID_USUARIO);
         fetch("/cargos/cadastrar", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 nomeCargoServer: nomeCargo,
                 idCompanhiaServer: idCompanhia,
-                permissoesServer: idsParaEnviar
+                permissoesServer: idsParaEnviar,
+                fkUsuarioAcao: idUsuarioLogado
             })
         }).then(res => {
             if(res.ok) {
@@ -298,7 +300,8 @@
 
     function excluirCargo(idCargo) {
         if(confirm("Atenção! Tem certeza que deseja excluir este cargo?")) {
-            fetch(`/cargos/deletar/${idCargo}`, {
+            let idUsuarioLogado = Number(sessionStorage.ID_USUARIO);
+            fetch(`/cargos/deletar/${idCargo}?fkUsuarioAcao=${idUsuarioLogado}`, {
                 method: "DELETE"
             }).then(res => {
                 if(res.ok) {
@@ -323,11 +326,13 @@
                 permissoesSelecionadas.push(checkboxes[i].value);
             }
 
+            let idUsuarioLogado = Number(sessionStorage.ID_USUARIO);
             fetch(`/cargos/atualizar/${idCargo}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    permissoesServer: permissoesSelecionadas
+                    permissoesServer: permissoesSelecionadas,
+                    fkUsuarioAcao: idUsuarioLogado
                 })
             }).then(res => {
                 if (res.ok) {
