@@ -236,6 +236,10 @@ INSERT INTO permissao (nomePermissao)
 SELECT 'Editar Usuário' FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Editar Usuário');
 
+INSERT INTO permissao (nomePermissao)
+SELECT 'Acessar Central de Recomendações' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Acessar Central de Recomendações');
+
 -- Funcionalidades associadas aos módulos
 INSERT INTO funcionalidade (nomeFuncionalidade)
 SELECT 'Visualizar Dashboard de Rotas' FROM DUAL
@@ -256,6 +260,10 @@ WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Geren
 INSERT INTO funcionalidade (nomeFuncionalidade)
 SELECT 'Editar Informações de Usuário' FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Editar Informações de Usuário');
+
+INSERT INTO funcionalidade (nomeFuncionalidade)
+SELECT 'Visualizar Central de Recomendações' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Visualizar Central de Recomendações');
 
 -- Vínculo inicial entre Funcionalidades e Permissões (funcPermissao)
 INSERT INTO funcPermissao (fkFuncionalidade, fkPermissao)
@@ -287,3 +295,20 @@ SELECT f.idFuncionalidade, p.idPermissao
 FROM funcionalidade f, permissao p
 WHERE f.nomeFuncionalidade = 'Editar Informações de Usuário' AND p.nomePermissao = 'Editar Usuário'
   AND NOT EXISTS (SELECT 1 FROM funcPermissao WHERE fkFuncionalidade = f.idFuncionalidade AND fkPermissao = p.idPermissao);
+
+INSERT INTO funcPermissao (fkFuncionalidade, fkPermissao)
+SELECT f.idFuncionalidade, p.idPermissao
+FROM funcionalidade f, permissao p
+WHERE f.nomeFuncionalidade = 'Visualizar Central de Recomendações'
+  AND p.nomePermissao = 'Acessar Central de Recomendações'
+  AND NOT EXISTS (SELECT 1 FROM funcPermissao WHERE fkFuncionalidade = f.idFuncionalidade AND fkPermissao = p.idPermissao);
+
+INSERT INTO cargoPermissao (fkCargo, fkPermissao)
+SELECT c.idCargo, p.idPermissao
+FROM cargo c
+JOIN companhia co ON co.idCompanhia = c.fkCompanhia
+CROSS JOIN permissao p
+LEFT JOIN cargoPermissao cp ON cp.fkCargo = c.idCargo AND cp.fkPermissao = p.idPermissao
+WHERE co.codCompanhia = 1001
+  AND c.cargo = 'Administrador'
+  AND cp.fkCargo IS NULL;

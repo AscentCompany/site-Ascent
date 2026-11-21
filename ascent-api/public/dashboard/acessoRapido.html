@@ -103,14 +103,6 @@
     if(window.innerWidth <= 900) document.body.classList.add('menu-fechado');
     btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
     overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
-    // Mostrar itens de gestor
-    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-      var navConf = document.getElementById('nav-configurar-ar');
-      var cardConf = document.getElementById('card-configurar-ar');
-      if (navConf)  navConf.style.display  = '';
-      if (cardConf) cardConf.style.display = '';
-    }
-
   </script>
 </body>
 </html>

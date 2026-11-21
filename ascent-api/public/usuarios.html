@@ -115,10 +115,6 @@
 
 <script>
     document.getElementById("nome-usuario").textContent = sessionStorage.NOME_USUARIO || "Usuário";
-    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-        document.getElementById("nav-configurar-gestao").style.display = "";
-    }
-
     const btnMenu = document.getElementById("btn-menu");
     const overlay = document.getElementById("overlay");
     btnMenu.addEventListener("click", () => document.body.classList.toggle("menu-fechado"));
@@ -135,16 +131,19 @@
             return;
         }
 
-        fetch(`/usuarios/permissao/${idCompanhia}`)
-            .then(res => res.json())
-            .then(res => {
-                let menorCargo = res[0].adminCargo;
-                if(idCargoUsuarioLogado > menorCargo) {
+        usuarioTemFuncionalidade("Gerenciar Funcionários e Cargos")
+            .then(podeGerenciar => {
+                if (!podeGerenciar) {
                     alert("Você não tem permissão para acessar esta tela.");
                     window.location.href = "dashboard/acessoRapido.html";
                 } else {
                     carregarCargos();
                 }
+            })
+            .catch(erro => {
+                console.error("Erro ao verificar permissão de gestão:", erro);
+                alert("Não foi possível verificar suas permissões. Tente novamente.");
+                window.location.href = "dashboard/acessoRapido.html";
             });
     }
 

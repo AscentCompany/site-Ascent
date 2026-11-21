@@ -86,13 +86,11 @@
 
 <script>
   let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
-  let ehGestor = Number(sessionStorage.CARGO_USUARIO) <= 2;
   let abaAtiva = "todas";
   let todosAlertas = [];
 
   document.getElementById("nome-usuario").innerHTML = sessionStorage.NOME_USUARIO || "Usuário";
 
-  if (ehGestor) document.getElementById("nav-configurar").style.display = "";
   if (window.innerWidth <= 900) document.body.classList.add("menu-fechado");
 
   function janelaTexto(janela, inicio, fim) {

@@ -179,13 +179,9 @@
     btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
     overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
 
-    // Nome do usuário + permissão gestor
+    // Nome do usuário
     var nomeEl = document.getElementById('nome-usuario');
     if (nomeEl) nomeEl.textContent = sessionStorage.NOME_USUARIO || 'Usuário';
-    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-      var navConf = document.getElementById('nav-configurar-faq');
-      if (navConf) navConf.style.display = '';
-    }
 
     // ---------- SCRIPT DO ACCORDION (FAQ) ----------
     const faqItems = document.querySelectorAll('.faq-item');

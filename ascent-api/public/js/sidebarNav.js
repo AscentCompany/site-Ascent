@@ -73,66 +73,70 @@
   }
 
 
-  function aplicarPermissoesSidebar() {
-    var idCargo = Number(sessionStorage.CARGO_USUARIO);
-    var idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+  function aplicarControleAcessoPagina() {
+    var funcionalidadesPorPagina = {
+      "dashboardrotas.html": "Visualizar Dashboard de Rotas",
+      "dashboardoperacoes.html": "Visualizar Dashboard de Operações",
+      "centralalertas.html": "Configurar Regras de Alertas",
+      "centralrecomendacoes.html": "Visualizar Central de Recomendações",
+      "configuraralertas.html": "Configurar Regras de Alertas",
+      "perfil.html": "Editar Informações de Usuário"
+    };
+    var pagina = window.location.pathname.split("/").pop().toLowerCase();
+    var funcionalidade = funcionalidadesPorPagina[pagina];
 
-    if (!idCargo) {
+    if (!funcionalidade) {
       return;
     }
 
-    function ocultarItens(ehAdmin) {
-      var navEl = document.querySelector(".sidebar .nav");
-      if (navEl) {
-        if (!ehAdmin) {
-          var linksGestao = navEl.querySelectorAll('a[href*="usuarios.html"], a[href*="cargos.html"], a[href*="permissoes.html"]');
-          linksGestao.forEach(function (link) {
-            var item = link.closest(".nav-item");
-            if (item) {
-              item.style.display = "none";
-            }
-          });
+    document.documentElement.style.visibility = "hidden";
+    exigirFuncionalidadePagina(funcionalidade, "acessoRapido.html")
+      .then(function (podeAcessar) {
+        if (podeAcessar) {
+          document.documentElement.style.visibility = "";
         }
-
-        var ehGestor = idCargo <= 2 || ehAdmin;
-        if (!ehGestor) {
-          var linksConfig = navEl.querySelectorAll('a[href*="configurarAlertas.html"]');
-          linksConfig.forEach(function (link) {
-            var item = link.closest(".nav-item");
-            if (item) {
-              item.style.display = "none";
-            }
-          });
-        }
-      }
-
-      if (!ehAdmin) {
-        var cardsGestao = document.querySelectorAll('.acesso-grid a[href*="usuarios.html"]');
-        cardsGestao.forEach(function (card) {
-          card.style.display = "none";
-        });
-      }
-    }
-
-    if (sessionStorage.ADMIN_CARGO !== undefined) {
-      var ehAdmin = idCargo === Number(sessionStorage.ADMIN_CARGO);
-      ocultarItens(ehAdmin);
-    } else if (idCompanhia) {
-      fetch("/usuarios/permissao/" + idCompanhia)
-        .then(function (res) { return res.json(); })
-        .then(function (dados) {
-          if (dados && dados.length > 0) {
-            sessionStorage.ADMIN_CARGO = dados[0].adminCargo;
-            var ehAdmin = idCargo === Number(dados[0].adminCargo);
-            ocultarItens(ehAdmin);
-          }
-        })
-        .catch(function (e) {
-          console.warn("Erro ao verificar permissão na sidebar:", e);
-        });
-    }
+      });
   }
 
+  function aplicarPermissoesSidebar() {
+    var regras = [
+      { arquivo: "dashboardrotas.html", funcionalidade: "Visualizar Dashboard de Rotas" },
+      { arquivo: "dashboardoperacoes.html", funcionalidade: "Visualizar Dashboard de Operações" },
+      { arquivo: "usuarios.html", funcionalidade: "Gerenciar Funcionários e Cargos" },
+      { arquivo: "cargos.html", funcionalidade: "Gerenciar Funcionários e Cargos" },
+      { arquivo: "permissoes.html", funcionalidade: "Gerenciar Funcionários e Cargos" },
+      { arquivo: "centralalertas.html", funcionalidade: "Configurar Regras de Alertas" },
+      { arquivo: "centralrecomendacoes.html", funcionalidade: "Visualizar Central de Recomendações" },
+      { arquivo: "configuraralertas.html", funcionalidade: "Configurar Regras de Alertas" },
+      { arquivo: "perfil.html", funcionalidade: "Editar Informações de Usuário" }
+    ];
+
+    function aplicarRegras(funcionalidades) {
+      var links = document.querySelectorAll(".sidebar .nav a[href], .acesso-grid a[href]");
+      links.forEach(function (link) {
+        var destino = link.getAttribute("href").toLowerCase();
+        var regra = regras.find(function (item) {
+          return destino.indexOf(item.arquivo) !== -1;
+        });
+
+        if (!regra) {
+          return;
+        }
+
+        var elemento = link.closest(".nav-item") || link;
+        elemento.style.display = funcionalidades.indexOf(regra.funcionalidade) !== -1 ? "" : "none";
+      });
+    }
+
+    carregarFuncionalidadesCargo()
+      .then(aplicarRegras)
+      .catch(function (erro) {
+        console.error("Erro ao carregar permissões da navegação:", erro);
+        aplicarRegras([]);
+      });
+  }
+
+  aplicarControleAcessoPagina();
   aplicarPermissoesSidebar();
 
   var nav = document.querySelector(".sidebar .nav");

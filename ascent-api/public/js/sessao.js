@@ -1,5 +1,6 @@
 // sessão
 var URL_LOGIN = new URL("../login.html", document.currentScript.src).href;
+var funcionalidadesCargoCache = {};
 
 function validarSessao() {
     var email = sessionStorage.EMAIL_USUARIO;
@@ -21,6 +22,87 @@ function validarSessao() {
     } else {
         window.location = URL_LOGIN;
     }
+}
+
+function carregarFuncionalidadesCargo() {
+    var idCargo = Number(sessionStorage.CARGO_USUARIO);
+    var idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+
+    if (!idCargo || !idCompanhia) {
+        return Promise.resolve([]);
+    }
+
+    var chaveCache = `${idCompanhia}:${idCargo}`;
+    if (funcionalidadesCargoCache[chaveCache]) {
+        return funcionalidadesCargoCache[chaveCache];
+    }
+
+    var requisicoes = [
+        fetch(`/cargos/listar/${idCompanhia}`),
+        fetch("/permissoes/listar")
+    ];
+
+    funcionalidadesCargoCache[chaveCache] = Promise.all(requisicoes)
+        .then(function (respostas) {
+            if (respostas.some(function (resposta) { return !resposta.ok; })) {
+                throw new Error("Não foi possível consultar as funcionalidades do cargo.");
+            }
+            return Promise.all(respostas.map(function (resposta) { return resposta.json(); }));
+        })
+        .then(function (resultados) {
+            var cargos = resultados[0];
+            var permissoes = resultados[1];
+            if (!Array.isArray(cargos) || !Array.isArray(permissoes)) {
+                throw new Error("A resposta de funcionalidades do cargo é inválida.");
+            }
+
+            var idsPermissoesCargo = new Set(cargos.filter(function (cargo) {
+                return Number(cargo.idCargo) === idCargo
+                    && cargo.idCargoPermissao !== null
+                    && Number(cargo.idCargoPermissao) === idCargo;
+            }).map(function (cargo) {
+                return Number(cargo.idPermissao);
+            }));
+
+            var funcionalidades = permissoes.filter(function (permissao) {
+                return idsPermissoesCargo.has(Number(permissao.idPermissao))
+                    && permissao.idpermissaoFuncionalidade !== null
+                    && Number(permissao.idpermissaoFuncionalidade) === Number(permissao.idPermissao);
+            }).map(function (permissao) {
+                return permissao.funcionalidade;
+            });
+            return Array.from(new Set(funcionalidades));
+        })
+        .catch(function (erro) {
+            delete funcionalidadesCargoCache[chaveCache];
+            throw erro;
+        });
+
+    return funcionalidadesCargoCache[chaveCache];
+}
+
+function usuarioTemFuncionalidade(nomeFuncionalidade) {
+    return carregarFuncionalidadesCargo().then(function (funcionalidades) {
+        return funcionalidades.indexOf(nomeFuncionalidade) !== -1;
+    });
+}
+
+function exigirFuncionalidadePagina(nomeFuncionalidade, urlFallback) {
+    return usuarioTemFuncionalidade(nomeFuncionalidade)
+        .then(function (podeAcessar) {
+            if (!podeAcessar) {
+                alert("Você não tem permissão para acessar esta página.");
+                window.location.href = urlFallback;
+                return false;
+            }
+            return true;
+        })
+        .catch(function (erro) {
+            console.error("Erro ao verificar permissão da página:", erro);
+            alert("Não foi possível verificar suas permissões. Tente novamente.");
+            window.location.href = urlFallback;
+            return false;
+        });
 }
 
 function limparSessao() {

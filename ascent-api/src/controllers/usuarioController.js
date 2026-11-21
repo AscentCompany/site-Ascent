@@ -108,7 +108,7 @@ function cadastrar(req, res) {
                 }
                 var idCompanhiaReal = resultado[0].idCompanhia;
 
-                return cargoModel.listarCargos(idCompanhiaReal)
+                return usuarioModel.listarCargos(idCompanhiaReal)
                     .then(cargosResultado => {
                         if (cargosResultado.length === 0) {
                             // Primeiro cadastro da companhia: provisiona a estrutura de cargos padrão
@@ -126,16 +126,27 @@ function cadastrar(req, res) {
                                             );
                                             return Promise.all(promises);
                                         })
-                                        // 3. Cria os demais cargos operacionais padrão da companhia
-                                        .then(() => cargoModel.cadastrarCargo("Gestor de Operações Aéreas", idCompanhiaReal))
-                                        .then(() => cargoModel.cadastrarCargo("Analista de Planejamento de Rotas", idCompanhiaReal))
+                                        // 3. Cria o cargo padrão sem permissões
+                                        .then(() => cargoModel.cadastrarCargo("Padrão", idCompanhiaReal))
                                         // 4. Cadastra o 1º usuário com o cargo Administrador
                                         .then(() => usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, idCargoAdmin));
                                 });
                         }
 
-                        // Próximos usuários da companhia: cadastra com o cargo padrão (Analista de Planejamento de Rotas)
-                        return usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal);
+                        var cargoPadrao = cargosResultado.find(cargo => cargo.cargo === "Padrão");
+                        if (cargoPadrao) {
+                            return usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, cargoPadrao.idCargo);
+                        }
+
+                        return cargoModel.cadastrarCargo("Padrão", idCompanhiaReal)
+                            .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
+                            .then(ultCargo => usuarioModel.cadastrar(
+                                nome,
+                                email,
+                                senha,
+                                idCompanhiaReal,
+                                ultCargo[0].idNovoCargo
+                            ));
                     });
             })
             .then(function (resultado) {
