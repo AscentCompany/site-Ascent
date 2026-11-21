@@ -61,16 +61,20 @@
             <div class="faq-content">
               <div class="faq-content-inner">
                 <div class="qa-block">
+                  <h3>Antes de começar: confira seus acessos</h3>
+                  <p>Consulte as opções disponíveis no menu lateral ou em Acesso Rápido. Se uma funcionalidade não aparecer ou o sistema informar acesso negado, fale com seu superior ou administrador para solicitar a permissão correspondente ao seu cargo.</p>
+                </div>
+                <div class="qa-block">
                   <h3>O que é o sistema Ascent?</h3>
-                  <p>O Ascent é uma plataforma de inteligência de dados e análise voltada para o setor de aviação. Ele centraliza indicadores de oferta e demanda de voos, auxiliando companhias aéreas a tomarem decisões estratégicas sobre rotas e operações.</p>
+                  <p>O Ascent reúne telas de análise de rotas e operações, gestão de usuários, cargos e permissões, além de configuração e consulta de alertas de ocupação.</p>
                 </div>
                 <div class="qa-block">
                   <h3>Para que serve a tela de "Acesso Rápido"?</h3>
-                  <p>É o seu painel central de navegação. A partir dele, você pode acessar de forma ágil os dashboards de Rotas e Operações, módulos de IA, perfil, FAQ e a gestão de funcionários.</p>
+                  <p>É o painel central de navegação. Ele mostra atalhos para as funcionalidades liberadas para o seu cargo, como dashboards, Perfil, Gestão, Central de Alertas e Central de Recomendações.</p>
                 </div>
                 <div class="qa-block">
                   <h3>Como faço para alternar entre os dashboards?</h3>
-                  <p>Você pode usar o menu lateral (sidebar) fixo em qualquer página ou retornar à tela de Acesso Rápido através do ícone da logo no topo do menu.</p>
+                  <p>Use os links disponíveis no menu lateral. O ícone da logo leva à tela Acesso Rápido. As opções que dependem de permissão só aparecem para os cargos autorizados; tentar abrir diretamente uma página sem acesso gera um aviso.</p>
                 </div>
               </div>
             </div>
@@ -89,16 +93,16 @@
             <div class="faq-content">
               <div class="faq-content-inner">
                 <div class="qa-block">
-                  <h3>O que os dados dos dashboards representam?</h3>
-                  <p>Eles são baseados em análises históricas (como dados dos últimos 5 anos) e processamentos de planilhas de voos para monitorar taxas de ocupação, rotas mais buscadas e sazonalidade mensal.</p>
+                  <h3>O que encontro no Dashboard de Rotas?</h3>
+                  <p>A tela reúne indicadores e gráficos de demanda por rota, tipo de voo e horário. As rotas são identificadas pelo código de origem e destino, no formato GRU - GIG.</p>
                 </div>
                 <div class="qa-block">
-                  <h3>Como interpreto o indicador de rotas com maior incidência?</h3>
-                  <p>Esse KPI mostra qual trecho (por exemplo, SP -> RJ) teve o maior volume de procura no período avaliado, ajudando a direcionar esforços de capacidade e preços.</p>
+                  <h3>O que encontro no Dashboard de Operações?</h3>
+                  <p>A tela reúne indicadores de ocupação e volume médio de passageiros, comparações da companhia com o mercado, gráficos de capacidade e ocupação e listas de rotas por ocupação.</p>
                 </div>
                 <div class="qa-block">
-                  <h3>O que significa a queda ou aumento de procura em determinadas cidades?</h3>
-                  <p>Os gráficos apontam variações percentuais em relação ao ano anterior. Isso serve para identificar gargalos de demanda ou cidades com potencial de expansão de malha aérea.</p>
+                  <h3>O que significa a taxa de ocupação?</h3>
+                  <p>É a proporção entre a quantidade de passageiros e a capacidade de assentos dos voos considerados, apresentada em percentual.</p>
                 </div>
               </div>
             </div>
@@ -107,7 +111,7 @@
           <!-- Tópico 3 -->
           <div class="faq-item">
             <button class="faq-trigger" type="button" aria-expanded="false">
-              <span>Sistema e Notificações (Slack e Alertas)</span>
+              <span>Alertas e Recomendações</span>
               <span class="faq-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="6 9 12 15 18 9"></polyline>
@@ -117,18 +121,58 @@
             <div class="faq-content">
               <div class="faq-content-inner">
                 <div class="qa-block">
-                  <h3>Como funcionam os alertas e notificações do sistema?</h3>
-                  <p>O sistema conta com rotinas automatizadas (via Java e processamento de logs) que monitoram dados e geram mensagens automáticas de avisos importantes diretamente em canais integrados, como o Slack da equipe.</p>
+                  <h3>Como são configuradas as regras de alerta?</h3>
+                  <p>Uma regra define um limite de ocupação, a severidade (Atenção ou Crítico) e o período analisado: 1, 3, 5 ou 10 anos, todo o histórico ou um intervalo personalizado. Ela identifica rotas com ocupação abaixo do limite definido.</p>
                 </div>
                 <div class="qa-block">
-                  <h3>Quem tem acesso à Gestão de Funcionários?</h3>
-                  <p>Essa funcionalidade é restrita a usuários com perfil de Administrador, conforme as permissões de cargo configuradas no sistema. O perfil de Visualizador possui acesso apenas aos dashboards de leitura.</p>
+                  <h3>Onde consulto e organizo os alertas?</h3>
+                  <p>Na Central de Alertas, você pode consultar os itens gerados, ver detalhes da rota e da regra relacionada, alternar entre todos e não lidos e marcar alertas como lidos.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Os alertas podem ser enviados ao Slack?</h3>
+                  <p>Quando o serviço de notificações da instalação está configurado, os alertas também podem ser encaminhados ao Slack.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Como filtro as recomendações?</h3>
+                  <p>Na Central de Recomendações, use os filtros Todas, Alta, Média ou Baixa. Cada item apresenta uma recomendação, o motivo associado e sua prioridade.</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Tópico 4 -->
+          <div class="faq-item">
+            <button class="faq-trigger" type="button" aria-expanded="false">
+              <span>Cargos e Permissões</span>
+              <span class="faq-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-content-inner">
+                <div class="qa-block">
+                  <h3>Como são definidos os acessos de cada usuário?</h3>
+                  <p>As permissões são associadas ao cargo do usuário e determinam quais funcionalidades ele pode utilizar. O menu mostra apenas as opções permitidas para esse cargo.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Qual é o acesso de um novo usuário?</h3>
+                  <p>No cadastro público, se a companhia ainda não possui cargos, o primeiro usuário recebe o cargo Administrador. Os cadastros públicos seguintes recebem o cargo Padrão, sem permissões de funcionalidades inicialmente. Ao cadastrar um funcionário pela Gestão, o responsável seleciona o cargo.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Como solicito acesso a uma funcionalidade?</h3>
+                  <p>Entre em contato com o administrador ou superior da sua companhia e solicite que a permissão necessária seja atribuída ao seu cargo.</p>
+                </div>
+                <div class="qa-block">
+                  <h3>Quem pode acessar a Gestão de Funcionários?</h3>
+                  <p>Usuários cujo cargo tenha a permissão de Gerenciar Funcionários e Cargos podem acessar essa área. O acesso depende da permissão atribuída ao cargo, não apenas do nome do cargo.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tópico 5 -->
           <div class="faq-item">
             <button class="faq-trigger" type="button" aria-expanded="false">
               <span>Conta e Suporte</span>
@@ -141,12 +185,12 @@
             <div class="faq-content">
               <div class="faq-content-inner">
                 <div class="qa-block">
-                  <h3>Como posso alterar minha senha ou dados do perfil?</h3>
-                  <p>Basta acessar a opção Perfil no menu lateral ou na tela de Acesso Rápido para visualizar e atualizar suas informações cadastrais.</p>
+                  <h3>Onde encontro a tela Perfil?</h3>
+                  <p>Acesse Perfil pelo menu lateral ou pela tela Acesso Rápido, se essa funcionalidade estiver liberada para o seu cargo.</p>
                 </div>
                 <div class="qa-block">
-                  <h3>O que devo fazer se encontrar algum erro nos dados ou gráficos?</h3>
-                  <p>Verifique se a sua conexão está ativa ou entre em contato com o Administrador do sistema da sua companhia para reportar inconsistências nas bases de dados carregadas.</p>
+                  <h3>O que devo fazer se encontrar dados ausentes ou inconsistentes?</h3>
+                  <p>Informe ao administrador da companhia qual página e indicador apresentam o problema para que ele possa verificar os dados da operação.</p>
                 </div>
               </div>
             </div>

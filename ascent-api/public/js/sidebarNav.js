@@ -111,6 +111,15 @@
       { arquivo: "perfil.html", funcionalidade: "Editar Informações de Usuário" }
     ];
 
+    var navEl = document.querySelector(".sidebar .nav");
+    var acessoGrid = document.querySelector(".acesso-grid");
+    if (navEl) {
+      navEl.style.visibility = "hidden";
+    }
+    if (acessoGrid) {
+      acessoGrid.style.visibility = "hidden";
+    }
+
     function aplicarRegras(funcionalidades) {
       var links = document.querySelectorAll(".sidebar .nav a[href], .acesso-grid a[href]");
       links.forEach(function (link) {
@@ -126,9 +135,16 @@
         var elemento = link.closest(".nav-item") || link;
         elemento.style.display = funcionalidades.indexOf(regra.funcionalidade) !== -1 ? "" : "none";
       });
+
+      if (navEl) {
+        navEl.style.visibility = "";
+      }
+      if (acessoGrid) {
+        acessoGrid.style.visibility = "";
+      }
     }
 
-    carregarFuncionalidadesCargo()
+    return carregarFuncionalidadesCargo()
       .then(aplicarRegras)
       .catch(function (erro) {
         console.error("Erro ao carregar permissões da navegação:", erro);
@@ -137,75 +153,77 @@
   }
 
   aplicarControleAcessoPagina();
-  aplicarPermissoesSidebar();
+  aplicarPermissoesSidebar().then(inicializarIndicadorSidebar);
 
-  var nav = document.querySelector(".sidebar .nav");
-  var indicator = nav && nav.querySelector(".nav-indicador");
-  var items = nav ? Array.from(nav.querySelectorAll(".nav-item")) : [];
-  var activeItem = items.find(function (item) {
-    return item.classList.contains("ativo");
-  });
+  function inicializarIndicadorSidebar() {
+    var nav = document.querySelector(".sidebar .nav");
+    var indicator = nav && nav.querySelector(".nav-indicador");
+    var items = nav ? Array.from(nav.querySelectorAll(".nav-item")) : [];
+    var activeItem = items.find(function (item) {
+      return item.classList.contains("ativo") && getComputedStyle(item).display !== "none";
+    });
 
-  if (!nav || !indicator || !activeItem) {
+    if (!nav || !indicator || !activeItem) {
+      sessionStorage.removeItem(storageKey);
+      sessionStorage.removeItem(legacyStorageKey);
+      return;
+    }
+
+    var previousHref = sessionStorage.getItem(storageKey);
     sessionStorage.removeItem(storageKey);
     sessionStorage.removeItem(legacyStorageKey);
-    return;
-  }
 
-  var previousHref = sessionStorage.getItem(storageKey);
-  sessionStorage.removeItem(storageKey);
-  sessionStorage.removeItem(legacyStorageKey);
-
-  function getHref(item) {
-    var link = item && item.querySelector("a[href]");
-    return link ? new URL(link.href, window.location.href).pathname : null;
-  }
-
-  function getOffset(item) {
-    return item.getBoundingClientRect().top - nav.getBoundingClientRect().top;
-  }
-
-  function setPosition(item, animate) {
-    if (!item || item.hidden || getComputedStyle(item).display === "none") {
-      return;
+    function getHref(item) {
+      var link = item && item.querySelector("a[href]");
+      return link ? new URL(link.href, window.location.href).pathname : null;
     }
 
-    indicator.style.transition = animate ? "" : "none";
-    indicator.style.transform = "translateY(" + getOffset(item) + "px)";
-    indicator.style.opacity = "1";
+    function getOffset(item) {
+      return item.getBoundingClientRect().top - nav.getBoundingClientRect().top;
+    }
+
+    function setPosition(item, animate) {
+      if (!item || item.hidden || getComputedStyle(item).display === "none") {
+        return;
+      }
+
+      indicator.style.transition = animate ? "" : "none";
+      indicator.style.transform = "translateY(" + getOffset(item) + "px)";
+      indicator.style.opacity = "1";
+    }
+
+    var previousItem = items.find(function (item) {
+      return getHref(item) === previousHref && getComputedStyle(item).display !== "none";
+    });
+
+    function initializeIndicator() {
+      if (previousItem && previousItem !== activeItem) {
+        setPosition(previousItem, false);
+        indicator.getBoundingClientRect();
+        requestAnimationFrame(function () {
+          setPosition(activeItem, true);
+        });
+        return;
+      }
+
+      setPosition(activeItem, false);
+    }
+
+    initializeIndicator();
+    window.addEventListener("resize", function () {
+      setPosition(activeItem, false);
+    });
+
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest(".sidebar .nav-item a[href]");
+      if (!link || link.target === "_blank") {
+        return;
+      }
+
+      var destination = new URL(link.href, window.location.href);
+      if (destination.origin === window.location.origin) {
+        sessionStorage.setItem(storageKey, getHref(activeItem));
+      }
+    }, true);
   }
-
-  var previousItem = items.find(function (item) {
-    return getHref(item) === previousHref;
-  });
-
-  function initializeIndicator() {
-    if (previousItem && previousItem !== activeItem) {
-      setPosition(previousItem, false);
-      indicator.getBoundingClientRect();
-      requestAnimationFrame(function () {
-        setPosition(activeItem, true);
-      });
-      return;
-    }
-
-    setPosition(activeItem, false);
-  }
-
-  window.addEventListener("load", initializeIndicator);
-  window.addEventListener("resize", function () {
-    setPosition(activeItem, false);
-  });
-
-  document.addEventListener("click", function (event) {
-    var link = event.target.closest(".sidebar .nav-item a[href]");
-    if (!link || link.target === "_blank") {
-      return;
-    }
-
-    var destination = new URL(link.href, window.location.href);
-    if (destination.origin === window.location.origin) {
-      sessionStorage.setItem(storageKey, getHref(activeItem));
-    }
-  }, true);
 })();
