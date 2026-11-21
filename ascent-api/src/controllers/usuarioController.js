@@ -24,14 +24,29 @@ function autenticar(req, res) {
                         var usuarioLogado = resultadoAutenticar[0];
                         logModel.registrarLog("AUTENTICAÇÃO", "LOGIN", `Usuário ${usuarioLogado.email} realizou login com sucesso`, "login.html", usuarioLogado.idUsuario);
 
-                        res.json({
-                            idUsuario: usuarioLogado.idUsuario,
-                            email: usuarioLogado.email,
-                            nome: usuarioLogado.nome,
-                            senha: usuarioLogado.senha,
-                            idCompanhia: usuarioLogado.fkCompanhia,
-                            idCargo: usuarioLogado.fkCargo
-                        });
+                        usuarioModel.verificarPermissaoAdmin(usuarioLogado.fkCompanhia)
+                            .then(adminRes => {
+                                var idCargoAdmin = adminRes && adminRes.length > 0 ? adminRes[0].adminCargo : null;
+                                res.json({
+                                    idUsuario: usuarioLogado.idUsuario,
+                                    email: usuarioLogado.email,
+                                    nome: usuarioLogado.nome,
+                                    senha: usuarioLogado.senha,
+                                    idCompanhia: usuarioLogado.fkCompanhia,
+                                    idCargo: usuarioLogado.fkCargo,
+                                    adminCargo: idCargoAdmin
+                                });
+                            })
+                            .catch(() => {
+                                res.json({
+                                    idUsuario: usuarioLogado.idUsuario,
+                                    email: usuarioLogado.email,
+                                    nome: usuarioLogado.nome,
+                                    senha: usuarioLogado.senha,
+                                    idCompanhia: usuarioLogado.fkCompanhia,
+                                    idCargo: usuarioLogado.fkCargo
+                                });
+                            });
 
 
                     } else if (resultadoAutenticar.length == 0) {

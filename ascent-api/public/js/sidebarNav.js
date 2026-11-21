@@ -72,6 +72,69 @@
     });
   }
 
+
+  function aplicarPermissoesSidebar() {
+    var idCargo = Number(sessionStorage.CARGO_USUARIO);
+    var idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+
+    if (!idCargo) {
+      return;
+    }
+
+    function ocultarItens(ehAdmin) {
+      var navEl = document.querySelector(".sidebar .nav");
+      if (navEl) {
+        if (!ehAdmin) {
+          var linksGestao = navEl.querySelectorAll('a[href*="usuarios.html"], a[href*="cargos.html"], a[href*="permissoes.html"]');
+          linksGestao.forEach(function (link) {
+            var item = link.closest(".nav-item");
+            if (item) {
+              item.style.display = "none";
+            }
+          });
+        }
+
+        var ehGestor = idCargo <= 2 || ehAdmin;
+        if (!ehGestor) {
+          var linksConfig = navEl.querySelectorAll('a[href*="configurarAlertas.html"]');
+          linksConfig.forEach(function (link) {
+            var item = link.closest(".nav-item");
+            if (item) {
+              item.style.display = "none";
+            }
+          });
+        }
+      }
+
+      if (!ehAdmin) {
+        var cardsGestao = document.querySelectorAll('.acesso-grid a[href*="usuarios.html"]');
+        cardsGestao.forEach(function (card) {
+          card.style.display = "none";
+        });
+      }
+    }
+
+    if (sessionStorage.ADMIN_CARGO !== undefined) {
+      var ehAdmin = idCargo === Number(sessionStorage.ADMIN_CARGO);
+      ocultarItens(ehAdmin);
+    } else if (idCompanhia) {
+      fetch("/usuarios/permissao/" + idCompanhia)
+        .then(function (res) { return res.json(); })
+        .then(function (dados) {
+          if (dados && dados.length > 0) {
+            sessionStorage.ADMIN_CARGO = dados[0].adminCargo;
+            var ehAdmin = idCargo === Number(dados[0].adminCargo);
+            ocultarItens(ehAdmin);
+          }
+        })
+        .catch(function (e) {
+          console.warn("Erro ao verificar permissão na sidebar:", e);
+        });
+    }
+  }
+
+  aplicarPermissoesSidebar();
+
   var nav = document.querySelector(".sidebar .nav");
   var indicator = nav && nav.querySelector(".nav-indicador");
   var items = nav ? Array.from(nav.querySelectorAll(".nav-item")) : [];

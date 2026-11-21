@@ -344,8 +344,27 @@
             });
         }
     }
-        listarCargos();
+    function verificarPermissao() {
+        if (!idCompanhia || !Number(sessionStorage.CARGO_USUARIO)) {
+            return;
+        }
 
+        fetch(`/usuarios/permissao/${idCompanhia}`)
+            .then(res => res.json())
+            .then(res => {
+                let menorCargo = res[0].adminCargo;
+                sessionStorage.ADMIN_CARGO = menorCargo;
+                if (Number(sessionStorage.CARGO_USUARIO) > menorCargo) {
+                    alert("Você não tem permissão para acessar esta tela.");
+                    window.location.href = "dashboard/acessoRapido.html";
+                } else {
+                    listarCargos();
+                }
+            })
+            .catch(() => listarCargos());
+    }
+
+    verificarPermissao();
 </script>
 
 </body>

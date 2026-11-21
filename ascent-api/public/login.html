@@ -128,6 +128,9 @@
             sessionStorage.ID_USUARIO = json.idUsuario;
             sessionStorage.COMPANHIA_USUARIO = json.idCompanhia;
             sessionStorage.CARGO_USUARIO = json.idCargo;
+            if (json.adminCargo !== undefined && json.adminCargo !== null) {
+              sessionStorage.ADMIN_CARGO = json.adminCargo;
+            }
 
             console.log("Login funcionou antes do setTimeout")
 
