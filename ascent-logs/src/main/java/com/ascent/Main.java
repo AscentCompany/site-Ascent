@@ -138,12 +138,7 @@ public class Main {
         }
 
         for (Log log : logs){
-            System.out.println(log.getDataHora()
-                    + " " + log.getCategoria()
-                    + " [" + log.getServico() + "] - " + log.getMensagem()
-                    + " [LogID=" + (log.getLogId() != null ? log.getLogId() : "N/A")
-                    + ", AutorID=" + (log.getFkUsuario() != null ? log.getFkUsuario() : "SISTEMA")
-                    + ", origem=" + log.getOrigemCadastro() + "]");
+            System.out.println(log);
         }
 
     }
