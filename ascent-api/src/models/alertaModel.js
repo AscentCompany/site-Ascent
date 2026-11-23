@@ -1,4 +1,5 @@
 let database = require("../../database/config");
+let logModel = require("./logModel");
 let http = require("http");
 let fs = require("fs");
 
@@ -162,7 +163,16 @@ function processarRegra(idRegra, idCompanhia) {
 
                 return database.executar(`DELETE FROM alerta WHERE fkRegraAlerta = ${idRegra};`)
                     .then(function () {
-                        if (!rotas.length) return;
+                        if (!rotas.length) {
+                            logModel.registrarLog(
+                                "GESTÃO DE ALERTAS",
+                                "ALERTAS_GERADOS",
+                                `Regra ID ${idRegra} processada: nenhum alerta gerado para companhia ${idCompanhia}`,
+                                "sistema",
+                                null
+                            );
+                            return;
+                        }
 
                         // se a regra é de atenção, remove rotas que já estão como crítico no banco
                         let rotasFiltradas = rotas;
@@ -173,11 +183,29 @@ function processarRegra(idRegra, idCompanhia) {
                             `).then(function (criticas) {
                                 let chavesCriticas = criticas.map(c => c.origemIata + "→" + c.destinoIata);
                                 rotasFiltradas = rotas.filter(rt => !chavesCriticas.includes(rt.origemIata + "→" + rt.destinoIata));
-                                return inserirAlertas(rotasFiltradas, r, idRegra, idCompanhia);
+                                return inserirAlertas(rotasFiltradas, r, idRegra, idCompanhia)
+                                    .then(function () {
+                                        logModel.registrarLog(
+                                            "GESTÃO DE ALERTAS",
+                                            "ALERTAS_GERADOS",
+                                            `Regra ID ${idRegra} processada: ${rotasFiltradas.length} alerta(s) gerado(s) para companhia ${idCompanhia}`,
+                                            "sistema",
+                                            null
+                                        );
+                                    });
                             });
                         }
 
-                        return inserirAlertas(rotasFiltradas, r, idRegra, idCompanhia);
+                        return inserirAlertas(rotasFiltradas, r, idRegra, idCompanhia)
+                            .then(function () {
+                                logModel.registrarLog(
+                                    "GESTÃO DE ALERTAS",
+                                    "ALERTAS_GERADOS",
+                                    `Regra ID ${idRegra} processada: ${rotasFiltradas.length} alerta(s) gerado(s) para companhia ${idCompanhia}`,
+                                    "sistema",
+                                    null
+                                );
+                            });
                     });
             });
         });

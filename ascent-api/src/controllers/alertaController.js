@@ -1,4 +1,5 @@
 let alertaModel = require("../models/alertaModel");
+let logModel = require("../models/logModel");
 
 function listarRegras(req, res) {
     alertaModel.listarRegras(req.params.idCompanhia)
@@ -13,39 +14,98 @@ function criarRegra(req, res) {
     if (!faixaOcupacao || !severidade || !janelaAnalise || !idCompanhia || !idUsuario)
         return res.status(400).json({ mensagem: "Campos obrigatórios ausentes." });
 
+    let idRegraInserida;
+
     alertaModel.criarRegra(faixaOcupacao, severidade, janelaAnalise, janelaInicio || null, janelaFim || null, ativo, idCompanhia, idUsuario)
         .then(function (resultado) {
-            if (ativo) return alertaModel.processarRegra(resultado.insertId, idCompanhia);
+            idRegraInserida = resultado.insertId;
+            if (ativo) return alertaModel.processarRegra(idRegraInserida, idCompanhia);
         })
-        .then(() => res.status(201).json({ mensagem: "Regra criada." }))
+        .then(function () {
+            logModel.registrarLog(
+                "GESTÃO DE ALERTAS",
+                "CRIACAO_REGRA",
+                `Regra criada: faixa ${faixaOcupacao}%, severidade ${severidade}`,
+                "alertas.html",
+                idUsuario
+            );
+            res.status(201).json({ mensagem: "Regra criada." });
+        })
         .catch(function (e) {
             if (e.duplicata) return res.status(409).json({ mensagem: e.mensagem });
+            logModel.registrarLog(
+                "GESTÃO DE ALERTAS",
+                "CRIACAO_REGRA_ERRO",
+                `Falha ao criar regra: faixa ${faixaOcupacao}%, severidade ${severidade}`,
+                "alertas.html",
+                idUsuario
+            );
             res.status(500).json(e.sqlMessage || e);
         });
 }
 
 function editarRegra(req, res) {
-    let { faixaOcupacao, severidade, janelaAnalise, janelaInicio, janelaFim, ativo, idCompanhia } = req.body;
+    let { faixaOcupacao, severidade, janelaAnalise, janelaInicio, janelaFim, ativo, idCompanhia, fkUsuarioAcao } = req.body;
 
     if (!faixaOcupacao || !severidade || !janelaAnalise || !idCompanhia)
         return res.status(400).json({ mensagem: "Campos obrigatórios ausentes." });
 
-    alertaModel.editarRegra(req.params.idRegra, faixaOcupacao, severidade, janelaAnalise, janelaInicio || null, janelaFim || null, ativo, idCompanhia)
+    let idRegra = req.params.idRegra;
+
+    alertaModel.editarRegra(idRegra, faixaOcupacao, severidade, janelaAnalise, janelaInicio || null, janelaFim || null, ativo, idCompanhia)
         .then(function () {
-            if (ativo) return alertaModel.processarRegra(req.params.idRegra, idCompanhia);
+            if (ativo) return alertaModel.processarRegra(idRegra, idCompanhia);
         })
-        .then(() => res.json({ mensagem: "Regra atualizada." }))
+        .then(function () {
+            logModel.registrarLog(
+                "GESTÃO DE ALERTAS",
+                "EDICAO_REGRA",
+                `Regra ID ${idRegra} atualizada: faixa ${faixaOcupacao}%, severidade ${severidade}`,
+                "alertas.html",
+                fkUsuarioAcao || null
+            );
+            res.json({ mensagem: "Regra atualizada." });
+        })
         .catch(function (e) {
             if (e.duplicata) return res.status(409).json({ mensagem: e.mensagem });
+            logModel.registrarLog(
+                "GESTÃO DE ALERTAS",
+                "EDICAO_REGRA_ERRO",
+                `Falha ao atualizar regra ID ${idRegra}`,
+                "alertas.html",
+                fkUsuarioAcao || null
+            );
             res.status(500).json(e.sqlMessage || e);
         });
 }
 
 
 function excluirRegra(req, res) {
-    alertaModel.excluirRegra(req.params.idRegra, req.params.idCompanhia)
-        .then(() => res.json({ mensagem: "Regra excluída." }))
-        .catch(e => res.status(500).json(e.sqlMessage || e));
+    let idRegra = req.params.idRegra;
+    let idCompanhia = req.params.idCompanhia;
+    let fkUsuarioAcao = req.body.fkUsuarioAcao || null;
+
+    alertaModel.excluirRegra(idRegra, idCompanhia)
+        .then(function () {
+            logModel.registrarLog(
+                "GESTÃO DE ALERTAS",
+                "EXCLUSAO_REGRA",
+                `Regra ID ${idRegra} excluída`,
+                "alertas.html",
+                fkUsuarioAcao
+            );
+            res.json({ mensagem: "Regra excluída." });
+        })
+        .catch(function (e) {
+            logModel.registrarLog(
+                "GESTÃO DE ALERTAS",
+                "EXCLUSAO_REGRA_ERRO",
+                `Falha ao excluir regra ID ${idRegra}`,
+                "alertas.html",
+                fkUsuarioAcao
+            );
+            res.status(500).json(e.sqlMessage || e);
+        });
 }
 
 function listarAlertas(req, res) {
