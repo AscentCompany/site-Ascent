@@ -45,14 +45,14 @@
           em decisões mais inteligentes para a sua operação aérea.
         </p>
 
-        <form class="formulario" action="#" method="post">
+        <form class="formulario" action="#" method="post" onsubmit="return entrar()">
           <label for="email">E-mail</label>
           <input type="email" id="email" name="email" placeholder="seuemail@empresa.com" required>
 
           <label for="senha">Senha</label>
           <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
 
-          <button type="button" class="botao-enviar" onclick="entrar()">Entrar</button>
+          <button type="submit" class="botao-enviar">Entrar</button>
         </form>
 
         <p class="texto-alternar">
