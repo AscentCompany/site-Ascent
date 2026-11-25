@@ -12,13 +12,8 @@
 # Serviços Java (ascent-logs e ascent-apachepoi) são gerenciados via scripts:
 #   start.sh         → sobe stack (MySQL + API + logs), aplica schema e DuckDNS
 #   apache-po.sh     → Apache POI / S3 ANAC
-# Serviços Java (ascent-logs e ascent-apachepoi) NÃO estão aqui.
-#   start.sh         → MySQL + API + logs + DuckDNS
-#   inserir-dados.sh → schema + seed (volume existente)
-#   importar-anac.sh → Apache POI / S3 ANAC
 #
 # ATENÇÃO: scripts em initdb.d só rodam se /dados/mysql estiver VAZIO.
-# Em produção use sempre ./inserir-dados.sh após o primeiro up.
 # =============================================================
 
 services:
