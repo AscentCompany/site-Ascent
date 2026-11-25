@@ -2,36 +2,68 @@
 var usuarioModel = require("../models/usuarioModel");
 var logModel = require("../models/logModel");
 
+function emailValido(email) {
+    return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function senhaValida(senha) {
+    return typeof senha === "string"
+        && senha.length >= 8
+        && /[@!#$]/.test(senha)
+        && /\d/.test(senha)
+        && /[A-Z]/.test(senha)
+        && /[a-z]/.test(senha);
+}
+
 function autenticar(req, res) {
     var email = req.body.emailServer;
     var senha = req.body.senhaServer;
 
-    if (email == undefined) {
-        res.status(400).send("Seu email está undefined!");
-    } else if (senha == undefined) {
-        res.status(400).send("Sua senha está indefinida!");
+    if (!emailValido(email)) {
+        return res.status(400).send("Informe um e-mail válido.");
+    } else if (senha == undefined || senha === "") {
+        return res.status(400).send("Informe sua senha.");
     } else {
 
         usuarioModel.autenticar(email, senha)
             .then(
                 function (resultadoAutenticar) {
                     console.log(`\nResultados encontrados: ${resultadoAutenticar.length}`);
-                    console.log(`Resultados: ${JSON.stringify(resultadoAutenticar)}`); // transforma JSON em String
+                    console.log(`Resultados: ${JSON.stringify(resultadoAutenticar)}`);
 
                     if (resultadoAutenticar.length == 1) {
                         console.log(resultadoAutenticar);
 
-                        res.json({
-                            idUsuario: resultadoAutenticar[0].idUsuario,
-                            email: resultadoAutenticar[0].email,
-                            nome: resultadoAutenticar[0].nome,
-                            senha: resultadoAutenticar[0].senha,
-                            idCompanhia: resultadoAutenticar[0].fkCompanhia,
-                            idCargo: resultadoAutenticar[0].fkCargo
-                        });
+                        var usuarioLogado = resultadoAutenticar[0];
+                        logModel.registrarLog("AUTENTICAÇÃO", "LOGIN", `Usuário ${usuarioLogado.email} realizou login com sucesso`, "login.html", usuarioLogado.idUsuario);
+
+                        usuarioModel.verificarPermissaoAdmin(usuarioLogado.fkCompanhia)
+                            .then(adminRes => {
+                                var idCargoAdmin = adminRes && adminRes.length > 0 ? adminRes[0].adminCargo : null;
+                                res.json({
+                                    idUsuario: usuarioLogado.idUsuario,
+                                    email: usuarioLogado.email,
+                                    nome: usuarioLogado.nome,
+                                    senha: usuarioLogado.senha,
+                                    idCompanhia: usuarioLogado.fkCompanhia,
+                                    idCargo: usuarioLogado.fkCargo,
+                                    adminCargo: idCargoAdmin
+                                });
+                            })
+                            .catch(() => {
+                                res.json({
+                                    idUsuario: usuarioLogado.idUsuario,
+                                    email: usuarioLogado.email,
+                                    nome: usuarioLogado.nome,
+                                    senha: usuarioLogado.senha,
+                                    idCompanhia: usuarioLogado.fkCompanhia,
+                                    idCargo: usuarioLogado.fkCargo
+                                });
+                            });
 
 
                     } else if (resultadoAutenticar.length == 0) {
+                        logModel.registrarLog("AUTENTICAÇÃO", "LOGIN_FALHA", `Tentativa de login inválida para o e-mail: ${email}`, "login.html", null);
                         res.status(403).send("Email e/ou senha inválido(s)");
                     } else {
                         res.status(403).send("Mais de um usuário com o mesmo login e senha!");
@@ -39,9 +71,10 @@ function autenticar(req, res) {
                 }
             ).catch(
                 function (erro) {
+                    logModel.registrarLog("AUTENTICAÇÃO", "LOGIN_ERRO", `Erro ao autenticar usuário ${email}`, "login.html", null);
                     console.log(erro);
                     console.log("\nHouve um erro ao realizar o login! Erro: ", erro.sqlMessage);
-                    res.status(500).json(erro.sqlMessage);
+                    res.status(500).send("Não foi possível realizar o login. Tente novamente mais tarde.");
                 }
             );
     }
@@ -49,39 +82,99 @@ function autenticar(req, res) {
 }
 
 function cadastrar(req, res) {
-    // Crie uma variável que vá recuperar os valores do arquivo cadastro.html
     var nome = req.body.nomeServer;
     var email = req.body.emailServer;
     var senha = req.body.senhaServer;
     var idCompanhia = req.body.idCompanhiaServer;
 
-    // Faça as validações dos valores
     if (nome == undefined) {
-        res.status(400).send("Seu nome está undefined!");
-    } else if (email == undefined) {
-        res.status(400).send("Seu email está undefined!");
-    } else if (senha == undefined) {
-        res.status(400).send("Sua senha está undefined!");
+        return res.status(400).send("Informe seu nome.");
+    } else if (!emailValido(email)) {
+        return res.status(400).send("Informe um e-mail válido.");
+    } else if (!senhaValida(senha)) {
+        return res.status(400).send("A senha deve ter ao menos 8 caracteres, incluindo letra maiúscula, letra minúscula, número e um caractere especial (@, !, # ou $).");
     } else if (idCompanhia == undefined) {
-        res.status(400).send("Sua companhia está undefined!");
-    }else {
+        return res.status(400).send("Informe o código da companhia.");
+    } else {
+        // O frontend envia o codCompanhia (código de negócio).
+        // Resolvemos para o idCompanhia (PK) antes de qualquer operação.
+        var cargoModel = require("../models/cargoModel");
+        var permissaoModel = require("../models/permissaoModel");
 
-        // Passe os valores como parâmetro e vá para o arquivo usuarioModel.js
-        usuarioModel.cadastrar(nome, email, senha, idCompanhia)
-            .then(
-                function (resultado) {
-                    res.json(resultado);
+        usuarioModel.buscarIdPorCodigo(idCompanhia)
+            .then(resultado => {
+                if (!resultado || resultado.length === 0) {
+                    return res.status(404).send("Companhia não encontrada. Verifique o código informado.");
                 }
-            ).catch(
-                function (erro) {
-                    console.log(erro);
-                    console.log(
-                        "\nHouve um erro ao realizar o cadastro! Erro: ",
-                        erro.sqlMessage
-                    );
-                    res.status(500).json(erro.sqlMessage);
-                }
-            );
+                var idCompanhiaReal = resultado[0].idCompanhia;
+
+                return usuarioModel.listarCargos(idCompanhiaReal)
+                    .then(cargosResultado => {
+                        if (cargosResultado.length === 0) {
+                            // Primeiro cadastro da companhia: provisiona a estrutura de cargos padrão
+                            // 1. Cria o cargo Administrador
+                            return cargoModel.cadastrarCargo("Administrador", idCompanhiaReal)
+                                .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
+                                .then(ultCargo => {
+                                    var idCargoAdmin = ultCargo[0].idNovoCargo;
+
+                                    // 2. Vincula todas as permissões ao Administrador
+                                    return cargoModel.listarPermissoes()
+                                        .then(permissoes => {
+                                            var promises = permissoes.map(p =>
+                                                cargoModel.cadastrarCargoPermissao(idCargoAdmin, p.idPermissao || p)
+                                            );
+                                            return Promise.all(promises);
+                                        })
+                                        // 3. Cria o cargo padrão sem permissões
+                                        .then(() => cargoModel.cadastrarCargo("Padrão", idCompanhiaReal))
+                                        // 4. Cadastra o 1º usuário com o cargo Administrador
+                                        .then(() => usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, idCargoAdmin));
+                                });
+                        }
+
+                        var cargoPadrao = cargosResultado.find(cargo => cargo.cargo === "Padrão");
+                        if (cargoPadrao) {
+                            return usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, cargoPadrao.idCargo);
+                        }
+
+                        return cargoModel.cadastrarCargo("Padrão", idCompanhiaReal)
+                            .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
+                            .then(ultCargo => usuarioModel.cadastrar(
+                                nome,
+                                email,
+                                senha,
+                                idCompanhiaReal,
+                                ultCargo[0].idNovoCargo
+                            ));
+                    });
+            })
+            .then(function (resultado) {
+                var novoIdUsuario = resultado.insertId || null;
+                logModel.registrarLog(
+                    "GESTÃO DE USUÁRIO",
+                    "CADASTRO",
+                    `Novo usuário ${nome} (${email}) cadastrado na companhia ${idCompanhia}`,
+                    "cadastro.html",
+                    novoIdUsuario
+                );
+                res.json(resultado);
+            })
+            .catch(function (erro) {
+                logModel.registrarLog(
+                    "GESTÃO DE USUÁRIO",
+                    "CADASTRO_ERRO",
+                    `Falha ao cadastrar usuário ${email}`,
+                    "cadastro.html",
+                    null
+                );
+                console.log(erro);
+                console.log("\nHouve um erro ao realizar o cadastro! Erro: ", erro.sqlMessage || erro);
+                var mensagemErro = erro.code === "ER_DUP_ENTRY"
+                    ? "Este e-mail já está cadastrado."
+                    : "Não foi possível realizar o cadastro. Tente novamente mais tarde.";
+                res.status(500).send(mensagemErro);
+            });
     }
 }
 
@@ -116,8 +209,12 @@ function cadastrarFuncionario(req, res) {
     var idCargo = req.body.idCargoServer;
     var fkUsuarioAcao = req.body.fkUsuarioAcao;
 
-    if (nome == undefined || email == undefined || senha == undefined || idCompanhia == undefined || idCargo == undefined) {
-        res.status(400).send("Valores indefinidos!");
+    if (nome == undefined || idCompanhia == undefined || idCargo == undefined) {
+        return res.status(400).send("Preencha todos os campos obrigatórios.");
+    } else if (!emailValido(email)) {
+        return res.status(400).send("Informe um e-mail válido.");
+    } else if (!senhaValida(senha)) {
+        return res.status(400).send("A senha deve ter ao menos 8 caracteres, incluindo letra maiúscula, letra minúscula, número e um caractere especial (@, !, # ou $).");
     } else {
         usuarioModel.cadastrarFuncionario(nome, email, senha, idCompanhia, idCargo)
             .then(resultado => {
@@ -126,7 +223,10 @@ function cadastrarFuncionario(req, res) {
             })
             .catch(erro => {
                 logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO_ERRO", `Falha ao cadastrar o funcionário ${nome}`, "usuarios.html", fkUsuarioAcao);
-                res.status(500).json(erro.sqlMessage);
+                var mensagemErro = erro.code === "ER_DUP_ENTRY"
+                    ? "Este e-mail já está cadastrado."
+                    : "Não foi possível cadastrar o funcionário. Tente novamente mais tarde.";
+                res.status(500).send(mensagemErro);
             });
     }
 }

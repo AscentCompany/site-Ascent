@@ -117,10 +117,6 @@
 <script>
 
     document.getElementById("nome-usuario").textContent = sessionStorage.NOME_USUARIO || "Usuário";
-    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-        document.getElementById("nav-configurar-gestao").style.display = "";
-    }
-
     const btnMenu = document.getElementById("btn-menu");
     const overlay = document.getElementById("overlay");
     btnMenu.addEventListener("click", () => document.body.classList.toggle("menu-fechado"));
@@ -240,7 +236,7 @@
                 select.innerHTML = '<option value="">Selecione uma funcionalidade...</option>';
 
                 for(let i = 0; i < funcionalidades.length; i++) {
-                    select.innerHTML += `<option value="${funcionalidades[i].idFuncionalidade}">${funcionalidades[i].nome}</option>`;
+                    select.innerHTML += `<option value="${funcionalidades[i].idFuncionalidade}">${funcionalidades[i].nomeFuncionalidade || funcionalidades[i].nome}</option>`;
                 }
             });
     }
@@ -349,7 +345,30 @@
         }
     }
 
-    listarPermissoes();
+    function verificarPermissao() {
+        let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+        let idCargo = Number(sessionStorage.CARGO_USUARIO);
+        if (!idCompanhia || !idCargo) {
+            return;
+        }
+
+        usuarioTemFuncionalidade("Gerenciar Funcionários e Cargos")
+            .then(podeGerenciar => {
+                if (!podeGerenciar) {
+                    alert("Você não tem permissão para acessar esta tela.");
+                    window.location.href = "dashboard/acessoRapido.html";
+                } else {
+                    listarPermissoes();
+                }
+            })
+            .catch(erro => {
+                console.error("Erro ao verificar permissão de gestão:", erro);
+                alert("Não foi possível verificar suas permissões. Tente novamente.");
+                window.location.href = "dashboard/acessoRapido.html";
+            });
+    }
+
+    verificarPermissao();
 </script>
 
 </body>

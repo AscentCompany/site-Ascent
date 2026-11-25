@@ -113,11 +113,17 @@
 
       <article class="card kpi-card">
         <h2>Taxa de ocupação média</h2>
-        <div class="kpi-card-main">
-          <div class="big">40%</div>
-        </div>
-        <div class="sub">
-          <strong class="positive">▲ 2,4 p.p.</strong> vs período anterior · <strong class="positive">▲ 1,1 p.p.</strong> vs ano ant.
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome" id="kpi-nome-ocupacao-companhia">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-taxa-ocupacao-companhia">--%</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Mercado</span>
+            <span class="kpi-coluna-nome" id="kpi-nome-ocupacao-mercado">Todas as companhias</span>
+            <strong class="kpi-coluna-taxa" id="kpi-taxa-ocupacao-mercado">--%</strong>
+          </div>
         </div>
       </article>
     </section>
@@ -448,6 +454,62 @@
   }
 
   carregarKpiMesMaiorProcura();
+
+  function carregarKpiOcupacaoMedia() {
+    let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoNomeCompanhia = document.getElementById('kpi-nome-ocupacao-companhia');
+    let elementoTaxaCompanhia = document.getElementById('kpi-taxa-ocupacao-companhia');
+    let elementoNomeMercado = document.getElementById('kpi-nome-ocupacao-mercado');
+    let elementoTaxaMercado = document.getElementById('kpi-taxa-ocupacao-mercado');
+
+    fetch(`/api/kpis/ocupacao-media/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let suaCompanhia = json.dados.suaCompanhia;
+        let mercado = json.dados.mercado;
+
+        let nomeCompanhia = suaCompanhia.nome || 'Sua companhia';
+        let taxaCompanhia = Number(suaCompanhia.taxaOcupacao) || 0;
+
+        let nomeMercado = mercado.nome || 'Todas as companhias';
+        let taxaMercado = Number(mercado.taxaOcupacao) || 0;
+
+        let classeCompanhia = taxaCompanhia < taxaMercado ? 'negative' : 'positive';
+
+        elementoNomeCompanhia.textContent = nomeCompanhia;
+        elementoNomeCompanhia.title = nomeCompanhia;
+        elementoTaxaCompanhia.textContent = `${taxaCompanhia}%`;
+        elementoTaxaCompanhia.className = `kpi-coluna-taxa ${classeCompanhia}`;
+
+        elementoNomeMercado.textContent = nomeMercado;
+        elementoNomeMercado.title = nomeMercado;
+        elementoTaxaMercado.textContent = `${taxaMercado}%`;
+        elementoTaxaMercado.className = 'kpi-coluna-taxa';
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de ocupação média:', erro);
+        elementoNomeCompanhia.textContent = '--';
+        elementoNomeCompanhia.title = '';
+        elementoTaxaCompanhia.textContent = '--';
+        elementoTaxaCompanhia.className = 'kpi-coluna-taxa';
+
+        elementoNomeMercado.textContent = '--';
+        elementoNomeMercado.title = '';
+        elementoTaxaMercado.textContent = '--';
+        elementoTaxaMercado.className = 'kpi-coluna-taxa';
+      });
+  }
+
+  carregarKpiOcupacaoMedia();
   const meses = [
     'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
     'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'
@@ -644,14 +706,6 @@
     }
   });
 </script>
-
-  <!-- nav-configurar visível apenas para gestores -->
-  <script>
-    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-      var el = document.getElementById('nav-configurar-op');
-      if (el) el.style.display = '';
-    }
-  </script>
 
 </body>
 </html>

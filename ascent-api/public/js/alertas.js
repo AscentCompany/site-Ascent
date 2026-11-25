@@ -1,5 +1,4 @@
 let idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
-let ehGestor = Number(sessionStorage.CARGO_USUARIO) <= 2;
 
 
 function janelaTexto(janela, inicio, fim) {
@@ -133,7 +132,14 @@ function abrirModal(idAlerta) {
 }
 
 
-window.onload = function() {
+window.onload = async function() {
+  let podeConfigurarAlertas = false;
+  try {
+    podeConfigurarAlertas = await usuarioTemFuncionalidade("Configurar Regras de Alertas");
+  } catch (erro) {
+    console.error("Erro ao verificar permissão para configurar alertas:", erro);
+  }
+
   const btnFiltrar = document.querySelector(".btn-filtrar");
   if (!btnFiltrar) return;
 
@@ -149,7 +155,7 @@ window.onload = function() {
   sinoHtml += '<div class="painel-header"><h3>Alertas</h3><div class="painel-acoes">';
   sinoHtml += '<button class="painel-btn-icon" onclick="marcarTodas()" title="Marcar todas como lidas"><i class="fas fa-check-double"></i></button>';
 
-  if (ehGestor) sinoHtml += '<a href="/dashboard/configurarAlertas.html" class="painel-btn-icon" title="Configurar alertas"><i class="fas fa-gear"></i></a>';
+  if (podeConfigurarAlertas) sinoHtml += '<a href="/dashboard/configurarAlertas.html" class="painel-btn-icon" title="Configurar alertas"><i class="fas fa-gear"></i></a>';
 
   sinoHtml += '</div></div>';
   sinoHtml += '<div class="painel-lista" id="painel-lista"></div>';

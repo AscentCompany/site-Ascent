@@ -185,11 +185,6 @@
   <script>
     document.getElementById("nome-usuario").textContent = sessionStorage.NOME_USUARIO || "Usuário";
 
-    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-      const el = document.getElementById("nav-configurar");
-      if (el) el.style.display = "";
-    }
-
     if (window.innerWidth <= 900) {
       document.body.classList.add("menu-fechado");
     }

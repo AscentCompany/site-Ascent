@@ -205,8 +205,62 @@ function obterMesMaiorProcura() {
         });
 }
 
+function obterTaxaOcupacaoMedia(idCompanhia) {
+    let id = Number(idCompanhia);
+    if (isNaN(id) || id <= 0 || id % 1 !== 0) {
+        id = 0;
+    }
+
+    let sqlMercado = `
+        SELECT
+            (
+                SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN v.qtdPassageiros ELSE 0 END) /
+                NULLIF(SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN av.numAssentos ELSE 0 END), 0)
+            ) * 100 AS taxaOcupacaoMercado
+        FROM voo v
+        JOIN aviao av ON av.idAviao = v.fkAviao;
+    `;
+
+    let sqlCompanhia = `
+        SELECT
+            c.idCompanhia,
+            c.nomeCompanhia,
+            (
+                SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN v.qtdPassageiros ELSE 0 END) /
+                NULLIF(SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN av.numAssentos ELSE 0 END), 0)
+            ) * 100 AS taxaOcupacaoCompanhia
+        FROM companhia c
+        LEFT JOIN voo v ON v.fkCompanhia = c.idCompanhia
+        LEFT JOIN aviao av ON av.idAviao = v.fkAviao
+        WHERE c.idCompanhia = ${id}
+        GROUP BY c.idCompanhia, c.nomeCompanhia;
+    `;
+
+    let resposta = {
+        taxaOcupacaoMercado: null,
+        suaCompanhia: null
+    };
+
+    return database.executar(sqlMercado)
+        .then(function (resultadoMercado) {
+            if (resultadoMercado.length > 0) {
+                resposta.taxaOcupacaoMercado = resultadoMercado[0].taxaOcupacaoMercado;
+            }
+
+            return database.executar(sqlCompanhia);
+        })
+        .then(function (resultadoCompanhia) {
+            if (resultadoCompanhia.length > 0) {
+                resposta.suaCompanhia = resultadoCompanhia[0];
+            }
+
+            return resposta;
+        });
+}
+
 module.exports = {
     obterBenchmarkOcupacao,
     obterVolumeMedioPassageiros,
-    obterMesMaiorProcura
+    obterMesMaiorProcura,
+    obterTaxaOcupacaoMedia
 };

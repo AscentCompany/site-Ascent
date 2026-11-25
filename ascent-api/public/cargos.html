@@ -116,10 +116,6 @@
 <script>
 
     document.getElementById("nome-usuario").textContent = sessionStorage.NOME_USUARIO || "Usuário";
-    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-        document.getElementById("nav-configurar-gestao").style.display = "";
-    }
-
     const btnMenu = document.getElementById("btn-menu");
     const overlay = document.getElementById("overlay");
     btnMenu.addEventListener("click", () => document.body.classList.toggle("menu-fechado"));
@@ -279,13 +275,15 @@
             idsParaEnviar.push(permissoesEscolhidas[i].id);
         }
 
+        let idUsuarioLogado = Number(sessionStorage.ID_USUARIO);
         fetch("/cargos/cadastrar", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 nomeCargoServer: nomeCargo,
                 idCompanhiaServer: idCompanhia,
-                permissoesServer: idsParaEnviar
+                permissoesServer: idsParaEnviar,
+                fkUsuarioAcao: idUsuarioLogado
             })
         }).then(res => {
             if(res.ok) {
@@ -298,7 +296,8 @@
 
     function excluirCargo(idCargo) {
         if(confirm("Atenção! Tem certeza que deseja excluir este cargo?")) {
-            fetch(`/cargos/deletar/${idCargo}`, {
+            let idUsuarioLogado = Number(sessionStorage.ID_USUARIO);
+            fetch(`/cargos/deletar/${idCargo}?fkUsuarioAcao=${idUsuarioLogado}`, {
                 method: "DELETE"
             }).then(res => {
                 if(res.ok) {
@@ -323,11 +322,13 @@
                 permissoesSelecionadas.push(checkboxes[i].value);
             }
 
+            let idUsuarioLogado = Number(sessionStorage.ID_USUARIO);
             fetch(`/cargos/atualizar/${idCargo}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    permissoesServer: permissoesSelecionadas
+                    permissoesServer: permissoesSelecionadas,
+                    fkUsuarioAcao: idUsuarioLogado
                 })
             }).then(res => {
                 if (res.ok) {
@@ -339,8 +340,28 @@
             });
         }
     }
-        listarCargos();
+    function verificarPermissao() {
+        if (!idCompanhia || !Number(sessionStorage.CARGO_USUARIO)) {
+            return;
+        }
 
+        usuarioTemFuncionalidade("Gerenciar Funcionários e Cargos")
+            .then(podeGerenciar => {
+                if (!podeGerenciar) {
+                    alert("Você não tem permissão para acessar esta tela.");
+                    window.location.href = "dashboard/acessoRapido.html";
+                } else {
+                    listarCargos();
+                }
+            })
+            .catch(erro => {
+                console.error("Erro ao verificar permissão de gestão:", erro);
+                alert("Não foi possível verificar suas permissões. Tente novamente.");
+                window.location.href = "dashboard/acessoRapido.html";
+            });
+    }
+
+    verificarPermissao();
 </script>
 
 </body>

@@ -1,4 +1,28 @@
+# =============================================================
+# docker-compose.yml — Ascent (produção / AWS EC2)
+#
+# Como usar:
+#   1. Copie .env.example para .env e preencha os valores reais
+#   2. docker compose up -d
+#
+# Serviços neste compose:
+#   mysql       → banco de dados (apenas rede interna)
+#   ascent-api  → Node.js API + frontend (porta 3333)
+#
+# Serviços Java (ascent-logs e ascent-apachepoi) são gerenciados via scripts:
+#   start.sh         → sobe stack (MySQL + API + logs), aplica schema e DuckDNS
+#   apache-po.sh     → Apache POI / S3 ANAC
+# Serviços Java (ascent-logs e ascent-apachepoi) NÃO estão aqui.
+#   start.sh         → MySQL + API + logs + DuckDNS
+#   inserir-dados.sh → schema + seed (volume existente)
+#   importar-anac.sh → Apache POI / S3 ANAC
+#
+# ATENÇÃO: scripts em initdb.d só rodam se /dados/mysql estiver VAZIO.
+# Em produção use sempre ./inserir-dados.sh após o primeiro up.
+# =============================================================
+
 services:
+
   mysql:
     image: mysql:8.0
     container_name: ascent-mysql
@@ -11,6 +35,7 @@ services:
     volumes:
       - /dados/mysql:/var/lib/mysql
       - ./database/ascent.sql:/docker-entrypoint-initdb.d/01-ascent.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s

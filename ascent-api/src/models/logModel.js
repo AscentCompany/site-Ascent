@@ -1,15 +1,17 @@
 var database = require("../../database/config");
 
 function registrarLog(categoria, servico, mensagem, origemCadastro, fkUsuario) {
-    let fkUsuarioVal = fkUsuario ? Number(fkUsuario) : "NULL";
-
-    let instrucaoSql = `
+    const fkUsuarioVal = fkUsuario != null ? Number(fkUsuario) : null;
+    const instrucaoSql = `
         INSERT INTO logsServico (categoria, servico, mensagem, dataHora, origemCadastro, fkUsuario)
-        VALUES ('${categoria}', '${servico}', '${mensagem}', NOW(), '${origemCadastro}', ${fkUsuarioVal});
+        VALUES (?, ?, ?, NOW(), ?, ?);
     `;
 
-    console.log("Executando a instrução SQL de Log: \n" + instrucaoSql);
-    return database.executar(instrucaoSql);
+    console.log("Executando a instrução parametrizada de Log.");
+    return database.executar(
+        instrucaoSql,
+        [categoria, servico, mensagem, origemCadastro, fkUsuarioVal]
+    );
 }
 
 module.exports = {

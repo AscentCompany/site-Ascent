@@ -1,8 +1,11 @@
 package com.ascent;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Log {
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private Integer logId;
     private String categoria;
@@ -89,15 +92,15 @@ public class Log {
 
     @Override
     public String toString() {
-        return "\nLog{" +
-                "logId=" + logId +
-                ", categoria='" + categoria + '\'' +
-                ", servico='" + servico + '\'' +
-                ", mensagem='" + mensagem + '\'' +
-                ", dataHora=" + dataHora +
-                ", fkUsuario=" + fkUsuario +
-                ", origemCadastro='" + origemCadastro + '\'' +
-                '}';
+        String dataHoraFormatada = dataHora != null ? dataHora.format(FORMATTER) : "SEM_DATA";
+        return String.format("[%s] [%s] [%s] %s (LogID: %s, AutorID: %s, Origem: %s)",
+                dataHoraFormatada,
+                categoria != null ? categoria : "N/A",
+                servico != null ? servico : "N/A",
+                mensagem != null ? mensagem : "N/A",
+                logId != null ? logId : "N/A",
+                fkUsuario != null ? fkUsuario : "SISTEMA",
+                origemCadastro != null ? origemCadastro : "N/A");
     }
 
 
