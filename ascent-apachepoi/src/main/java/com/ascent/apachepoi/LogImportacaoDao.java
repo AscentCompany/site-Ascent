@@ -41,8 +41,8 @@ public class LogImportacaoDao {
         List<Integer> resultado = jdbcTemplate.queryForList(
                 "SELECT 1 FROM logsServico " +
                 "WHERE nomeArquivo = ? AND servico = 'importacao' " +
-                "AND statusLeitura IN ('LIDO', 'PARCIALMENTE_LIDO') LIMIT 1",
-                Integer.class, nomeArquivo);
+                "AND statusLeitura IN (?, ?) LIMIT 1",
+                Integer.class, nomeArquivo, StatusLeitura.LIDO.name(), StatusLeitura.PARCIALMENTE_LIDO.name());
         return !resultado.isEmpty();
     }
 
@@ -51,9 +51,9 @@ public class LogImportacaoDao {
         List<Long> resultado = jdbcTemplate.queryForList(
                 "SELECT idInicialVoo FROM logsServico " +
                 "WHERE nomeArquivo = ? AND servico = 'importacao' " +
-                "AND statusLeitura = 'EM_ANDAMENTO' " +
+                "AND statusLeitura = ? " +
                 "ORDER BY idLogServico DESC LIMIT 1",
-                Long.class, nomeArquivo);
+                Long.class, nomeArquivo, StatusLeitura.EM_ANDAMENTO.name());
         return resultado.isEmpty() ? null : resultado.get(0);
     }
 
@@ -61,9 +61,9 @@ public class LogImportacaoDao {
     public void iniciarArquivo(LogLeitura log) {
         int atualizados = jdbcTemplate.update(
                 "UPDATE logsServico SET categoria = ?, mensagem = ?, dataHora = ?, origemCadastro = ?, idInicialVoo = ? " +
-                "WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = 'EM_ANDAMENTO'",
+                "WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = ?",
                 log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getOrigemCadastro(), log.getIdInicialVoo(),
-                log.getNomeArquivo());
+                log.getNomeArquivo(), StatusLeitura.EM_ANDAMENTO.name());
 
         if (atualizados == 0) {
             jdbcTemplate.update(
@@ -71,7 +71,7 @@ public class LogImportacaoDao {
                     " nomeArquivo, statusLeitura, linhasEncontradas, linhasLidas, linhasRejeitadas, detalheErro, idInicialVoo)" +
                     " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     log.getCategoria(), log.getServico(), log.getMensagem(), log.getDataHora(), log.getOrigemCadastro(), log.getFkUsuario(),
-                    log.getNomeArquivo(), log.getStatusLeitura(), log.getLinhasEncontradas(), log.getLinhasLidas(),
+                    log.getNomeArquivo(), log.getStatusLeitura().name(), log.getLinhasEncontradas(), log.getLinhasLidas(),
                     log.getLinhasRejeitadas(), log.getDetalheErro(), log.getIdInicialVoo());
         }
     }
@@ -80,18 +80,18 @@ public class LogImportacaoDao {
         jdbcTemplate.update(
                 "UPDATE logsServico SET categoria = ?, mensagem = ?, dataHora = ?, origemCadastro = ?," +
                 " statusLeitura = ?, linhasEncontradas = ?, linhasLidas = ?, linhasRejeitadas = ?, detalheErro = ?" +
-                " WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = 'EM_ANDAMENTO'",
+                " WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = ?",
                 log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getOrigemCadastro(),
-                log.getStatusLeitura(), log.getLinhasEncontradas(), log.getLinhasLidas(), log.getLinhasRejeitadas(), log.getDetalheErro(),
-                log.getNomeArquivo());
+                log.getStatusLeitura().name(), log.getLinhasEncontradas(), log.getLinhasLidas(), log.getLinhasRejeitadas(), log.getDetalheErro(),
+                log.getNomeArquivo(), StatusLeitura.EM_ANDAMENTO.name());
     }
 
  
     public void marcarErro(LogLeitura log) {
         jdbcTemplate.update(
                 "UPDATE logsServico SET categoria = ?, mensagem = ?, dataHora = ?, detalheErro = ? " +
-                "WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = 'EM_ANDAMENTO'",
+                "WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = ?",
                 log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getDetalheErro(),
-                log.getNomeArquivo());
+                log.getNomeArquivo(), StatusLeitura.EM_ANDAMENTO.name());
     }
 }

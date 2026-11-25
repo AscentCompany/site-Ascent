@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public class LogLeitura extends LogServico {
 
     private String nomeArquivo;
-    private String statusLeitura;
+    private StatusLeitura statusLeitura;
     private Integer linhasEncontradas;
     private Integer linhasLidas;
     private Integer linhasRejeitadas;
@@ -15,7 +15,7 @@ public class LogLeitura extends LogServico {
     public LogLeitura() {}
 
     public LogLeitura(Integer idLogServico, String categoria, String servico, String mensagem, LocalDateTime dataHora, String origemCadastro, Integer fkUsuario,
-                      String nomeArquivo, String statusLeitura, Integer linhasEncontradas, Integer linhasLidas, Integer linhasRejeitadas, String detalheErro, Long idInicialVoo) {
+                      String nomeArquivo, StatusLeitura statusLeitura, Integer linhasEncontradas, Integer linhasLidas, Integer linhasRejeitadas, String detalheErro, Long idInicialVoo) {
         super(idLogServico, categoria, servico, mensagem, dataHora, origemCadastro, fkUsuario);
         this.nomeArquivo = nomeArquivo;
         this.statusLeitura = statusLeitura;
@@ -34,11 +34,11 @@ public class LogLeitura extends LogServico {
         this.nomeArquivo = nomeArquivo;
     }
 
-    public String getStatusLeitura() {
+    public StatusLeitura getStatusLeitura() {
         return statusLeitura;
     }
 
-    public void setStatusLeitura(String statusLeitura) {
+    public void setStatusLeitura(StatusLeitura statusLeitura) {
         this.statusLeitura = statusLeitura;
     }
 

@@ -67,7 +67,7 @@ public class LeitorExcel {
         private int    linhasEncontradas = 0;
         private int    linhasLidas       = 0;
         private int    linhasRejeitadas  = 0;
-        private String statusLeitura     = "LIDO";
+        private StatusLeitura statusLeitura = StatusLeitura.LIDO;
         private String detalheErro       = null;
 
         public String getNomeArquivo() { return nomeArquivo; }
@@ -76,7 +76,7 @@ public class LeitorExcel {
         public int getLinhasEncontradas() { return linhasEncontradas; }
         public int getLinhasLidas() { return linhasLidas; }
         public int getLinhasRejeitadas() { return linhasRejeitadas; }
-        public String getStatusLeitura() { return statusLeitura; }
+        public StatusLeitura getStatusLeitura() { return statusLeitura; }
         public String getDetalheErro() { return detalheErro; }
 
         @Override
@@ -196,12 +196,12 @@ public class LeitorExcel {
                 xml.close();
             }
 
-            resultado.statusLeitura = resultado.linhasRejeitadas == 0        ? "LIDO"
-                                    : resultado.linhasLidas       > 0         ? "PARCIALMENTE_LIDO"
-                                                                               : "ERRO_NA_LEITURA";
+            resultado.statusLeitura = resultado.linhasRejeitadas == 0        ? StatusLeitura.LIDO
+                                    : resultado.linhasLidas       > 0         ? StatusLeitura.PARCIALMENTE_LIDO
+                                                                               : StatusLeitura.ERRO_NA_LEITURA;
 
         } catch (Exception e) {
-            resultado.statusLeitura = "ERRO_NA_LEITURA";
+            resultado.statusLeitura = StatusLeitura.ERRO_NA_LEITURA;
             resultado.detalheErro   = e.getMessage();
             throw new RuntimeException("Erro ao ler o arquivo " + arquivo.getName() + ": " + e.getMessage(), e);
         }
