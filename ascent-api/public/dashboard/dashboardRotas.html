@@ -60,7 +60,7 @@
       <header class="page-header">
         <div class="page-titulo">
           <h1>Análise de Rotas</h1>
-          <p>Com base nos últimos 5 anos</p>
+          <p>Dados tratados originados da base de dados da ANAC</p>
         </div>
         <button class="btn-filtrar" type="button" id="btn-filtrar">
           Filtrar <i class="fi fi-rr-settings-sliders"></i>
@@ -425,11 +425,5 @@
 
 <div id="modal-alerta-container"></div>
 <script src="/js/alertas.js"></script>
-<script>
-  if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-    var el = document.getElementById('nav-configurar-rot');
-    if (el) el.style.display = '';
-  }
-</script>
 </body>
 </html>

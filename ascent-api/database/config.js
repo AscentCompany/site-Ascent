@@ -9,7 +9,7 @@ var mySqlConfig = {
     port: process.env.DB_PORT || 3306
 };
 
-function executar(instrucao) {
+function executar(instrucao, parametros, opcoes) {
 
     if (process.env.AMBIENTE_PROCESSO !== "producao" && process.env.AMBIENTE_PROCESSO !== "desenvolvimento") {
         console.log("\nO AMBIENTE (produção OU desenvolvimento) NÃO FOI DEFINIDO EM .env OU dev.env OU app.js\n");
@@ -32,15 +32,23 @@ function executar(instrucao) {
                 return;
             }
 
-            conexao.query(instrucao, function (erro, resultados) {
+            var callbackQuery = function (erro, resultados) {
                 conexao.end();
                 if (erro) {
                     reject(erro);
                     return;
                 }
-                console.log(resultados);
+                if (!opcoes || opcoes.logResultados !== false) {
+                    console.log(resultados);
+                }
                 resolve(resultados);
-            });
+            };
+
+            if (Array.isArray(parametros) && parametros.length > 0) {
+                conexao.execute(instrucao, parametros, callbackQuery);
+            } else {
+                conexao.query(instrucao, callbackQuery);
+            }
         });
 
         conexao.on('error', function (erro) {

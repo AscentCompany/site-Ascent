@@ -60,7 +60,7 @@
       <header class="page-header">
         <div class="page-titulo">
           <h1>Análise de Operações</h1>
-          <p>Com base nos últimos 5 anos</p>
+          <p>Dados tratados originados da base de dados da ANAC</p>
         </div>
         <button class="btn-filtrar" type="button" id="btn-filtrar">
           Filtrar <i class="fi fi-rr-settings-sliders"></i>
@@ -113,11 +113,17 @@
 
       <article class="card kpi-card">
         <h2>Taxa de ocupação média</h2>
-        <div class="kpi-card-main">
-          <div class="big">40%</div>
-        </div>
-        <div class="sub">
-          <strong class="positive">▲ 2,4 p.p.</strong> vs período anterior · <strong class="positive">▲ 1,1 p.p.</strong> vs ano ant.
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome" id="kpi-nome-ocupacao-companhia">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-taxa-ocupacao-companhia">--%</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Mercado</span>
+            <span class="kpi-coluna-nome" id="kpi-nome-ocupacao-mercado">Todas as companhias</span>
+            <strong class="kpi-coluna-taxa" id="kpi-taxa-ocupacao-mercado">--%</strong>
+          </div>
         </div>
       </article>
     </section>
@@ -178,24 +184,25 @@
     <main class="main">
 
       <section class="card card-evolucao">
-        <h2 class="chart-title">CAPACIDADE DO AVIÃO VS. OCUPAÇÃO REAL</h2>
+        <h2 class="chart-title">CAPACIDADE DO AVIÃO VS. OCUPAÇÃO REAL (<span id="ano-grafico-evolucao"></span>)</h2>
 
         <div class="chart-placeholder" style="position: relative; height: 210px;">
           <canvas id="grafico-evolucao"></canvas>
         </div>
+        <p class="chart-status" id="status-grafico-evolucao" role="status">Carregando dados...</p>
       </section>
 
       <section class="card card-mensal">
-        <h2 class="chart-title">ANÁLISE DE PROCURA HISTÓRICA</h2>
+        <h2 class="chart-title">ANÁLISE DE PROCURA HISTÓRICA (<span id="ano-grafico-mensal"></span>)</h2>
 
         <div class="grafico-container" style="position: relative; height: 210px;">
           <canvas id="grafico-mensal"></canvas>
         </div>
+        <p class="chart-status" id="status-grafico-mensal" role="status">Carregando dados...</p>
       </section>
 
       <section class="card card-faixa">
-        <h2 class="chart-title">Informativo rotas</h2>
-
+        <h2 class="chart-title">Informativo rotas (<span id="ano-informativo-rotas"></span>)</h2>
         <div class="tabela-rotas-container">
           <div class="tabela-rotas">
             <div class="cabecalho-rotas">
@@ -204,72 +211,34 @@
               <span>Ocupação</span>
             </div>
 
-            <h3 class="titulo-maiores">Top 5 Maiores Ocupações</h3>
+            <div class="listas-rotas">
+              <section class="lista-rotas">
+                <h3 class="titulo-maiores">Top 5 Maiores Ocupações</h3>
+                <div id="rotas-maior-ocupacao">
+                  <div class="linha-rota"><span>Carregando...</span><span>--</span><span>--</span></div>
+                </div>
+              </section>
 
-            <div class="linha-rota">
-              <span>CGH - REC</span>
-              <span>248</span>
-              <span class="ocupacao alta">96,7%</span>
-            </div>
-            <div class="linha-rota">
-              <span>GRU - GIG</span>
-              <span>312</span>
-              <span class="ocupacao alta">96,0%</span>
-            </div>
-            <div class="linha-rota">
-              <span>SSA - GRU</span>
-              <span>276</span>
-              <span class="ocupacao alta">95,9%</span>
-            </div>
-            <div class="linha-rota">
-              <span>BSB - SDU</span>
-              <span>220</span>
-              <span class="ocupacao alta">94,6%</span>
-            </div>
-            <div class="linha-rota">
-              <span>CNF - GRU</span>
-              <span>198</span>
-              <span class="ocupacao alta">93,8%</span>
-            </div>
-
-            <h3 class="titulo-menores">Top 5 Menores Ocupações</h3>
-
-            <div class="linha-rota">
-              <span>VIX - CGB</span>
-              <span>248</span>
-              <span class="ocupacao baixa">74,0%</span>
-            </div>
-            <div class="linha-rota">
-              <span>PMW - CGH</span>
-              <span>312</span>
-              <span class="ocupacao baixa">78,2%</span>
-            </div>
-            <div class="linha-rota">
-              <span>RBR - VCP</span>
-              <span>276</span>
-              <span class="ocupacao baixa">80,5%</span>
-            </div>
-            <div class="linha-rota">
-              <span>THE - GRU</span>
-              <span>220</span>
-              <span class="ocupacao baixa">82,1%</span>
-            </div>
-            <div class="linha-rota">
-              <span>SBJ - CGH</span>
-              <span>198</span>
-              <span class="ocupacao baixa">83,4%</span>
+              <section class="lista-rotas">
+                <h3 class="titulo-menores">Top 5 Menores Ocupações</h3>
+                <div id="rotas-menor-ocupacao">
+                  <div class="linha-rota"><span>Carregando...</span><span>--</span><span>--</span></div>
+                </div>
+              </section>
             </div>
           </div>
 
           <div class="indicadores-rotas">
-            <div class="indicador-rota">
+            <div class="indicador-rota" id="indicador-subutilizacao">
               <span>⚠ SUBUTILIZAÇÃO</span>
-              <strong>18 rotas</strong>
+              <small>Abaixo da ocupação média</small>
+              <strong>-- rotas</strong>
             </div>
 
-            <div class="indicador-rota">
+            <div class="indicador-rota" id="indicador-gargalo-demanda">
               <span>↗ GARGALO DE DEMANDA</span>
-              <strong>12 rotas</strong>
+              <small>50% Abaixo da capacidade</small>
+              <strong>-- rotas</strong>
             </div>
           </div>
         </div>
@@ -282,6 +251,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/js/alertas.js"></script>
+<script src="/js/graficosOperacoes.js"></script>
 <script>
 
   document.getElementById('nome-usuario').textContent = sessionStorage.NOME_USUARIO || 'Usuário';
@@ -448,210 +418,64 @@
   }
 
   carregarKpiMesMaiorProcura();
-  const meses = [
-    'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
-    'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'
-  ];
 
-  // GRÁFICO 1 — CAPACIDADE DO AVIÃO VS. OCUPAÇÃO REAL (SCATTER)
-  const pontosLaranja = [
-    { x: 92, y: 58 }, { x: 94, y: 68 }, { x: 96, y: 78 },
-    { x: 102, y: 54 }, { x: 104, y: 64 }, { x: 106, y: 76 }, { x: 108, y: 92 },
-    { x: 114, y: 64 }, { x: 116, y: 74 }, { x: 118, y: 92 }, { x: 120, y: 100 },
-    { x: 124, y: 58 }, { x: 126, y: 68 }, { x: 130, y: 92 }, { x: 132, y: 100 },
-    { x: 138, y: 84 }, { x: 140, y: 94 }, { x: 142, y: 104 }, { x: 144, y: 114 }, { x: 146, y: 124 },
-    { x: 148, y: 88 }, { x: 152, y: 108 }, { x: 154, y: 118 },
-    { x: 160, y: 94 }, { x: 162, y: 106 }, { x: 164, y: 118 }, { x: 166, y: 136 }, { x: 168, y: 148 },
-    { x: 170, y: 86 }, { x: 172, y: 98 }, { x: 174, y: 112 },
-    { x: 184, y: 102 }, { x: 186, y: 116 }, { x: 192, y: 160 },
-    { x: 194, y: 104 }, { x: 200, y: 142 }, { x: 202, y: 156 }, { x: 206, y: 185 },
-    { x: 210, y: 128 }, { x: 212, y: 144 }, { x: 216, y: 176 }, { x: 218, y: 192 }
-  ];
+  function carregarKpiOcupacaoMedia() {
+    let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoNomeCompanhia = document.getElementById('kpi-nome-ocupacao-companhia');
+    let elementoTaxaCompanhia = document.getElementById('kpi-taxa-ocupacao-companhia');
+    let elementoNomeMercado = document.getElementById('kpi-nome-ocupacao-mercado');
+    let elementoTaxaMercado = document.getElementById('kpi-taxa-ocupacao-mercado');
 
-  const pontosCinza = [
-    { x: 88, y: 44 }, { x: 90, y: 52 },
-    { x: 112, y: 56 },
-    { x: 128, y: 76 }, { x: 134, y: 108 },
-    { x: 136, y: 70 },
-    { x: 150, y: 98 }, { x: 156, y: 132 },
-    { x: 158, y: 84 },
-    { x: 176, y: 124 }, { x: 178, y: 142 }, { x: 180, y: 152 },
-    { x: 182, y: 90 }, { x: 188, y: 138 }, { x: 190, y: 150 },
-    { x: 196, y: 116 }, { x: 198, y: 126 }, { x: 204, y: 170 },
-    { x: 208, y: 114 }, { x: 214, y: 162 }
-  ];
+    fetch(`/api/kpis/ocupacao-media/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
 
-  new Chart(document.getElementById('grafico-evolucao'), {
-    type: 'scatter',
-    data: {
-      datasets: [
-        {
-          label: 'Ocupação Real',
-          data: pontosLaranja,
-          backgroundColor: '#ff6a00',
-          borderColor: '#ff6a00',
-          pointRadius: 4.5,
-          pointHoverRadius: 6
-        },
-        {
-          label: 'Capacidade / Referência',
-          data: pontosCinza,
-          backgroundColor: '#b5b5b5',
-          borderColor: '#b5b5b5',
-          pointRadius: 4.5,
-          pointHoverRadius: 6
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'end',
-          labels: {
-            boxWidth: 12,
-            boxHeight: 12,
-            usePointStyle: true,
-            pointStyle: 'circle',
-            font: { size: 11 },
-            color: '#555'
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} passageiros (Capacidade: ${ctx.parsed.x})`
-          }
-        }
-      },
-      scales: {
-        x: {
-          type: 'linear',
-          min: 70,
-          max: 220,
-          grid: { display: false },
-          border: { display: false },
-          ticks: {
-            stepSize: 40,
-            callback: valor => [80, 120, 160, 200].includes(valor) ? valor : null,
-            color: '#777',
-            font: { size: 10 }
-          },
-          title: {
-            display: true,
-            text: 'Capacidade do Avião',
-            color: '#555',
-            font: { size: 10, weight: '600' }
-          }
-        },
-        y: {
-          beginAtZero: true,
-          min: 0,
-          max: 210,
-          grid: { color: '#ececec' },
-          border: { display: false },
-          ticks: {
-            stepSize: 100,
-            callback: valor => [0, 100, 200].includes(valor) ? valor : null,
-            color: '#777',
-            font: { size: 10 }
-          },
-          title: {
-            display: true,
-            text: 'Nº de Passageiros',
-            color: '#555',
-            font: { size: 10, weight: '600' }
-          }
-        }
-      }
-    }
-  });
+        let suaCompanhia = json.dados.suaCompanhia;
+        let mercado = json.dados.mercado;
 
-  // GRÁFICO 2 — ANÁLISE DE PROCURA HISTÓRICA
-  new Chart(document.getElementById('grafico-mensal'), {
-    type: 'bar',
-    data: {
-      labels: meses,
-      datasets: [
-        {
-          label: 'Demanda',
-          data: [75, 82, 88, 92, 100, 116, 120, 110, 107, 118, 132, 160],
-          backgroundColor: '#ff6a00',
-          borderRadius: 4,
-          barPercentage: 0.52,
-          categoryPercentage: 0.8,
-          grouped: false,
-          order: 1
-        },
-        {
-          label: 'Capacidade',
-          data: [125, 130, 136, 140, 145, 150, 155, 148, 145, 152, 162, 180],
-          backgroundColor: '#dfe3e8',
-          borderRadius: 4,
-          barPercentage: 0.85,
-          categoryPercentage: 0.8,
-          grouped: false,
-          order: 2
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'end',
-          labels: {
-            boxWidth: 12,
-            boxHeight: 12,
-            usePointStyle: true,
-            pointStyle: 'rectRounded',
-            font: { size: 11 },
-            color: '#555'
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} passageiros`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          border: { display: false },
-          ticks: { font: { size: 10 }, color: '#777' }
-        },
-        y: {
-          beginAtZero: true,
-          min: 0,
-          max: 200,
-          grid: { color: '#ececec' },
-          border: { display: false },
-          ticks: {
-            stepSize: 100,
-            callback: valor => [0, 100, 200].includes(valor) ? valor : null,
-            color: '#777',
-            font: { size: 10 }
-          }
-        }
-      }
-    }
-  });
+        let nomeCompanhia = suaCompanhia.nome || 'Sua companhia';
+        let taxaCompanhia = Number(suaCompanhia.taxaOcupacao) || 0;
+
+        let nomeMercado = mercado.nome || 'Todas as companhias';
+        let taxaMercado = Number(mercado.taxaOcupacao) || 0;
+
+        let classeCompanhia = taxaCompanhia < taxaMercado ? 'negative' : 'positive';
+
+        elementoNomeCompanhia.textContent = nomeCompanhia;
+        elementoNomeCompanhia.title = nomeCompanhia;
+        elementoTaxaCompanhia.textContent = `${taxaCompanhia}%`;
+        elementoTaxaCompanhia.className = `kpi-coluna-taxa ${classeCompanhia}`;
+
+        elementoNomeMercado.textContent = nomeMercado;
+        elementoNomeMercado.title = nomeMercado;
+        elementoTaxaMercado.textContent = `${taxaMercado}%`;
+        elementoTaxaMercado.className = 'kpi-coluna-taxa';
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de ocupação média:', erro);
+        elementoNomeCompanhia.textContent = '--';
+        elementoNomeCompanhia.title = '';
+        elementoTaxaCompanhia.textContent = '--';
+        elementoTaxaCompanhia.className = 'kpi-coluna-taxa';
+
+        elementoNomeMercado.textContent = '--';
+        elementoNomeMercado.title = '';
+        elementoTaxaMercado.textContent = '--';
+        elementoTaxaMercado.className = 'kpi-coluna-taxa';
+      });
+  }
+
+  carregarKpiOcupacaoMedia();
+
 </script>
-
-  <!-- nav-configurar visível apenas para gestores -->
-  <script>
-    if (Number(sessionStorage.CARGO_USUARIO) <= 2) {
-      var el = document.getElementById('nav-configurar-op');
-      if (el) el.style.display = '';
-    }
-  </script>
 
 </body>
 </html>

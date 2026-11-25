@@ -3,6 +3,13 @@ set -e
 
 # =============================================================
 # start.sh — Inicializa o sistema Ascent:
+#   1. Prepara ambiente e volume persistente (/dados/mysql)
+#   2. Derruba containers anteriores sem apagar volumes/dados
+#   3. Atualiza imagens Docker via pull
+#   4. Sobe a stack (MySQL + API) via docker compose no mesmo volume
+#   5. Aplica schema e dados base se necessário (idempotente)
+#   6. Sobe o container de logs (ascent-logs)
+#   7. Configura DuckDNS e crontab @reboot
 #   1. Prepara ambiente e volume de dados (/dados/mysql)
 #   2. Derruba containers anteriores sem apagar volumes/dados
 #   3. Atualiza imagens Docker via pull
@@ -15,9 +22,7 @@ set -e
 # start.sh — Atualiza imagens Docker, sobe MySQL + API + logs
 #            e configura o DuckDNS.
 #
-# NÃO roda Apache POI nem importa ANAC.
-#   Schema/seed : ./inserir-dados.sh
-#   Importação  : ./importar-anac.sh
+# Importação ANAC (Apache POI): ./apache-po.sh
 # =============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -59,13 +64,12 @@ fi
 compose() {
   "${COMPOSE[@]}" --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
 }
+
+echo "=== 2. Atualizando repositório ==="
 echo "=== 1. Atualizando repositório e imagens Docker ==="
 git pull origin develop 2>/dev/null || git pull 2>/dev/null || true
-docker pull mysql:8.0
-docker pull lucasveneroso/ascent:ascent-api || true
-docker pull lucasveneroso/ascent:ascent-logs || true
 
-echo "=== 2. Configurando ambiente (.env) ==="
+echo "=== 3. Configurando ambiente (.env) ==="
 if [ ! -f "$ENV_FILE" ]; then
 cat << 'EOF' > "$ENV_FILE"
 # =============================================================
@@ -112,7 +116,7 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_SESSION_TOKEN=
 EOF
-echo ".env criado com sucesso!"
+  echo ".env criado com sucesso!"
 else
   echo ".env já existe. Usando configurações existentes."
 fi
@@ -125,6 +129,19 @@ else
   echo "DB_HOST=mysql" >> "$ENV_FILE"
 fi
 
+echo "=== 4. Preparando volume persistente do MySQL (/dados/mysql) ==="
+# Sempre conecta o compose ao mesmo diretório /dados/mysql para preservar os dados.
+sudo mkdir -p /dados/mysql 2>/dev/null || mkdir -p /dados/mysql 2>/dev/null || true
+sudo chmod 777 /dados/mysql 2>/dev/null || chmod 777 /dados/mysql 2>/dev/null || true
+echo ">> Diretório /dados/mysql verificado (dados preservados)."
+
+echo "=== 5. Derrubando containers anteriores sem apagar volumes/dados ==="
+RUNNING_CONTAINERS="$(compose ps --services --filter "status=running" 2>/dev/null || compose ps -q 2>/dev/null || true)"
+if [ -n "$RUNNING_CONTAINERS" ] || docker ps --filter "name=ascent" --filter "name=mysql" -q 2>/dev/null | grep -q .; then
+  echo ">> Compose/containers detectados de pé. Derrubando serviços sem apagar volumes..."
+  compose down 2>/dev/null || true
+else
+  compose down 2>/dev/null || true
 echo "=== 3. Preparando volume do MySQL (Persistência no EBS em /dados/mysql) ==="
 if [ "${IS_EC2:-false}" = true ]; then
 echo "=== 3. Removendo apenas containers legados (fora do compose) ==="
@@ -149,8 +166,9 @@ else
   sudo mkdir -p /dados/mysql 2>/dev/null || mkdir -p /dados/mysql 2>/dev/null || true
   sudo chmod 777 /dados/mysql 2>/dev/null || chmod 777 /dados/mysql 2>/dev/null || true
 fi
-echo ">> Diretório /dados/mysql verificado."
 
+# Remove apenas containers remanescentes para evitar conflito de nome no Docker daemon
+# (Nunca usa -v; dados em /dados/mysql continuam 100% preservados)
 echo "=== 4. Validando se o compose está de pé ==="
 COMPOSE_ATIVO=false
 
@@ -177,6 +195,13 @@ for c in ascent-mysql ascent-api ascent-logs mysql; do
   if docker inspect "$c" >/dev/null 2>&1; then
     echo ">> Removendo container remanescente '$c' (volumes preservados)..."
     docker rm -f "$c" >/dev/null 2>&1 || true
+  fi
+done
+
+echo "=== 6. Atualizando imagens Docker (pull) ==="
+compose pull || true
+docker pull lucasveneroso/ascent:ascent-logs || true
+docker pull "${APACHEPOI_IMAGE:-lucasveneroso/ascent:ascent-apachepoi-s3}" || true
 echo "=== 5. Subindo MySQL e ascent-api via docker compose ==="
 if docker compose version &>/dev/null; then
   COMPOSE=(docker compose)
@@ -254,10 +279,10 @@ compose() {
   "${COMPOSE[@]}" --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
 }
 
-echo ">> Usando: ${COMPOSE[*]}"
+echo "=== 7. Subindo MySQL e ascent-api via docker compose ==="
 compose up -d --remove-orphans
 
-echo "=== 5.1. Aguardando o MySQL ficar pronto ==="
+echo "=== 8. Aguardando o MySQL ficar pronto ==="
 MYSQL_ID="$(compose ps -q mysql 2>/dev/null | head -n1)"
 if [ -n "$MYSQL_ID" ]; then
   for _ in $(seq 1 60); do
@@ -270,16 +295,21 @@ if [ -n "$MYSQL_ID" ]; then
   done
 fi
 
-echo "=== 6. Garantindo schema + dados iniciais no MySQL ==="
-# Volume /dados/mysql já existente → initdb.d NÃO roda. Por isso o seed é explícito.
-if [ -f "$SCRIPT_DIR/inserir-dados.sh" ]; then
-  bash "$SCRIPT_DIR/inserir-dados.sh" || {
-    echo ">> AVISO: inserir-dados.sh falhou. Rode manualmente depois."
-  }
-else
-  echo ">> AVISO: inserir-dados.sh não encontrado."
+echo "=== 9. Garantindo schema + dados iniciais no MySQL ==="
+if [ -f "$SCRIPT_DIR/database/ascent.sql" ]; then
+  DB_USER=$(grep -E "^DB_USER=" "$ENV_FILE" | tail -n1 | cut -d= -f2- | tr -d '\r')
+  DB_PASSWORD=$(grep -E "^DB_PASSWORD=" "$ENV_FILE" | tail -n1 | cut -d= -f2- | tr -d '\r')
+  DB_USER="${DB_USER:-admin}"
+  DB_PASSWORD="${DB_PASSWORD:-admin}"
+
+  docker exec -i ascent-mysql mysql -u"$DB_USER" -p"$DB_PASSWORD" < "$SCRIPT_DIR/database/ascent.sql" >/dev/null 2>&1 && \
+    echo ">> Schema e dados conferidos com sucesso." || echo ">> AVISO: Não foi possível executar ascent.sql automaticamente."
 fi
 
+echo "=== 10. Inicializando ascent-logs ==="
+NETWORK=""
+if [ -n "$MYSQL_ID" ]; then
+  NETWORK="$(docker inspect -f '{{range $nome, $_ := .NetworkSettings.Networks}}{{$nome}}{{end}}' "$MYSQL_ID" 2>/dev/null || true)"
 echo "=== 10. Configurando DuckDNS + crontab @reboot ==="
 echo "=== 7. Inicializando ascent-logs ==="
 if [ -f "$SCRIPT_DIR/start-logs.sh" ]; then
@@ -289,8 +319,22 @@ if [ -f "$SCRIPT_DIR/start-logs.sh" ]; then
 else
   echo ">> AVISO: start-logs.sh não encontrado."
 fi
+NETWORK="${NETWORK:-ascent_ascent}"
 
-echo "=== 8. Configurando DuckDNS + crontab @reboot ==="
+docker rm -f ascent-logs >/dev/null 2>&1 || true
+docker run -d \
+  --name ascent-logs \
+  --network "$NETWORK" \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  --env-file "$ENV_FILE" \
+  -e DB_HOST=mysql \
+  -e DB_PORT=3306 \
+  lucasveneroso/ascent:ascent-logs >/dev/null 2>&1 || {
+    echo ">> AVISO: Não foi possível iniciar container ascent-logs."
+  }
+
+echo "=== 11. Configurando DuckDNS + crontab @reboot ==="
 if [ -f "$SCRIPT_DIR/setup-duckdns.sh" ]; then
   bash "$SCRIPT_DIR/setup-duckdns.sh"
 else
@@ -304,15 +348,11 @@ chmod +x "$SCRIPT_DIR/start.sh" "$SCRIPT_DIR/start-logs.sh" \
   "$SCRIPT_DIR/inserir-dados.sh" "$SCRIPT_DIR/importar-anac.sh" 2>/dev/null || true
 
 CRON_BOOT="@reboot /bin/bash $SCRIPT_DIR/start.sh >> $SCRIPT_DIR/start.log 2>&1"
-CRON_LOGS_BOOT="@reboot /bin/bash $SCRIPT_DIR/start-logs.sh >/dev/null 2>&1"
 (
-  crontab -l 2>/dev/null \
-    | grep -vF "$SCRIPT_DIR/start.sh" \
-    | grep -vF "$SCRIPT_DIR/start-logs.sh"
+  crontab -l 2>/dev/null | grep -vF "$SCRIPT_DIR/start.sh"
   echo "$CRON_BOOT"
-  echo "$CRON_LOGS_BOOT"
 ) | crontab -
-echo ">> Crontab: apenas @reboot (DuckDNS fica no setup-duckdns.sh)."
+echo ">> Crontab @reboot configurado."
 
 echo ""
 echo "=== Sistema Ascent iniciado ==="

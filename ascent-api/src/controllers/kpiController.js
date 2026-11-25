@@ -202,8 +202,58 @@ function buscarDadosKpiMesMaiorProcura(req, res) {
         });
 }
 
+function buscarDadosKpiOcupacaoMedia(req, res) {
+    let idCompanhia = Number(req.params.idCompanhia);
+
+    if (isNaN(idCompanhia) || idCompanhia <= 0) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: "ID da companhia inválido ou não informado."
+        });
+    }
+
+    kpiModel.obterTaxaOcupacaoMedia(idCompanhia)
+        .then(function (resultado) {
+            let suaCompanhiaRow = resultado.suaCompanhia;
+            let nomeSuaCompanhia = suaCompanhiaRow && suaCompanhiaRow.nomeCompanhia
+                ? suaCompanhiaRow.nomeCompanhia
+                : "Sua companhia";
+
+            let taxaMercado = resultado.taxaOcupacaoMercado !== null && resultado.taxaOcupacaoMercado !== undefined
+                ? Math.round(Number(resultado.taxaOcupacaoMercado))
+                : 0;
+
+            let taxaCompanhia = suaCompanhiaRow && suaCompanhiaRow.taxaOcupacaoCompanhia !== null && suaCompanhiaRow.taxaOcupacaoCompanhia !== undefined
+                ? Math.round(Number(suaCompanhiaRow.taxaOcupacaoCompanhia))
+                : 0;
+
+            res.json({
+                sucesso: true,
+                dados: {
+                    suaCompanhia: {
+                        nome: nomeSuaCompanhia,
+                        taxaOcupacao: taxaCompanhia
+                    },
+                    mercado: {
+                        nome: "Todas as companhias",
+                        taxaOcupacao: taxaMercado
+                    }
+                }
+            });
+        })
+        .catch(function (erro) {
+            console.error("Erro ao buscar taxa de ocupação média:", erro);
+            res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar dados da KPI de ocupação média.",
+                erro: erro.sqlMessage || erro.message || erro
+            });
+        });
+}
+
 module.exports = {
     buscarDadosKpiBenchmark,
     buscarDadosKpiVolumeMedio,
-    buscarDadosKpiMesMaiorProcura
+    buscarDadosKpiMesMaiorProcura,
+    buscarDadosKpiOcupacaoMedia
 };

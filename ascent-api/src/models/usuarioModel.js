@@ -10,11 +10,17 @@ function autenticar(email, senha) {
 }
 
 // Coloque os mesmos parâmetros aqui. Vá para a var instrucaoSql
-function cadastrar(nome, email, senha, idCompanhia) {
-    console.log("ACESSEI O USUARIO MODEL \n \n\t\t >> Se aqui der erro de 'Error: connect ECONNREFUSED',\n \t\t >> verifique suas credenciais de acesso ao banco\n \t\t >> e se o servidor de seu BD está rodando corretamente. \n\n function cadastrar():", nome, email, senha, idCompanhia);
+function cadastrar(nome, email, senha, idCompanhia, idCargo) {
+    console.log("ACESSEI O USUARIO MODEL \n \n\t\t >> Se aqui der erro de 'Error: connect ECONNREFUSED',\n \t\t >> verifique suas credenciais de acesso ao banco\n \t\t >> e se o servidor de seu BD está rodando corretamente. \n\n function cadastrar():", nome, email, senha, idCompanhia, idCargo);
     
-    // Insira exatamente a query do banco aqui, lembrando da nomenclatura exata nos valores
-    //  e na ordem de inserção dos dados.
+    var cargoSql = idCargo
+        ? `${idCargo}`
+        : `COALESCE(
+               (SELECT idCargo FROM cargo WHERE fkCompanhia = ${idCompanhia} AND cargo = 'Padrão' LIMIT 1),
+               (SELECT idCargo FROM cargo WHERE fkCompanhia = ${idCompanhia} AND cargo NOT LIKE '%Admin%' ORDER BY idCargo DESC LIMIT 1),
+               (SELECT idCargo FROM cargo WHERE fkCompanhia = ${idCompanhia} ORDER BY idCargo DESC LIMIT 1)
+           )`;
+
     var instrucaoSql = `
         INSERT INTO usuario (nome, email, senha, fkCompanhia, fkCargo)
         VALUES (
@@ -22,10 +28,16 @@ function cadastrar(nome, email, senha, idCompanhia) {
                        '${email}',
                        '${senha}',
                        '${idCompanhia}',
-                       (SELECT idCargo FROM cargo WHERE fkCompanhia = ${idCompanhia} ORDER BY idCargo ASC LIMIT 1)
+                       ${cargoSql}
             );
     `;
     console.log("Executando a instrução SQL: \n" + instrucaoSql);
+    return database.executar(instrucaoSql);
+}
+
+// Resolve o codCompanhia (digitado pelo usuário) para o idCompanhia (PK real)
+function buscarIdPorCodigo(codCompanhia) {
+    var instrucaoSql = `SELECT idCompanhia FROM companhia WHERE codCompanhia = ${codCompanhia} LIMIT 1;`;
     return database.executar(instrucaoSql);
 }
 
@@ -75,6 +87,7 @@ function deletarUsuario(idUsuario) {
 module.exports = {
     autenticar,
     cadastrar,
+    buscarIdPorCodigo,
     verificarPermissaoAdmin,
     listarCargos,
     listarUsuariosCompanhia,

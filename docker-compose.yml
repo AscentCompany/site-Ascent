@@ -18,7 +18,6 @@
 #   importar-anac.sh → Apache POI / S3 ANAC
 #
 # ATENÇÃO: scripts em initdb.d só rodam se /dados/mysql estiver VAZIO.
-# Em produção use sempre ./inserir-dados.sh após o primeiro up.
 # =============================================================
 
 services:

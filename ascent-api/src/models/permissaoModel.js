@@ -18,7 +18,7 @@ function listarPermissoes() {
 }
 
 function listarFuncionalidades() {
-    return database.executar(`SELECT * FROM funcionalidade;`);
+    return database.executar(`SELECT idFuncionalidade, nomeFuncionalidade, nomeFuncionalidade AS nome FROM funcionalidade;`);
 }
 
 function cadastrarPermissao(nomePermissao) {

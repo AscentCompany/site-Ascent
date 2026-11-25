@@ -102,12 +102,21 @@ public class MainApp {
                     idInicial = importador.maiorIdVoo();
                 }
 
-                logImportacaoDao.iniciarArquivo(nomeArquivo, idInicial);
+                LogLeitura logInicio = new LogLeitura(null, "INFO", "importacao", "Importação em andamento.",
+                        LocalDateTime.now(), "Java", null,
+                        nomeArquivo, "EM_ANDAMENTO", null, null, null, null, idInicial);
+                logImportacaoDao.iniciarArquivo(logInicio);
+                log(logInicio.formatarLog());
 
                 log(String.format("[%d/%d] Baixando %s ...", i, totalPartes, s3Uri));
 
                 if (!baixarDoS3(s3Uri, destino.getAbsolutePath(), region)) {
-                    logImportacaoDao.marcarErro(nomeArquivo, "Falha ao baixar do S3.");
+                    LogLeitura logFalha = new LogLeitura(null, "ERROR", "importacao",
+                            "Importação interrompida; será retomada na próxima execução.",
+                            LocalDateTime.now(), "Java", null,
+                            nomeArquivo, "EM_ANDAMENTO", null, null, null, "Falha ao baixar do S3.", null);
+                    logImportacaoDao.marcarErro(logFalha);
+                    logErro(logFalha.formatarLog());
                     logErro("Falha ao baixar " + nomeArquivo + ". Pulando.");
                     partesErro++;
                     continue;
@@ -139,7 +148,27 @@ public class MainApp {
                             importador.getDirecoesInseridas()));
 
                     // Só fecha o arquivo depois que os dados foram gravados.
-                    logImportacaoDao.concluirArquivo(nomeArquivo, resultado);
+                    String categoria = "ERROR";
+                    if (resultado.getStatusLeitura().equals("LIDO")) {
+                        categoria = "INFO";
+                    } else if (resultado.getStatusLeitura().equals("PARCIALMENTE_LIDO")) {
+                        categoria = "WARN";
+                    }
+                    String mensagem = String.format("Leitura %s: %d encontradas, %d lidas, %d rejeitadas.",
+                            resultado.getStatusLeitura(),
+                            resultado.getLinhasEncontradas(),
+                            resultado.getLinhasLidas(),
+                            resultado.getLinhasRejeitadas());
+
+                    LogLeitura logConclusao = new LogLeitura(null, categoria, "importacao", mensagem,
+                            LocalDateTime.now(), "Java", null,
+                            nomeArquivo, resultado.getStatusLeitura(),
+                            resultado.getLinhasEncontradas(),
+                            resultado.getLinhasLidas(),
+                            resultado.getLinhasRejeitadas(),
+                            resultado.getDetalheErro(), null);
+                    logImportacaoDao.concluirArquivo(logConclusao);
+                    log(logConclusao.formatarLog());
 
                     partesOk++;
 
@@ -150,7 +179,12 @@ public class MainApp {
                         logErro("Falha ao reverter lote pendente: " + ex.getMessage());
                     }
                     try {
-                        logImportacaoDao.marcarErro(nomeArquivo, e.getMessage());
+                        LogLeitura logErroLeitura = new LogLeitura(null, "ERROR", "importacao",
+                                "Importação interrompida; será retomada na próxima execução.",
+                                LocalDateTime.now(), "Java", null,
+                                nomeArquivo, "EM_ANDAMENTO", null, null, null, e.getMessage(), null);
+                        logImportacaoDao.marcarErro(logErroLeitura);
+                        logErro(logErroLeitura.formatarLog());
                     } catch (Exception ex) {
                         logErro("Falha ao registrar o erro no banco: " + ex.getMessage());
                     }

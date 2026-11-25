@@ -244,19 +244,16 @@ public class LeitorExcel {
         return c;
     }
 
-    // Processa uma linha de dados — retorna null se algum campo obrigatório for nulo/inválido
     private LinhaVoo processarLinha(String[] linha, Colunas c) {
 
-        // Campos obrigatórios: numVoo + codEmpresa + nmAerodromo (origem)
         Integer codEmpresa = getInt(linha, c.codEmpresa);
         Integer nrVoo      = getInt(linha, c.nrVoo);
         String  nmAeroOrig = getStr(linha, c.nmAeroOrigem);
 
         if (codEmpresa == null || nrVoo == null || nmAeroOrig == null || nmAeroOrig.isBlank()) {
-            return null; // linha inválida — pula
+            return null;
         }
 
-        // --- Companhia ---
         Companhia companhia = new Companhia();
         companhia.setCodCompanhia(codEmpresa);
         companhia.setNomeCompanhia(getStr(linha, c.nmEmpresa));
@@ -264,7 +261,6 @@ public class LeitorExcel {
         companhia.setRazaoSocial("");
         companhia.setCnpj("");
 
-        // --- Aviao ---
         Aviao aviao = null;
         String modelo = getStr(linha, c.dsModelo);
         if (modelo != null && !modelo.isBlank()) {
@@ -273,7 +269,6 @@ public class LeitorExcel {
             aviao.setNumAssentos(getIntOuPadrao(linha, c.nrAssentos, 0));
         }
 
-        // --- Voo ---
         Voo voo = new Voo();
         voo.setNumVoo(nrVoo);
         voo.setTipoVoo(getIntOuPadrao(linha, c.cdDi, 0));
@@ -281,7 +276,6 @@ public class LeitorExcel {
         int gratis = getIntOuPadrao(linha, c.nrPassagGratis, 0);
         voo.setQtdPassageiros(pagos + gratis);
 
-        // --- Aeroporto Origem ---
         Aeroporto origem = new Aeroporto();
         origem.setNomeAeroporto(nmAeroOrig);
         origem.setMunicipio(getStr(linha, c.nmMunicipioOrigem));
