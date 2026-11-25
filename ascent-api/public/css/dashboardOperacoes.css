@@ -688,9 +688,27 @@ body.menu-fechado .btn-menu {
   max-width: 100%;
 }
 
+.chart-status {
+  margin-top: 4px;
+  color: #777;
+  font-size: 11px;
+  text-align: center;
+}
+
+.chart-status:empty {
+  display: none;
+}
+
 .tabela-rotas {
   --colunas-rotas: minmax(0, 1.3fr) minmax(52px, 0.7fr) minmax(76px, 1fr);
   font-size: 14px;
+}
+
+.informativo-periodo {
+  margin: -4px 0 8px;
+  color: #777;
+  font-size: 12px;
+  text-align: center;
 }
 
 .cabecalho-rotas,
@@ -729,6 +747,16 @@ body.menu-fechado .btn-menu {
   width: 100%;
 }
 
+.listas-rotas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 12px;
+}
+
+.lista-rotas {
+  min-width: 0;
+}
+
 .tabela-rotas-container .cabecalho-rotas {
   border-radius: 6px;
 }
@@ -739,9 +767,11 @@ body.menu-fechado .btn-menu {
 }
 
 .linha-rota>span:first-child {
-  text-align: center;
+  text-align: left;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .titulo-maiores,
@@ -811,6 +841,11 @@ body.menu-fechado .btn-menu {
   font-weight: 700;
 }
 
+.indicador-rota small {
+  color: #777;
+  font-size: 9px;
+}
+
 .indicador-rota strong {
   color: #ff5a1f;
   font-size: 17px;
@@ -835,6 +870,14 @@ body.menu-fechado .btn-menu {
   .card-faixa {
     grid-column: 1;
     grid-row: 3;
+  }
+
+  .linha-rota>span:first-child {
+    display: -webkit-box;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 }
 
@@ -926,6 +969,12 @@ body.menu-fechado .btn-menu {
 
   .kpi-middle {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+  .listas-rotas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

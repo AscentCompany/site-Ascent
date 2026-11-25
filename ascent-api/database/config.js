@@ -9,7 +9,7 @@ var mySqlConfig = {
     port: process.env.DB_PORT || 3306
 };
 
-function executar(instrucao, parametros) {
+function executar(instrucao, parametros, opcoes) {
 
     if (process.env.AMBIENTE_PROCESSO !== "producao" && process.env.AMBIENTE_PROCESSO !== "desenvolvimento") {
         console.log("\nO AMBIENTE (produção OU desenvolvimento) NÃO FOI DEFINIDO EM .env OU dev.env OU app.js\n");
@@ -38,7 +38,9 @@ function executar(instrucao, parametros) {
                     reject(erro);
                     return;
                 }
-                console.log(resultados);
+                if (!opcoes || opcoes.logResultados !== false) {
+                    console.log(resultados);
+                }
                 resolve(resultados);
             };
 
