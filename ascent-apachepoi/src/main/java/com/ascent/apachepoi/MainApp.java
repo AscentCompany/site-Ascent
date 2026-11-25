@@ -105,7 +105,6 @@ public class MainApp {
                 LogLeitura logInicio = new LogLeitura(null, "INFO", "importacao", "Importação em andamento.",
                         LocalDateTime.now(), "Java", null,
                         nomeArquivo, StatusLeitura.EM_ANDAMENTO, null, null, null, null, idInicial);
-                        nomeArquivo, "EM_ANDAMENTO", null, null, null, null, idInicial);
                 logImportacaoDao.iniciarArquivo(logInicio);
                 log(logInicio.formatarLog());
 
@@ -116,7 +115,6 @@ public class MainApp {
                             "Importação interrompida; será retomada na próxima execução.",
                             LocalDateTime.now(), "Java", null,
                             nomeArquivo, StatusLeitura.EM_ANDAMENTO, null, null, null, "Falha ao baixar do S3.", null);
-                            nomeArquivo, "EM_ANDAMENTO", null, null, null, "Falha ao baixar do S3.", null);
                     logImportacaoDao.marcarErro(logFalha);
                     logErro(logFalha.formatarLog());
                     logErro("Falha ao baixar " + nomeArquivo + ". Pulando.");
@@ -154,9 +152,6 @@ public class MainApp {
                     if (resultado.getStatusLeitura() == StatusLeitura.LIDO) {
                         categoria = "INFO";
                     } else if (resultado.getStatusLeitura() == StatusLeitura.PARCIALMENTE_LIDO) {
-                    if (resultado.getStatusLeitura().equals("LIDO")) {
-                        categoria = "INFO";
-                    } else if (resultado.getStatusLeitura().equals("PARCIALMENTE_LIDO")) {
                         categoria = "WARN";
                     }
                     String mensagem = String.format("Leitura %s: %d encontradas, %d lidas, %d rejeitadas.",
@@ -188,7 +183,6 @@ public class MainApp {
                                 "Importação interrompida; será retomada na próxima execução.",
                                 LocalDateTime.now(), "Java", null,
                                 nomeArquivo, StatusLeitura.EM_ANDAMENTO, null, null, null, e.getMessage(), null);
-                                nomeArquivo, "EM_ANDAMENTO", null, null, null, e.getMessage(), null);
                         logImportacaoDao.marcarErro(logErroLeitura);
                         logErro(logErroLeitura.formatarLog());
                     } catch (Exception ex) {

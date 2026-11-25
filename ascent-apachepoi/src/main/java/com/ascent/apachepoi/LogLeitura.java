@@ -6,7 +6,6 @@ public class LogLeitura extends LogServico {
 
     private String nomeArquivo;
     private StatusLeitura statusLeitura;
-    private String statusLeitura;
     private Integer linhasEncontradas;
     private Integer linhasLidas;
     private Integer linhasRejeitadas;
@@ -17,7 +16,6 @@ public class LogLeitura extends LogServico {
 
     public LogLeitura(Integer idLogServico, String categoria, String servico, String mensagem, LocalDateTime dataHora, String origemCadastro, Integer fkUsuario,
                       String nomeArquivo, StatusLeitura statusLeitura, Integer linhasEncontradas, Integer linhasLidas, Integer linhasRejeitadas, String detalheErro, Long idInicialVoo) {
-                      String nomeArquivo, String statusLeitura, Integer linhasEncontradas, Integer linhasLidas, Integer linhasRejeitadas, String detalheErro, Long idInicialVoo) {
         super(idLogServico, categoria, servico, mensagem, dataHora, origemCadastro, fkUsuario);
         this.nomeArquivo = nomeArquivo;
         this.statusLeitura = statusLeitura;
@@ -41,11 +39,6 @@ public class LogLeitura extends LogServico {
     }
 
     public void setStatusLeitura(StatusLeitura statusLeitura) {
-    public String getStatusLeitura() {
-        return statusLeitura;
-    }
-
-    public void setStatusLeitura(String statusLeitura) {
         this.statusLeitura = statusLeitura;
     }
 
