@@ -231,6 +231,9 @@ WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Gerenciar Alert
 INSERT INTO permissao (nomePermissao)
 SELECT 'Gerenciar Organização' FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Gerenciar Organização');
+INSERT INTO permissao (nomePermissao)
+SELECT 'Adicionar Usuário' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Adicionar Usuário');
 
 INSERT INTO permissao (nomePermissao)
 SELECT 'Editar Usuário' FROM DUAL
@@ -312,3 +315,25 @@ LEFT JOIN cargoPermissao cp ON cp.fkCargo = c.idCargo AND cp.fkPermissao = p.idP
 WHERE co.codCompanhia = 1001
   AND c.cargo = 'Administrador'
   AND cp.fkCargo IS NULL;
+SELECT 'Excluir Usuário' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Excluir Usuário');
+
+INSERT INTO permissao (nomePermissao)
+SELECT 'Gerenciar Cargos' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Gerenciar Cargos');
+
+INSERT INTO funcionalidade (nomeFuncionalidade)
+SELECT 'Acessar Dashboard' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Acessar Dashboard');
+
+INSERT INTO funcionalidade (nomeFuncionalidade)
+SELECT 'Exportar Relatórios' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Exportar Relatórios');
+
+INSERT INTO funcionalidade (nomeFuncionalidade)
+SELECT 'Visualizar Gráficos de Ocupação' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Visualizar Gráficos de Ocupação');
+
+INSERT INTO funcionalidade (nomeFuncionalidade)
+SELECT 'Configurações Avançadas' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Configurações Avançadas');
