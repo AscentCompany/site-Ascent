@@ -64,6 +64,9 @@ public class LogImportacaoDao {
                 "WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = ?",
                 log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getOrigemCadastro(), log.getIdInicialVoo(),
                 log.getNomeArquivo(), StatusLeitura.EM_ANDAMENTO.name());
+                "WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = 'EM_ANDAMENTO'",
+                log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getOrigemCadastro(), log.getIdInicialVoo(),
+                log.getNomeArquivo());
 
         if (atualizados == 0) {
             jdbcTemplate.update(
@@ -72,6 +75,7 @@ public class LogImportacaoDao {
                     " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     log.getCategoria(), log.getServico(), log.getMensagem(), log.getDataHora(), log.getOrigemCadastro(), log.getFkUsuario(),
                     log.getNomeArquivo(), log.getStatusLeitura().name(), log.getLinhasEncontradas(), log.getLinhasLidas(),
+                    log.getNomeArquivo(), log.getStatusLeitura(), log.getLinhasEncontradas(), log.getLinhasLidas(),
                     log.getLinhasRejeitadas(), log.getDetalheErro(), log.getIdInicialVoo());
         }
     }
@@ -84,6 +88,10 @@ public class LogImportacaoDao {
                 log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getOrigemCadastro(),
                 log.getStatusLeitura().name(), log.getLinhasEncontradas(), log.getLinhasLidas(), log.getLinhasRejeitadas(), log.getDetalheErro(),
                 log.getNomeArquivo(), StatusLeitura.EM_ANDAMENTO.name());
+                " WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = 'EM_ANDAMENTO'",
+                log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getOrigemCadastro(),
+                log.getStatusLeitura(), log.getLinhasEncontradas(), log.getLinhasLidas(), log.getLinhasRejeitadas(), log.getDetalheErro(),
+                log.getNomeArquivo());
     }
 
  
@@ -93,5 +101,8 @@ public class LogImportacaoDao {
                 "WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = ?",
                 log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getDetalheErro(),
                 log.getNomeArquivo(), StatusLeitura.EM_ANDAMENTO.name());
+                "WHERE nomeArquivo = ? AND servico = 'importacao' AND statusLeitura = 'EM_ANDAMENTO'",
+                log.getCategoria(), log.getMensagem(), log.getDataHora(), log.getDetalheErro(),
+                log.getNomeArquivo());
     }
 }

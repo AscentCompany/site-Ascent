@@ -18,12 +18,14 @@ public class LeitorLogServico {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    // Logs padrao: registros que nao sao de leitura de arquivo.
     public List<LogServico> buscarLogsServico() {
         String sql = "SELECT idLogServico, categoria, servico, mensagem, dataHora, origemCadastro, fkUsuario"
                 + " FROM logsServico WHERE nomeArquivo IS NULL ORDER BY dataHora ASC";
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(LogServico.class));
     }
 
+    // Logs de leitura: registros que possuem nomeArquivo.
     public List<LogLeitura> buscarLogsLeitura() {
         String sql = "SELECT idLogServico, categoria, servico, mensagem, dataHora, origemCadastro, fkUsuario,"
                 + " nomeArquivo, statusLeitura, linhasEncontradas, linhasLidas, linhasRejeitadas, detalheErro, idInicialVoo"
@@ -31,6 +33,8 @@ public class LeitorLogServico {
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(LogLeitura.class));
     }
 
+    // Junta todos os tipos de log em uma unica lista.
+    // Como LogLeitura herda de LogServico, ele pode entrar na mesma lista.
     public List<LogServico> buscarTodosLogs() {
         List<LogServico> todos = new ArrayList<>();
         todos.addAll(buscarLogsServico());
@@ -47,6 +51,7 @@ public class LeitorLogServico {
 
         System.out.println("===================Total de logs: " + logs.size() + "=======================");
         for (int i = logs.size() - 1; i >= 0; i--) {
+            // Se o log for um LogLeitura, o formatarLog dele e chamado automaticamente.
             System.out.println(logs.get(i).formatarLog());
         }
     }
