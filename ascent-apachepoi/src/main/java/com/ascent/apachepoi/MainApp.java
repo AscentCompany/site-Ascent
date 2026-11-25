@@ -36,7 +36,7 @@ public class MainApp {
         String bucket      = LeitorExcel.getEnvOrProp("AWS_BUCKET", "ascent-base-de-dados");
         String prefixo     = LeitorExcel.getEnvOrProp("AWS_PREFIXO_ARQUIVOS", "anac_part_");
         String region      = LeitorExcel.getEnvOrProp("AWS_REGION", "us-east-1");
-        int    totalPartes = Integer.parseInt(LeitorExcel.getEnvOrProp("AWS_TOTAL_PARTES", "23"));
+        Integer    totalPartes = Integer.parseInt(LeitorExcel.getEnvOrProp("AWS_TOTAL_PARTES", "23"));
 
         log("╔══════════════════════════════════════════════╗");
         log("║        Ascent — Importação S3 → MySQL        ║");
@@ -104,7 +104,7 @@ public class MainApp {
 
                 LogLeitura logInicio = new LogLeitura(null, "INFO", "importacao", "Importação em andamento.",
                         LocalDateTime.now(), "Java", null,
-                        nomeArquivo, "EM_ANDAMENTO", null, null, null, null, idInicial);
+                        nomeArquivo, StatusLeitura.EM_ANDAMENTO, null, null, null, null, idInicial);
                 logImportacaoDao.iniciarArquivo(logInicio);
                 log(logInicio.formatarLog());
 
@@ -114,7 +114,7 @@ public class MainApp {
                     LogLeitura logFalha = new LogLeitura(null, "ERROR", "importacao",
                             "Importação interrompida; será retomada na próxima execução.",
                             LocalDateTime.now(), "Java", null,
-                            nomeArquivo, "EM_ANDAMENTO", null, null, null, "Falha ao baixar do S3.", null);
+                            nomeArquivo, StatusLeitura.EM_ANDAMENTO, null, null, null, "Falha ao baixar do S3.", null);
                     logImportacaoDao.marcarErro(logFalha);
                     logErro(logFalha.formatarLog());
                     logErro("Falha ao baixar " + nomeArquivo + ". Pulando.");
@@ -149,9 +149,9 @@ public class MainApp {
 
                     // Só fecha o arquivo depois que os dados foram gravados.
                     String categoria = "ERROR";
-                    if (resultado.getStatusLeitura().equals("LIDO")) {
+                    if (resultado.getStatusLeitura() == StatusLeitura.LIDO) {
                         categoria = "INFO";
-                    } else if (resultado.getStatusLeitura().equals("PARCIALMENTE_LIDO")) {
+                    } else if (resultado.getStatusLeitura() == StatusLeitura.PARCIALMENTE_LIDO) {
                         categoria = "WARN";
                     }
                     String mensagem = String.format("Leitura %s: %d encontradas, %d lidas, %d rejeitadas.",
@@ -182,7 +182,7 @@ public class MainApp {
                         LogLeitura logErroLeitura = new LogLeitura(null, "ERROR", "importacao",
                                 "Importação interrompida; será retomada na próxima execução.",
                                 LocalDateTime.now(), "Java", null,
-                                nomeArquivo, "EM_ANDAMENTO", null, null, null, e.getMessage(), null);
+                                nomeArquivo, StatusLeitura.EM_ANDAMENTO, null, null, null, e.getMessage(), null);
                         logImportacaoDao.marcarErro(logErroLeitura);
                         logErro(logErroLeitura.formatarLog());
                     } catch (Exception ex) {
