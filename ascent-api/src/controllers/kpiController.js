@@ -251,9 +251,121 @@ function buscarDadosKpiOcupacaoMedia(req, res) {
         });
 }
 
+function buscarDadosKpiRotaMaiorIncidencia(req, res) {
+    let idCompanhia = Number(req.params.idCompanhia);
+
+    if (isNaN(idCompanhia) || idCompanhia <= 0) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: "ID da companhia inválido ou não informado."
+        });
+    }
+
+    kpiModel.obterRotaMaiorIncidencia(idCompanhia)
+        .then(function (resultado) {
+            res.json({
+                sucesso: true,
+                dados: resultado
+            });
+        })
+        .catch(function (erro) {
+            console.error("Erro ao buscar rota com maior incidência:", erro);
+            res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar dados da KPI de rota com maior incidência.",
+                erro: erro.sqlMessage || erro.message || erro
+            });
+        });
+}
+
+function buscarDadosKpiAeroportoMenorProcura(req, res) {
+    let idCompanhia = Number(req.params.idCompanhia);
+
+    if (isNaN(idCompanhia) || idCompanhia <= 0) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: "ID da companhia inválido ou não informado."
+        });
+    }
+
+    kpiModel.obterAeroportoMenorProcura(idCompanhia)
+        .then(function (resultado) {
+            res.json({
+                sucesso: true,
+                dados: resultado
+            });
+        })
+        .catch(function (erro) {
+            console.error("Erro ao buscar aeroporto com menor procura:", erro);
+            res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar dados da KPI de aeroporto com mais baixa procura.",
+                erro: erro.sqlMessage || erro.message || erro
+            });
+        });
+}
+
+function buscarDadosKpiHubMaiorCirculacao(req, res) {
+    let idCompanhia = Number(req.params.idCompanhia);
+
+    if (isNaN(idCompanhia) || idCompanhia <= 0) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: "ID da companhia inválido ou não informado."
+        });
+    }
+
+    kpiModel.obterHubMaiorCirculacao(idCompanhia)
+        .then(function (resultado) {
+            res.json({
+                sucesso: true,
+                dados: resultado
+            });
+        })
+        .catch(function (erro) {
+            console.error("Erro ao buscar hub com maior circulação:", erro);
+            res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar dados da KPI de hub com maior circulação.",
+                erro: erro.sqlMessage || erro.message || erro
+            });
+        });
+}
+
+function buscarDadosKpiMesMaiorProcuraRotas(req, res) {
+    let idCompanhia = Number(req.params.idCompanhia);
+
+    if (isNaN(idCompanhia) || idCompanhia <= 0) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: "ID da companhia inválido ou não informado."
+        });
+    }
+
+    kpiModel.obterMesMaiorProcuraRotas(idCompanhia)
+        .then(function (resultado) {
+            res.json({
+                sucesso: true,
+                dados: resultado
+            });
+        })
+        .catch(function (erro) {
+            console.error("Erro ao buscar mês com maior procura de voos:", erro);
+            res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar dados da KPI de mês com maior procura de voos.",
+                erro: erro.sqlMessage || erro.message || erro
+            });
+        });
+}
+
 module.exports = {
     buscarDadosKpiBenchmark,
     buscarDadosKpiVolumeMedio,
     buscarDadosKpiMesMaiorProcura,
-    buscarDadosKpiOcupacaoMedia
+    buscarDadosKpiOcupacaoMedia,
+    buscarDadosKpiRotaMaiorIncidencia,
+    buscarDadosKpiAeroportoMenorProcura,
+    buscarDadosKpiHubMaiorCirculacao,
+    buscarDadosKpiMesMaiorProcuraRotas
 };

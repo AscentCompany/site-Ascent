@@ -19,4 +19,20 @@ router.get("/ocupacao-media/:idCompanhia", cache(15), function (req, res) {
     kpiController.buscarDadosKpiOcupacaoMedia(req, res);
 });
 
+router.get("/rotas/maior-incidencia/:idCompanhia", cache(15), function (req, res) {
+    kpiController.buscarDadosKpiRotaMaiorIncidencia(req, res);
+});
+
+router.get("/rotas/aeroporto-menor-procura/:idCompanhia", cache(15), function (req, res) {
+    kpiController.buscarDadosKpiAeroportoMenorProcura(req, res);
+});
+
+router.get("/rotas/hub-maior-circulacao/:idCompanhia", cache(15), function (req, res) {
+    kpiController.buscarDadosKpiHubMaiorCirculacao(req, res);
+});
+
+router.get("/rotas/mes-maior-procura/:idCompanhia", cache(15), function (req, res) {
+    kpiController.buscarDadosKpiMesMaiorProcuraRotas(req, res);
+});
+
 module.exports = router;

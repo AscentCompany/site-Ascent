@@ -399,6 +399,99 @@ body.menu-fechado .btn-menu {
   color: #c62828;
 }
 
+.kpi-comparacao {
+  display: flex;
+  width: 100%;
+}
+
+.kpi-coluna {
+  display: flex;
+  flex-direction: column;
+  width: 50%;
+  padding-right: 8px;
+  overflow: hidden;
+}
+
+.kpi-coluna-direita {
+  padding-right: 0;
+  padding-left: 10px;
+  border-left: 1px solid #eceef2;
+}
+
+.kpi-coluna-titulo {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #6b7280;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eceef2;
+  margin-bottom: 5px;
+}
+
+.kpi-coluna-nome {
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-coluna-taxa {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1f242e;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.kpi-coluna-taxa small {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.kpi-coluna-taxa.positive {
+  color: #53c529;
+}
+
+.kpi-coluna-taxa.negative {
+  color: #c62828;
+}
+
+.kpi-detalhe-rodape {
+  width: 100%;
+  margin-top: 2px;
+  padding-top: 5px;
+  border-top: 1px solid #eceef2;
+  display: flex;
+  font-size: 11px;
+  line-height: 1.25;
+  color: #6b7280;
+}
+
+.kpi-rodape-coluna {
+  width: 50%;
+  padding-right: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-rodape-coluna-direita {
+  padding-right: 0;
+  padding-left: 10px;
+  border-left: 1px solid #eceef2;
+}
+
+@media (hover: none), (max-width: 900px) {
+  .kpi-coluna-nome {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (max-width: 1200px) {
   .kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -70,42 +70,69 @@
 
     <section class="kpis">
       <article class="card kpi-card">
-        <h2>Rota com maior incidência</h2>
-        <div class="kpi-card-main">
-          <div class="big">GRU - GIG</div>
+        <h2 id="kpi-titulo-rota-maior-incidencia">Rota com maior incidência</h2>
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome" id="kpi-rota-nome-companhia">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-rota-taxa-companhia">--%</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Mercado</span>
+            <span class="kpi-coluna-nome" id="kpi-rota-nome-mercado">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-rota-taxa-mercado">--%</strong>
+          </div>
         </div>
-        <div class="sub">
-          <strong class="positive">▲ 75%</strong> da procura geral · <strong class="positive">▲ 4,8%</strong> vs. ano ant.
-        </div>
-      </article>
-
-      <article class="card kpi-card">
-        <h2>Aeroporto com mais baixa procura</h2>
-        <div class="kpi-card-main">
-          <div class="big">VIX <span class="unit">(Vitória)</span></div>
-        </div>
-        <div class="sub">
-          <strong class="negative">▼ Queda de 15%</strong> na procura vs. ano ant. (30 / 85)
-        </div>
-      </article>
-
-      <article class="card kpi-card">
-        <h2>Hub com maior circulação</h2>
-        <div class="kpi-card-main">
-          <div class="big">GRU <span class="unit">(Guarulhos)</span></div>
-        </div>
-        <div class="sub">
-          <strong class="positive">▲ 77%</strong> dos voos passaram por esse aeroporto (77 / 100)
+        <div class="sub kpi-detalhe-rodape" id="kpi-sub-rota-maior-incidencia">
+          Carregando dados...
         </div>
       </article>
 
       <article class="card kpi-card">
-        <h2>Mês com maior procura de voos</h2>
-        <div class="kpi-card-main">
-          <div class="big">Junho</div>
+        <h2 id="kpi-titulo-aeroporto-menor-procura">Aeroporto com mais baixa procura</h2>
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome" id="kpi-menor-nome-companhia">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-menor-valor-companhia">--</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Mercado</span>
+            <span class="kpi-coluna-nome" id="kpi-menor-nome-mercado">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-menor-valor-mercado">--</strong>
+          </div>
         </div>
-        <div class="sub">
-          <strong class="positive">▲ 14%</strong> da procura geral · <strong class="positive">▲ 3,4%</strong> vs. ano ant.
+        <div class="sub kpi-detalhe-rodape" id="kpi-sub-aeroporto-menor-procura">
+          Carregando dados...
+        </div>
+      </article>
+
+      <article class="card kpi-card">
+        <h2 id="kpi-titulo-hub-maior-circulacao">Hub com maior circulação</h2>
+        <div class="kpi-comparacao">
+          <div class="kpi-coluna">
+            <span class="kpi-coluna-titulo">Sua companhia</span>
+            <span class="kpi-coluna-nome" id="kpi-hub-nome-companhia">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-hub-taxa-companhia">--%</strong>
+          </div>
+          <div class="kpi-coluna kpi-coluna-direita">
+            <span class="kpi-coluna-titulo">Mercado</span>
+            <span class="kpi-coluna-nome" id="kpi-hub-nome-mercado">--</span>
+            <strong class="kpi-coluna-taxa" id="kpi-hub-taxa-mercado">--%</strong>
+          </div>
+        </div>
+        <div class="sub kpi-detalhe-rodape" id="kpi-sub-hub-maior-circulacao">
+          Carregando dados...
+        </div>
+      </article>
+
+      <article class="card kpi-card">
+        <h2 id="kpi-titulo-mes-maior-procura">Mês com maior procura de voos</h2>
+        <div class="kpi-card-main">
+          <div class="big" id="kpi-mes-maior-procura">--</div>
+        </div>
+        <div class="sub" id="kpi-sub-mes-maior-procura">
+          Carregando dados...
         </div>
       </article>
     </section>
@@ -421,6 +448,314 @@
       }
     }
   });
+
+  function preencherVariacao(elementoDestino, diferenca, textoComparacao, adicionarSeparador) {
+    if (adicionarSeparador) {
+      elementoDestino.append(' · ');
+    }
+
+    if (diferenca === null || diferenca === undefined || isNaN(Number(diferenca))) {
+      elementoDestino.append(`-- ${textoComparacao}`);
+      return;
+    }
+
+    let valor = Number(diferenca);
+    let seta = valor >= 0 ? '▲' : '▼';
+    let classe = valor >= 0 ? 'positive' : 'negative';
+    let valorFormatado = Math.abs(valor).toFixed(1).replace('.', ',');
+
+    let tagStrong = document.createElement('strong');
+    tagStrong.className = classe;
+    tagStrong.textContent = `${seta} ${valorFormatado}%`;
+
+    elementoDestino.append(tagStrong, ` ${textoComparacao}`);
+  }
+
+  function formatarPercentualKpi(valor) {
+    if (valor === null || valor === undefined || isNaN(Number(valor))) {
+      return '--';
+    }
+    return Number(valor).toLocaleString('pt-BR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1
+    }) + '%';
+  }
+
+  function preencherPassageirosKpi(elementoValor, totalPassageiros, classeCor) {
+    elementoValor.textContent = '';
+    elementoValor.className = classeCor ? `kpi-coluna-taxa ${classeCor}` : 'kpi-coluna-taxa';
+
+    if (totalPassageiros === null || totalPassageiros === undefined || isNaN(Number(totalPassageiros))) {
+      elementoValor.textContent = '--';
+      return;
+    }
+
+    elementoValor.append(Number(totalPassageiros).toLocaleString('pt-BR') + ' ');
+    let tagSmall = document.createElement('small');
+    tagSmall.textContent = 'pass.';
+    elementoValor.appendChild(tagSmall);
+  }
+
+  function preencherRodapeComparativo(elementoDestino, numeroCompanhia, numeroMercado) {
+    if (!elementoDestino) return;
+    elementoDestino.textContent = '';
+
+    let colComp = document.createElement('span');
+    colComp.className = 'kpi-rodape-coluna';
+    colComp.textContent = numeroCompanhia || '--';
+
+    let colMerc = document.createElement('span');
+    colMerc.className = 'kpi-rodape-coluna kpi-rodape-coluna-direita';
+    colMerc.textContent = numeroMercado || '--';
+
+    elementoDestino.append(colComp, colMerc);
+  }
+
+  function formatarFracaoNumeros(numerador, denominador) {
+    if (numerador === null || numerador === undefined || !denominador) {
+      return '--';
+    }
+    return `${Number(numerador).toLocaleString('pt-BR')} / ${Number(denominador).toLocaleString('pt-BR')}`;
+  }
+
+  function carregarKpiRotaMaiorIncidencia() {
+    let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoTitulo = document.getElementById('kpi-titulo-rota-maior-incidencia');
+    let elNomeComp = document.getElementById('kpi-rota-nome-companhia');
+    let elTaxaComp = document.getElementById('kpi-rota-taxa-companhia');
+    let elNomeMerc = document.getElementById('kpi-rota-nome-mercado');
+    let elTaxaMerc = document.getElementById('kpi-rota-taxa-mercado');
+    let elSub = document.getElementById('kpi-sub-rota-maior-incidencia');
+
+    fetch(`/api/kpis/rotas/maior-incidencia/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let dados = json.dados;
+        if (elementoTitulo && dados.anoReferencia) {
+          elementoTitulo.textContent = `Rota com maior incidência (${dados.anoReferencia})`;
+        }
+
+        let comp = dados.suaCompanhia || {};
+        let merc = dados.mercado || {};
+
+        let numComp = comp.rota ? formatarFracaoNumeros(comp.quantidadeVoos, comp.totalVoos) : '--';
+        let numMerc = merc.rota ? formatarFracaoNumeros(merc.quantidadeVoos, merc.totalVoos) : '--';
+
+        elNomeComp.textContent = comp.rota || 'Sem dados';
+        elNomeComp.title = comp.rota || '';
+
+        elNomeMerc.textContent = merc.rota || 'Sem dados';
+        elNomeMerc.title = merc.rota || '';
+
+        elTaxaComp.textContent = formatarPercentualKpi(comp.percentual);
+        elTaxaComp.className = 'kpi-coluna-taxa';
+
+        elTaxaMerc.textContent = formatarPercentualKpi(merc.percentual);
+        elTaxaMerc.className = 'kpi-coluna-taxa';
+
+        preencherRodapeComparativo(elSub, numComp, numMerc);
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de rota com maior incidência:', erro);
+        elNomeComp.textContent = '--';
+        elNomeComp.title = '';
+        elTaxaComp.textContent = '--';
+        elTaxaComp.className = 'kpi-coluna-taxa';
+
+        elNomeMerc.textContent = '--';
+        elNomeMerc.title = '';
+        elTaxaMerc.textContent = '--';
+        elTaxaMerc.className = 'kpi-coluna-taxa';
+
+        preencherRodapeComparativo(elSub, '--', '--');
+      });
+  }
+
+  function carregarKpiAeroportoMenorProcura() {
+    let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoTitulo = document.getElementById('kpi-titulo-aeroporto-menor-procura');
+    let elNomeComp = document.getElementById('kpi-menor-nome-companhia');
+    let elValorComp = document.getElementById('kpi-menor-valor-companhia');
+    let elNomeMerc = document.getElementById('kpi-menor-nome-mercado');
+    let elValorMerc = document.getElementById('kpi-menor-valor-mercado');
+    let elSub = document.getElementById('kpi-sub-aeroporto-menor-procura');
+
+    fetch(`/api/kpis/rotas/aeroporto-menor-procura/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let dados = json.dados;
+        if (elementoTitulo && dados.anoReferencia) {
+          elementoTitulo.textContent = `Aeroporto com mais baixa procura (${dados.anoReferencia})`;
+        }
+
+        let comp = dados.suaCompanhia || {};
+        let merc = dados.mercado || {};
+
+        let numComp = comp.nomeAeroporto ? formatarFracaoNumeros(comp.totalPassageiros, comp.totalAssentos) : '--';
+        let numMerc = merc.nomeAeroporto ? formatarFracaoNumeros(merc.totalPassageiros, merc.totalAssentos) : '--';
+
+        elNomeComp.textContent = comp.nomeAeroporto || 'Sem dados';
+        elNomeComp.title = comp.nomeAeroporto || '';
+
+        elNomeMerc.textContent = merc.nomeAeroporto || 'Sem dados';
+        elNomeMerc.title = merc.nomeAeroporto || '';
+
+        let temComp = comp.totalPassageiros !== null && comp.totalPassageiros !== undefined;
+        let temMerc = merc.totalPassageiros !== null && merc.totalPassageiros !== undefined;
+        let classeComp = temComp && temMerc
+          ? (Number(comp.totalPassageiros) <= Number(merc.totalPassageiros) ? 'negative' : 'positive')
+          : '';
+
+        preencherPassageirosKpi(elValorComp, comp.totalPassageiros, classeComp);
+        preencherPassageirosKpi(elValorMerc, merc.totalPassageiros, '');
+        preencherRodapeComparativo(elSub, numComp, numMerc);
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de aeroporto com mais baixa procura:', erro);
+        elNomeComp.textContent = '--';
+        elNomeComp.title = '';
+        elValorComp.textContent = '--';
+        elValorComp.className = 'kpi-coluna-taxa';
+
+        elNomeMerc.textContent = '--';
+        elNomeMerc.title = '';
+        elValorMerc.textContent = '--';
+        elValorMerc.className = 'kpi-coluna-taxa';
+
+        preencherRodapeComparativo(elSub, '--', '--');
+      });
+  }
+
+  function carregarKpiHubMaiorCirculacao() {
+    let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoTitulo = document.getElementById('kpi-titulo-hub-maior-circulacao');
+    let elNomeComp = document.getElementById('kpi-hub-nome-companhia');
+    let elTaxaComp = document.getElementById('kpi-hub-taxa-companhia');
+    let elNomeMerc = document.getElementById('kpi-hub-nome-mercado');
+    let elTaxaMerc = document.getElementById('kpi-hub-taxa-mercado');
+    let elSub = document.getElementById('kpi-sub-hub-maior-circulacao');
+
+    fetch(`/api/kpis/rotas/hub-maior-circulacao/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let dados = json.dados;
+        if (elementoTitulo && dados.anoReferencia) {
+          elementoTitulo.textContent = `Hub com maior circulação (${dados.anoReferencia})`;
+        }
+
+        let comp = dados.suaCompanhia || {};
+        let merc = dados.mercado || {};
+
+        let numComp = comp.nomeAeroporto ? formatarFracaoNumeros(comp.voosNoAeroporto, comp.totalVoos) : '--';
+        let numMerc = merc.nomeAeroporto ? formatarFracaoNumeros(merc.voosNoAeroporto, merc.totalVoos) : '--';
+
+        elNomeComp.textContent = comp.nomeAeroporto || 'Sem dados';
+        elNomeComp.title = comp.nomeAeroporto || '';
+
+        elNomeMerc.textContent = merc.nomeAeroporto || 'Sem dados';
+        elNomeMerc.title = merc.nomeAeroporto || '';
+
+        let temComp = comp.percentual !== null && comp.percentual !== undefined;
+        let temMerc = merc.percentual !== null && merc.percentual !== undefined;
+        let classeComp = temComp && temMerc
+          ? (Number(comp.percentual) >= Number(merc.percentual) ? 'positive' : 'negative')
+          : '';
+
+        elTaxaComp.textContent = formatarPercentualKpi(comp.percentual);
+        elTaxaComp.className = classeComp ? `kpi-coluna-taxa ${classeComp}` : 'kpi-coluna-taxa';
+
+        elTaxaMerc.textContent = formatarPercentualKpi(merc.percentual);
+        elTaxaMerc.className = 'kpi-coluna-taxa';
+
+        preencherRodapeComparativo(elSub, numComp, numMerc);
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de hub com maior circulação:', erro);
+        elNomeComp.textContent = '--';
+        elNomeComp.title = '';
+        elTaxaComp.textContent = '--';
+        elTaxaComp.className = 'kpi-coluna-taxa';
+
+        elNomeMerc.textContent = '--';
+        elNomeMerc.title = '';
+        elTaxaMerc.textContent = '--';
+        elTaxaMerc.className = 'kpi-coluna-taxa';
+
+        preencherRodapeComparativo(elSub, '--', '--');
+      });
+  }
+
+  function carregarKpiMesMaiorProcura() {
+    let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoTitulo = document.getElementById('kpi-titulo-mes-maior-procura');
+    let elementoMes = document.getElementById('kpi-mes-maior-procura');
+    let elementoSub = document.getElementById('kpi-sub-mes-maior-procura');
+
+    fetch(`/api/kpis/rotas/mes-maior-procura/${companhiaId}`)
+      .then(function (resposta) {
+        if (!resposta.ok) {
+          throw new Error('Erro HTTP: ' + resposta.status);
+        }
+        return resposta.json();
+      })
+      .then(function (json) {
+        if (!json.sucesso || !json.dados) {
+          throw new Error('Resposta inválida da API');
+        }
+
+        let dados = json.dados;
+        if (elementoTitulo && dados.anoReferencia) {
+          elementoTitulo.textContent = `Mês com maior procura de voos (${dados.anoReferencia})`;
+        }
+
+        elementoMes.textContent = dados.mesNome || '--';
+        elementoSub.textContent = '';
+
+        let tagShare = document.createElement('strong');
+        tagShare.className = 'positive';
+        tagShare.textContent = `▲ ${String(dados.shareGeral || 0).replace('.', ',')}%`;
+        elementoSub.append(tagShare, ' da procura geral');
+
+        preencherVariacao(elementoSub, dados.vsAnoAnterior, 'vs. ano ant.', true);
+      })
+      .catch(function (erro) {
+        console.error('Erro ao carregar KPI de mês com maior procura de voos:', erro);
+        elementoMes.textContent = '--';
+        elementoSub.textContent = 'Não foi possível carregar os dados.';
+      });
+  }
+
+  carregarKpiRotaMaiorIncidencia();
+  carregarKpiAeroportoMenorProcura();
+  carregarKpiHubMaiorCirculacao();
+  carregarKpiMesMaiorProcura();
 </script>
 
 <div id="modal-alerta-container"></div>
