@@ -148,6 +148,23 @@
       if (acessoGrid) {
         acessoGrid.style.visibility = "";
       }
+      document.documentElement.classList.add("permissoes-prontas");
+    }
+
+    var cacheFuncionalidades = typeof obterFuncionalidadesCargoCache === "function"
+      ? obterFuncionalidadesCargoCache()
+      : null;
+
+    if (cacheFuncionalidades !== null) {
+      aplicarRegras(cacheFuncionalidades);
+      return Promise.resolve(cacheFuncionalidades);
+    }
+
+    if (navEl) {
+      navEl.style.visibility = "hidden";
+    }
+    if (acessoGrid) {
+      acessoGrid.style.visibility = "hidden";
     }
 
     var cacheFuncionalidades = typeof obterFuncionalidadesCargoCache === "function"
