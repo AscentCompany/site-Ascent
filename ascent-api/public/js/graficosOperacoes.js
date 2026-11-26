@@ -111,6 +111,47 @@ const meses = [
 ];
 let quantidadeVoosMensais = new Array(12).fill(0);
 
+function calcularJitter(capacidade, passageiros, indice, amplitude) {
+  let amp = amplitude !== undefined ? amplitude : 4.5;
+  let s = Math.sin(capacidade * 17.3 + passageiros * 31.7 + indice * 13.1);
+  let normalizado = (s - Math.floor(s) - 0.5) * 2;
+  return Number((normalizado * amp).toFixed(2));
+}
+
+function processarPontosDispersao(pontos, ehCompanhia, amplitudeJitter) {
+  if (!Array.isArray(pontos)) return [];
+  let resultado = [];
+  for (let index = 0; index < pontos.length; index++) {
+    let ponto = pontos[index];
+    let capacidade = Number(ponto.x) || 0;
+    let passageiros = Number(ponto.y) || 0;
+    let quantidadeVoos = Number(ponto.quantidadeVoos) || 1;
+
+    if (capacidade <= 0 || passageiros < 0) continue;
+
+    let taxaOcupacao = (passageiros / capacidade) * 100;
+    // Descarta inconsistências pontuais de registros (ex: erro ANAC com ocupação > 115%)
+    if (taxaOcupacao > 115) continue;
+
+    let jitterX = calcularJitter(capacidade, passageiros, index, amplitudeJitter);
+
+    let raio = ehCompanhia
+      ? Math.min(11, Math.max(3.5, Math.sqrt(quantidadeVoos) * 1.5))
+      : Math.min(6, Math.max(1.8, Math.sqrt(quantidadeVoos) * 0.9));
+
+    resultado.push({
+      x: Number((capacidade + jitterX).toFixed(2)),
+      y: Number(taxaOcupacao.toFixed(1)),
+      r: raio,
+      capacidadeReal: capacidade,
+      passageirosReal: passageiros,
+      taxaOcupacao: taxaOcupacao,
+      quantidadeVoos: quantidadeVoos
+    });
+  }
+  return resultado;
+}
+
 const graficoEvolucao = new Chart(document.getElementById('grafico-evolucao'), {
   type: 'scatter',
   data: {
@@ -118,18 +159,56 @@ const graficoEvolucao = new Chart(document.getElementById('grafico-evolucao'), {
       {
         label: 'Mercado (todas as companhias)',
         data: [],
-        backgroundColor: 'rgba(181, 181, 181, 0.2)',
-        borderColor: 'rgba(181, 181, 181, 0.3)',
-        pointRadius: 1.5,
-        pointHoverRadius: 3
+        backgroundColor: 'rgba(160, 160, 160, 0.22)',
+        borderColor: 'rgba(160, 160, 160, 0.35)',
+        borderWidth: 1,
+        pointRadius: function (context) {
+          return context.raw && context.raw.r ? context.raw.r : 2;
+        },
+        pointHoverRadius: function (context) {
+          return (context.raw && context.raw.r ? context.raw.r : 2) + 2;
+        },
+        order: 3
       },
       {
         label: 'Sua companhia',
         data: [],
-        backgroundColor: '#ff6a00',
+        backgroundColor: 'rgba(255, 106, 0, 0.55)',
         borderColor: '#ff6a00',
-        pointRadius: 4,
-        pointHoverRadius: 6
+        borderWidth: 1.5,
+        pointRadius: function (context) {
+          return context.raw && context.raw.r ? context.raw.r : 4;
+        },
+        pointHoverRadius: function (context) {
+          return (context.raw && context.raw.r ? context.raw.r : 4) + 3;
+        },
+        order: 2
+      },
+      {
+        label: 'Capacidade Total (100%)',
+        data: [],
+        type: 'line',
+        showLine: true,
+        borderColor: 'rgba(40, 167, 69, 0.75)',
+        borderWidth: 1.5,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        fill: false,
+        order: 1
+      },
+      {
+        label: 'Break-even da Indústria (75%)',
+        data: [],
+        type: 'line',
+        showLine: true,
+        borderColor: 'rgba(235, 150, 0, 0.85)',
+        borderWidth: 1.5,
+        borderDash: [4, 4],
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        fill: false,
+        order: 1
       }
     ]
   },
@@ -142,11 +221,10 @@ const graficoEvolucao = new Chart(document.getElementById('grafico-evolucao'), {
         position: 'top',
         align: 'end',
         labels: {
-          boxWidth: 12,
-          boxHeight: 12,
+          boxWidth: 14,
+          boxHeight: 8,
           usePointStyle: true,
-          pointStyle: 'circle',
-          font: { size: 11 },
+          font: { size: 10 },
           color: '#555'
         }
       },
@@ -154,9 +232,16 @@ const graficoEvolucao = new Chart(document.getElementById('grafico-evolucao'), {
         callbacks: {
           label: function (contexto) {
             let ponto = contexto.raw;
+            if (!ponto || ponto.taxaOcupacao === undefined) {
+              return ` ${contexto.dataset.label}`;
+            }
             let quantidadeVoos = Number(ponto.quantidadeVoos) || 0;
             let vooLabel = quantidadeVoos === 1 ? 'voo' : 'voos';
-            return ` ${contexto.dataset.label}: ${ponto.y} passageiros / ${ponto.x} assentos (${quantidadeVoos} ${vooLabel})`;
+            let taxa = ponto.taxaOcupacao.toLocaleString('pt-BR', {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1
+            }) + '%';
+            return ` ${contexto.dataset.label}: ${taxa} de ocupação (${ponto.passageirosReal} pass. / ${ponto.capacidadeReal} assentos) [${Number(quantidadeVoos).toLocaleString('pt-BR')} ${vooLabel}]`;
           }
         }
       }
@@ -164,33 +249,36 @@ const graficoEvolucao = new Chart(document.getElementById('grafico-evolucao'), {
     scales: {
       x: {
         type: 'linear',
-        beginAtZero: true,
         grid: { display: false },
         border: { display: false },
         ticks: {
-          maxTicksLimit: 5,
+          maxTicksLimit: 6,
           color: '#777',
           font: { size: 10 }
         },
         title: {
           display: true,
-          text: 'Capacidade do Avião',
+          text: 'Capacidade do Avião (Assentos)',
           color: '#555',
           font: { size: 10, weight: '600' }
         }
       },
       y: {
-        beginAtZero: true,
+        min: 0,
+        max: 115,
         grid: { color: '#ececec' },
         border: { display: false },
         ticks: {
-          maxTicksLimit: 5,
+          maxTicksLimit: 6,
           color: '#777',
-          font: { size: 10 }
+          font: { size: 10 },
+          callback: function (valor) {
+            return valor + '%';
+          }
         },
         title: {
           display: true,
-          text: 'Nº de Passageiros',
+          text: 'Taxa de Ocupação Real (%)',
           color: '#555',
           font: { size: 10, weight: '600' }
         }
@@ -330,8 +418,30 @@ function carregarGraficosOperacoes() {
       document.getElementById('ano-grafico-evolucao').textContent = dados.anoReferencia;
       document.getElementById('ano-grafico-mensal').textContent = dados.anoReferencia;
 
-      graficoEvolucao.data.datasets[0].data = dadosDispersao.mercado;
-      graficoEvolucao.data.datasets[1].data = dadosDispersao.companhia;
+      let pontosMercadoProcessados = processarPontosDispersao(dadosDispersao.mercado, false, 3.5);
+      let pontosCompanhiaProcessados = processarPontosDispersao(dadosDispersao.companhia, true, 4.5);
+
+      let todasCapacidades = dadosDispersao.mercado.concat(dadosDispersao.companhia).map(function (p) {
+        return Number(p.x) || 0;
+      }).filter(function (c) {
+        return c > 0;
+      });
+
+      let minCapacidade = todasCapacidades.length > 0 ? Math.min.apply(null, todasCapacidades) : 50;
+      let maxCapacidade = todasCapacidades.length > 0 ? Math.max.apply(null, todasCapacidades) : 350;
+      let xInicio = Math.max(0, Math.floor(minCapacidade - 10));
+      let xFim = Math.ceil(maxCapacidade + 10);
+
+      graficoEvolucao.data.datasets[0].data = pontosMercadoProcessados;
+      graficoEvolucao.data.datasets[1].data = pontosCompanhiaProcessados;
+      graficoEvolucao.data.datasets[2].data = [
+        { x: xInicio, y: 100 },
+        { x: xFim, y: 100 }
+      ];
+      graficoEvolucao.data.datasets[3].data = [
+        { x: xInicio, y: 75 },
+        { x: xFim, y: 75 }
+      ];
       graficoEvolucao.update();
 
       graficoMensal.data.datasets[0].data = dadosMensais.mediaPassageiros;
