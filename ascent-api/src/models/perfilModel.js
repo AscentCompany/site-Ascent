@@ -1,53 +1,59 @@
 var database = require("../../database/config");
 
 // Escapa aspas simples para reduzir risco de SQL Injection
-// (o executar() do Web Data Viz recebe apenas a string da query)
 function esc(valor) {
     return String(valor).replace(/\\/g, "\\\\").replace(/'/g, "''");
 }
 
-// Nome e e-mail só são lidos, nunca alterados
+// Executa a query e imprime no terminal a instrução SQL + o resultado.
+// instrucaoLog é a versão "mascarada" (sem senhas) usada só para o console.
+function executarComLog(instrucao, instrucaoLog) {
+    console.log("Executando a instrução SQL: \n" + (instrucaoLog || instrucao) + "\n");
+    return database.executar(instrucao).then(function (resultado) {
+        console.log(resultado);
+        return resultado;
+    });
+}
+
+// Nome e e-mail: leitura
 function buscarPorId(idUsuario) {
     var instrucao = `
-        SELECT idUsuario, nome, email
-        FROM usuario
-        WHERE idUsuario = ${Number(idUsuario)};
+        SELECT idUsuario, nome, email FROM usuario WHERE idUsuario = ${Number(idUsuario)};
     `;
-    return database.executar(instrucao);
+    return executarComLog(instrucao);
 }
 
 // Confere se a senha informada bate com a do banco
 function validarSenhaAtual(idUsuario, senhaAtual) {
     var instrucao = `
-        SELECT idUsuario
-        FROM usuario
-        WHERE idUsuario = ${Number(idUsuario)}
-          AND senha = '${esc(senhaAtual)}';
+        SELECT idUsuario FROM usuario WHERE idUsuario = ${Number(idUsuario)} AND senha = '${esc(senhaAtual)}';
     `;
-    return database.executar(instrucao);
+    var instrucaoLog = `
+        SELECT idUsuario FROM usuario WHERE idUsuario = ${Number(idUsuario)} AND senha = '********';
+    `;
+    return executarComLog(instrucao, instrucaoLog);
+}
+
+function atualizarNome(idUsuario, nome) {
+    var instrucao = `
+        UPDATE usuario SET nome = '${esc(nome)}' WHERE idUsuario = ${Number(idUsuario)};
+    `;
+    return executarComLog(instrucao);
 }
 
 function atualizarSenha(idUsuario, novaSenha) {
     var instrucao = `
-        UPDATE usuario
-        SET senha = '${esc(novaSenha)}'
-        WHERE idUsuario = ${Number(idUsuario)};
+        UPDATE usuario SET senha = '${esc(novaSenha)}' WHERE idUsuario = ${Number(idUsuario)};
     `;
-    return database.executar(instrucao);
-}
-
-function atualizarNome(idUsuario, novoNome) {
-    var instrucao = `
-        UPDATE usuario
-        SET nome = '${esc(novoNome)}'
-        WHERE idUsuario = ${Number(idUsuario)};
+    var instrucaoLog = `
+        UPDATE usuario SET senha = '********' WHERE idUsuario = ${Number(idUsuario)};
     `;
-    return database.executar(instrucao);
+    return executarComLog(instrucao, instrucaoLog);
 }
 
 module.exports = {
     buscarPorId,
     validarSenhaAtual,
-    atualizarSenha,
-    atualizarNome
+    atualizarNome,
+    atualizarSenha
 };
