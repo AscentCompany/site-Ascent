@@ -176,12 +176,6 @@
   document.getElementById("nome-usuario").innerHTML = sessionStorage.NOME_USUARIO || "Usuário";
   if (window.innerWidth <= 900) document.body.classList.add("menu-fechado");
 
-  if (Number(sessionStorage.CARGO_USUARIO) > 2) {
-    alert("Você não tem permissão para acessar esta página.");
-    window.location.href = "/dashboard/dashboardOperacoes.html";
-  }
-
-
   function preencherAnos() {
     const ano = new Date().getFullYear();
     let opts = "";
