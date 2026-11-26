@@ -315,6 +315,8 @@ LEFT JOIN cargoPermissao cp ON cp.fkCargo = c.idCargo AND cp.fkPermissao = p.idP
 WHERE co.codCompanhia = 1001
   AND c.cargo = 'Administrador'
   AND cp.fkCargo IS NULL;
+
+INSERT INTO permissao (nomePermissao)
 SELECT 'Excluir Usuário' FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Excluir Usuário');
 
