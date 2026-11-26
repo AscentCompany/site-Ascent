@@ -288,15 +288,18 @@ function obterAnoReferencia(idCompanhia) {
     let id = Number(idCompanhia);
     if (isNaN(id) || id <= 0) id = 0;
 
+    let limiteAnoAtual = `${new Date().getFullYear()}-01-01`;
+
     let sqlCompanhia = `
         SELECT YEAR(MAX(ad.dia)) AS ultimoAno
-        FROM aeroportoDirecao ad
-        JOIN voo v ON v.idVoo = ad.fkVoo
+        FROM voo v
+        STRAIGHT_JOIN aeroportoDirecao ad ON ad.fkVoo = v.idVoo AND ad.direcao = 'Partida'
         WHERE v.fkCompanhia = ?
-        AND ad.dia IS NOT NULL;
+          AND ad.dia IS NOT NULL
+          AND ad.dia < ?;
     `;
 
-    return database.executar(sqlCompanhia, [id])
+    return database.executar(sqlCompanhia, [id, limiteAnoAtual])
         .then(function (res) {
             if (res.length > 0 && res[0].ultimoAno) {
                 return Number(res[0].ultimoAno);
@@ -304,9 +307,11 @@ function obterAnoReferencia(idCompanhia) {
             let sqlGlobal = `
                 SELECT YEAR(MAX(dia)) AS ultimoAno
                 FROM aeroportoDirecao
-                WHERE dia IS NOT NULL;
+                WHERE direcao = 'Partida'
+                  AND dia IS NOT NULL
+                  AND dia < ?;
             `;
-            return database.executar(sqlGlobal);
+            return database.executar(sqlGlobal, [limiteAnoAtual]);
         })
         .then(function (resGlobal) {
             if (typeof resGlobal === 'number') {
@@ -315,7 +320,7 @@ function obterAnoReferencia(idCompanhia) {
             if (resGlobal.length > 0 && resGlobal[0].ultimoAno) {
                 return Number(resGlobal[0].ultimoAno);
             }
-            return new Date().getFullYear() - 1;
+            return obterAnoAnteriorFechado();
         });
 }
 
