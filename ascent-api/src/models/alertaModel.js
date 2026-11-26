@@ -148,8 +148,8 @@ function processarRegra(idRegra, idCompanhia) {
                 SELECT ao.uf AS origemIata, ad2.uf AS destinoIata,
                        ROUND(100.0 * SUM(v.qtdPassageiros) / NULLIF(SUM(av.numAssentos), 0), 2) AS ocupacaoMedia
                 FROM voo v
-                JOIN aeroportoDirecao ad  ON ad.fkVoo = v.idVoo AND ad.direcao = 'ORIGEM'
-                JOIN aeroportoDirecao ad3 ON ad3.fkVoo = v.idVoo AND ad3.direcao = 'DESTINO'
+                JOIN aeroportoDirecao ad  ON ad.fkVoo = v.idVoo AND ad.direcao IN ('Partida', 'ORIGEM')
+                JOIN aeroportoDirecao ad3 ON ad3.fkVoo = v.idVoo AND ad3.direcao IN ('Destino', 'DESTINO')
                 JOIN aeroporto ao  ON ao.idAeroporto = ad.fkAeroporto
                 JOIN aeroporto ad2 ON ad2.idAeroporto = ad3.fkAeroporto
                 JOIN aviao av ON av.idAviao = v.fkAviao
@@ -231,8 +231,8 @@ function detalheAlerta(idAlerta, idCompanhia) {
             SELECT YEAR(ad.dia) AS ano,
                    ROUND(100.0 * SUM(v.qtdPassageiros) / NULLIF(SUM(av.numAssentos), 0), 2) AS ocupacaoMedia
             FROM voo v
-            JOIN aeroportoDirecao ad  ON ad.fkVoo = v.idVoo AND ad.direcao = 'ORIGEM'
-            JOIN aeroportoDirecao ad3 ON ad3.fkVoo = v.idVoo AND ad3.direcao = 'DESTINO'
+            JOIN aeroportoDirecao ad  ON ad.fkVoo = v.idVoo AND ad.direcao IN ('Partida', 'ORIGEM')
+            JOIN aeroportoDirecao ad3 ON ad3.fkVoo = v.idVoo AND ad3.direcao IN ('Destino', 'DESTINO')
             JOIN aeroporto ao  ON ao.idAeroporto = ad.fkAeroporto
             JOIN aeroporto ad2 ON ad2.idAeroporto = ad3.fkAeroporto
             JOIN aviao av ON av.idAviao = v.fkAviao
