@@ -89,7 +89,7 @@
       </article>
 
       <article class="card kpi-card">
-        <h2 id="kpi-titulo-aeroporto-menor-procura">Aeroporto com mais baixa procura</h2>
+        <h2 id="kpi-titulo-aeroporto-menor-procura">Aeroporto com maior baixa na procura</h2>
         <div class="kpi-comparacao">
           <div class="kpi-coluna">
             <span class="kpi-coluna-titulo">Sua companhia</span>
@@ -388,7 +388,7 @@
 
         let dados = json.dados;
         if (elementoTitulo && dados.anoReferencia) {
-          elementoTitulo.textContent = `Aeroporto com mais baixa procura (${dados.anoReferencia})`;
+          elementoTitulo.textContent = `Aeroporto com maior baixa na procura (${dados.anoReferencia})`;
         }
 
         let comp = dados.suaCompanhia || {};
@@ -414,7 +414,7 @@
         preencherRodapeComparativo(elSub, numComp, numMerc);
       })
       .catch(function (erro) {
-        console.error('Erro ao carregar KPI de aeroporto com mais baixa procura:', erro);
+        console.error('Erro ao carregar KPI de aeroporto com maior baixa na procura:', erro);
         elNomeComp.textContent = '--';
         elNomeComp.title = '';
         elValorComp.textContent = '--';

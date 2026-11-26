@@ -302,7 +302,7 @@ function buscarDadosKpiAeroportoMenorProcura(req, res) {
             console.error("Erro ao buscar aeroporto com menor procura:", erro);
             res.status(500).json({
                 sucesso: false,
-                mensagem: "Erro ao buscar dados da KPI de aeroporto com mais baixa procura.",
+                mensagem: "Erro ao buscar dados da KPI de aeroporto com maior baixa na procura.",
                 erro: erro.sqlMessage || erro.message || erro
             });
         });
