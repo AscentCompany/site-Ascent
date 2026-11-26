@@ -1,69 +1,93 @@
 var database = require("../../database/config");
 
+// Ano anterior fechado: mesma referência usada nos gráficos da dashboard de operações
+function obterAnoAnteriorFechado() {
+    return new Date().getFullYear() - 1;
+}
+
+function obterIntervaloAno(ano) {
+    return {
+        inicio: `${ano}-01-01`,
+        fim: `${ano + 1}-01-01`
+    };
+}
+
+// Totais de passageiros/assentos da companhia no ano (partidas), sempre retornando a companhia
+function montarSqlOcupacaoCompanhiaAno() {
+    return `
+        SELECT
+            c.idCompanhia,
+            c.nomeCompanhia,
+            COALESCE(dados.totalPassageiros, 0) AS totalPassageiros,
+            COALESCE(dados.totalAssentos, 0) AS totalAssentos,
+            (dados.totalPassageiros / NULLIF(dados.totalAssentos, 0)) * 100 AS taxaOcupacao
+        FROM companhia c
+        LEFT JOIN (
+            SELECT
+                SUM(v.qtdPassageiros) AS totalPassageiros,
+                SUM(av.numAssentos) AS totalAssentos
+            FROM voo v
+            STRAIGHT_JOIN aeroportoDirecao ad ON ad.fkVoo = v.idVoo AND ad.direcao = 'Partida'
+            STRAIGHT_JOIN aviao av ON av.idAviao = v.fkAviao
+            WHERE v.fkCompanhia = ?
+              AND ad.dia >= ? AND ad.dia < ?
+              AND v.qtdPassageiros IS NOT NULL
+              AND av.numAssentos > 0
+        ) dados ON 1 = 1
+        WHERE c.idCompanhia = ?;
+    `;
+}
+
 function obterBenchmarkOcupacao(idCompanhia) {
     let id = Number(idCompanhia);
     if (isNaN(id) || id <= 0) {
         id = 0;
     }
 
+    let anoReferencia = obterAnoAnteriorFechado();
+    let intervalo = obterIntervaloAno(anoReferencia);
+
     let sqlBenchmark = `
         SELECT
             c.idCompanhia,
             c.nomeCompanhia,
-            SUM(voos.totalPassageiros) AS totalPassageiros,
-            SUM(voos.quantidadeVoos * av.numAssentos) AS totalAssentos,
-            (
-                SUM(voos.totalPassageiros) /
-                NULLIF(SUM(voos.quantidadeVoos * av.numAssentos), 0)
-            ) * 100 AS taxaOcupacao
+            voos.totalPassageiros,
+            voos.totalAssentos,
+            (voos.totalPassageiros / NULLIF(voos.totalAssentos, 0)) * 100 AS taxaOcupacao
         FROM (
             SELECT
-                fkCompanhia,
-                fkAviao,
-                SUM(qtdPassageiros) AS totalPassageiros,
-                COUNT(*) AS quantidadeVoos
-            FROM voo FORCE INDEX (idx_voo_cia_passag_aviao)
-            WHERE qtdPassageiros IS NOT NULL
-            GROUP BY fkCompanhia, fkAviao
+                v.fkCompanhia,
+                SUM(v.qtdPassageiros) AS totalPassageiros,
+                SUM(av.numAssentos) AS totalAssentos
+            FROM aeroportoDirecao ad
+            STRAIGHT_JOIN voo v ON v.idVoo = ad.fkVoo
+            STRAIGHT_JOIN aviao av ON av.idAviao = v.fkAviao
+            WHERE ad.direcao = 'Partida'
+              AND ad.dia >= ? AND ad.dia < ?
+              AND v.qtdPassageiros IS NOT NULL
+              AND av.numAssentos > 0
+            GROUP BY v.fkCompanhia
         ) voos
-        STRAIGHT_JOIN aviao av
-            ON av.idAviao = voos.fkAviao AND av.numAssentos > 0
-        STRAIGHT_JOIN companhia c
-            ON c.idCompanhia = voos.fkCompanhia
-        GROUP BY c.idCompanhia, c.nomeCompanhia
+        JOIN companhia c ON c.idCompanhia = voos.fkCompanhia
         ORDER BY taxaOcupacao DESC
         LIMIT 1;
     `;
 
-    let sqlSuaCompanhia = `
-        SELECT
-            c.idCompanhia,
-            c.nomeCompanhia,
-            SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN v.qtdPassageiros ELSE 0 END) AS totalPassageiros,
-            SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN av.numAssentos ELSE 0 END) AS totalAssentos,
-            (
-                SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN v.qtdPassageiros END) /
-                NULLIF(SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN av.numAssentos END), 0)
-            ) * 100 AS taxaOcupacao
-        FROM companhia c
-        LEFT JOIN voo v ON v.fkCompanhia = c.idCompanhia
-        LEFT JOIN aviao av ON av.idAviao = v.fkAviao
-        WHERE c.idCompanhia = ${id}
-        GROUP BY c.idCompanhia, c.nomeCompanhia;
-    `;
+    let sqlSuaCompanhia = montarSqlOcupacaoCompanhiaAno();
 
     let resposta = {
+        anoReferencia: anoReferencia,
         benchmark: null,
         suaCompanhia: null
     };
 
-    return database.executar(sqlBenchmark)
+    return database.executar(sqlBenchmark, [intervalo.inicio, intervalo.fim])
         .then(function (resultadoBenchmark) {
             if (resultadoBenchmark.length > 0) {
                 resposta.benchmark = resultadoBenchmark[0];
             }
 
-            return database.executar(sqlSuaCompanhia);
+            return database.executar(sqlSuaCompanhia, [id, intervalo.inicio, intervalo.fim, id]);
         })
         .then(function (resultadoSuaCompanhia) {
             if (resultadoSuaCompanhia.length > 0) {
@@ -80,31 +104,40 @@ function obterVolumeMedioPassageiros(idCompanhia) {
         id = 0;
     }
 
+    let anoReferencia = obterAnoAnteriorFechado();
+    let intervalo = obterIntervaloAno(anoReferencia);
+
     let sqlMercado = `
-        SELECT AVG(qtdPassageiros) AS mediaMercado
-        FROM voo
-        WHERE qtdPassageiros IS NOT NULL;
+        SELECT AVG(v.qtdPassageiros) AS mediaMercado
+        FROM aeroportoDirecao ad
+        STRAIGHT_JOIN voo v ON v.idVoo = ad.fkVoo
+        WHERE ad.direcao = 'Partida'
+          AND ad.dia >= ? AND ad.dia < ?
+          AND v.qtdPassageiros IS NOT NULL;
     `;
 
     let sqlCompanhia = `
-        SELECT AVG(qtdPassageiros) AS mediaCompanhia
-        FROM voo
-        WHERE fkCompanhia = ${id}
-          AND qtdPassageiros IS NOT NULL;
+        SELECT AVG(v.qtdPassageiros) AS mediaCompanhia
+        FROM voo v
+        STRAIGHT_JOIN aeroportoDirecao ad ON ad.fkVoo = v.idVoo AND ad.direcao = 'Partida'
+        WHERE v.fkCompanhia = ?
+          AND ad.dia >= ? AND ad.dia < ?
+          AND v.qtdPassageiros IS NOT NULL;
     `;
 
     let resposta = {
+        anoReferencia: anoReferencia,
         mediaMercado: null,
         mediaCompanhia: null
     };
 
-    return database.executar(sqlMercado)
+    return database.executar(sqlMercado, [intervalo.inicio, intervalo.fim])
         .then(function (resultadoMercado) {
             if (resultadoMercado.length > 0) {
                 resposta.mediaMercado = resultadoMercado[0].mediaMercado;
             }
 
-            return database.executar(sqlCompanhia);
+            return database.executar(sqlCompanhia, [id, intervalo.inicio, intervalo.fim]);
         })
         .then(function (resultadoCompanhia) {
             if (resultadoCompanhia.length > 0) {
@@ -148,39 +181,15 @@ function montarSqlMesesPorAno(expressaoAno) {
 }
 
 function obterMesMaiorProcura() {
+    let anoReferencia = obterAnoAnteriorFechado();
+
     let resposta = {
-        anoAnalisado: null,
+        anoAnalisado: anoReferencia,
         meses: [],
         mesAnoAnterior: null
     };
 
-    return database.executar(montarSqlMesesPorAno("YEAR(CURDATE())"))
-        .then(function (resultadoMesesAtual) {
-            if (resultadoMesesAtual.length > 0) {
-                return resultadoMesesAtual;
-            }
-
-            let sqlUltimoAno = `
-                SELECT YEAR(MAX(dia)) AS ultimoAno
-                FROM aeroportoDirecao
-                WHERE direcao = 'Partida'
-                  AND dia <= CURDATE();
-            `;
-
-            return database.executar(sqlUltimoAno)
-                .then(function (resultadoAno) {
-                    if (resultadoAno.length === 0 || !resultadoAno[0].ultimoAno) {
-                        return [];
-                    }
-
-                    let ultimoAno = Number(resultadoAno[0].ultimoAno);
-                    if (isNaN(ultimoAno) || ultimoAno <= 0) {
-                        return [];
-                    }
-
-                    return database.executar(montarSqlMesesPorAno(ultimoAno));
-                });
-        })
+    return database.executar(montarSqlMesesPorAno(anoReferencia))
         .then(function (resultadoMeses) {
             resposta.meses = resultadoMeses;
 
@@ -233,47 +242,42 @@ function obterTaxaOcupacaoMedia(idCompanhia) {
         id = 0;
     }
 
+    let anoReferencia = obterAnoAnteriorFechado();
+    let intervalo = obterIntervaloAno(anoReferencia);
+
     let sqlMercado = `
         SELECT
-            (
-                SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN v.qtdPassageiros ELSE 0 END) /
-                NULLIF(SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN av.numAssentos ELSE 0 END), 0)
-            ) * 100 AS taxaOcupacaoMercado
-        FROM voo v
-        JOIN aviao av ON av.idAviao = v.fkAviao;
+            (SUM(v.qtdPassageiros) / NULLIF(SUM(av.numAssentos), 0)) * 100 AS taxaOcupacaoMercado
+        FROM aeroportoDirecao ad
+        STRAIGHT_JOIN voo v ON v.idVoo = ad.fkVoo
+        STRAIGHT_JOIN aviao av ON av.idAviao = v.fkAviao
+        WHERE ad.direcao = 'Partida'
+          AND ad.dia >= ? AND ad.dia < ?
+          AND v.qtdPassageiros IS NOT NULL
+          AND av.numAssentos > 0;
     `;
 
-    let sqlCompanhia = `
-        SELECT
-            c.idCompanhia,
-            c.nomeCompanhia,
-            (
-                SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN v.qtdPassageiros ELSE 0 END) /
-                NULLIF(SUM(CASE WHEN v.qtdPassageiros IS NOT NULL AND av.numAssentos > 0 THEN av.numAssentos ELSE 0 END), 0)
-            ) * 100 AS taxaOcupacaoCompanhia
-        FROM companhia c
-        LEFT JOIN voo v ON v.fkCompanhia = c.idCompanhia
-        LEFT JOIN aviao av ON av.idAviao = v.fkAviao
-        WHERE c.idCompanhia = ${id}
-        GROUP BY c.idCompanhia, c.nomeCompanhia;
-    `;
+    let sqlCompanhia = montarSqlOcupacaoCompanhiaAno();
 
     let resposta = {
+        anoReferencia: anoReferencia,
         taxaOcupacaoMercado: null,
         suaCompanhia: null
     };
 
-    return database.executar(sqlMercado)
+    return database.executar(sqlMercado, [intervalo.inicio, intervalo.fim])
         .then(function (resultadoMercado) {
             if (resultadoMercado.length > 0) {
                 resposta.taxaOcupacaoMercado = resultadoMercado[0].taxaOcupacaoMercado;
             }
 
-            return database.executar(sqlCompanhia);
+            return database.executar(sqlCompanhia, [id, intervalo.inicio, intervalo.fim, id]);
         })
         .then(function (resultadoCompanhia) {
             if (resultadoCompanhia.length > 0) {
-                resposta.suaCompanhia = resultadoCompanhia[0];
+                let linha = resultadoCompanhia[0];
+                linha.taxaOcupacaoCompanhia = linha.taxaOcupacao;
+                resposta.suaCompanhia = linha;
             }
 
             return resposta;

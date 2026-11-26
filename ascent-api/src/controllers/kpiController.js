@@ -57,6 +57,7 @@ function buscarDadosKpiBenchmark(req, res) {
             res.json({
                 sucesso: true,
                 dados: {
+                    anoReferencia: resultado.anoReferencia,
                     suaCompanhia: {
                         nome: nomeSuaCompanhia,
                         taxaOcupacao: taxaSuaCompanhia
@@ -109,6 +110,7 @@ function buscarDadosKpiVolumeMedio(req, res) {
             res.json({
                 sucesso: true,
                 dados: {
+                    anoReferencia: resultado.anoReferencia,
                     mediaMercado: mediaMercado,
                     mediaCompanhia: mediaCompanhia
                 }
@@ -140,7 +142,7 @@ function buscarDadosKpiMesMaiorProcura(req, res) {
                 return res.json({
                     sucesso: true,
                     dados: {
-                        anoAnalisado: null,
+                        anoAnalisado: anoAnalisado,
                         mesNome: "Sem dados",
                         taxaOcupacao: 0,
                         vsMedia: null,
@@ -230,6 +232,7 @@ function buscarDadosKpiOcupacaoMedia(req, res) {
             res.json({
                 sucesso: true,
                 dados: {
+                    anoReferencia: resultado.anoReferencia,
                     suaCompanhia: {
                         nome: nomeSuaCompanhia,
                         taxaOcupacao: taxaCompanhia
