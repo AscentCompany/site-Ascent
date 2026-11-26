@@ -96,84 +96,102 @@ function cadastrar(req, res) {
     } else if (idCompanhia == undefined) {
         return res.status(400).send("Informe o código da companhia.");
     } else {
-        // O frontend envia o codCompanhia (código de negócio).
-        // Resolvemos para o idCompanhia (PK) antes de qualquer operação.
         var cargoModel = require("../models/cargoModel");
         var permissaoModel = require("../models/permissaoModel");
 
-        usuarioModel.buscarIdPorCodigo(idCompanhia)
-            .then(resultado => {
-                if (!resultado || resultado.length === 0) {
-                    return res.status(404).send("Companhia não encontrada. Verifique o código informado.");
+        usuarioModel.buscarPorEmail(email)
+            .then(function (usuariosExistentes) {
+                if (usuariosExistentes.length > 0) {
+                    res.status(409).send("Este e-mail já está cadastrado.");
+                    return;
                 }
-                var idCompanhiaReal = resultado[0].idCompanhia;
 
-                return usuarioModel.listarCargos(idCompanhiaReal)
-                    .then(cargosResultado => {
-                        if (cargosResultado.length === 0) {
-                            // Primeiro cadastro da companhia: provisiona a estrutura de cargos padrão
-                            // 1. Cria o cargo Administrador
-                            return cargoModel.cadastrarCargo("Administrador", idCompanhiaReal)
-                                .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
-                                .then(ultCargo => {
-                                    var idCargoAdmin = ultCargo[0].idNovoCargo;
-
-                                    // 2. Vincula todas as permissões ao Administrador
-                                    return cargoModel.listarPermissoes()
-                                        .then(permissoes => {
-                                            var promises = permissoes.map(p =>
-                                                cargoModel.cadastrarCargoPermissao(idCargoAdmin, p.idPermissao || p)
-                                            );
-                                            return Promise.all(promises);
-                                        })
-                                        // 3. Cria o cargo padrao sem permissoes
-                                        .then(() => cargoModel.cadastrarCargo("Padrao", idCompanhiaReal))
-                                        // 4. Cadastra o 1º usuário com o cargo Administrador
-                                        .then(() => usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, idCargoAdmin));
-                                });
+                usuarioModel.buscarIdPorCodigo(idCompanhia)
+                    .then(function (resultado) {
+                        if (!resultado || resultado.length === 0) {
+                            res.status(404).send("Companhia não encontrada. Verifique o código informado.");
+                            return;
                         }
+                        var idCompanhiaReal = resultado[0].idCompanhia;
 
-                        var cargoPadrao = cargosResultado.find(cargo => cargo.cargo === "Padrao" || cargo.cargo === "Padrão");
-                        if (cargoPadrao) {
-                            return usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, cargoPadrao.idCargo);
-                        }
+                        usuarioModel.listarCargos(idCompanhiaReal)
+                            .then(function (cargosResultado) {
+                                var acaoCadastro;
 
-                        return cargoModel.cadastrarCargo("Padrao", idCompanhiaReal)
-                            .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
-                            .then(ultCargo => usuarioModel.cadastrar(
-                                nome,
-                                email,
-                                senha,
-                                idCompanhiaReal,
-                                ultCargo[0].idNovoCargo
-                            ));
+                                if (cargosResultado.length === 0) {
+                                    acaoCadastro = cargoModel.cadastrarCargo("Administrador", idCompanhiaReal)
+                                        .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
+                                        .then(ultCargo => {
+                                            var idCargoAdmin = ultCargo[0].idNovoCargo;
+
+                                            return cargoModel.listarPermissoes()
+                                                .then(permissoes => {
+                                                    var promises = permissoes.map(p =>
+                                                        cargoModel.cadastrarCargoPermissao(idCargoAdmin, p.idPermissao || p)
+                                                    );
+                                                    return Promise.all(promises);
+                                                })
+                                                .then(() => cargoModel.cadastrarCargo("Padrao", idCompanhiaReal))
+                                                .then(() => usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, idCargoAdmin));
+                                        });
+                                } else {
+                                    var cargoPadrao = cargosResultado.find(cargo => cargo.cargo === "Padrao" || cargo.cargo === "Padrão");
+                                    if (cargoPadrao) {
+                                        acaoCadastro = usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, cargoPadrao.idCargo);
+                                    } else {
+                                        acaoCadastro = cargoModel.cadastrarCargo("Padrao", idCompanhiaReal)
+                                            .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
+                                            .then(ultCargo => usuarioModel.cadastrar(
+                                                nome,
+                                                email,
+                                                senha,
+                                                idCompanhiaReal,
+                                                ultCargo[0].idNovoCargo
+                                            ));
+                                    }
+                                }
+
+                                acaoCadastro
+                                    .then(function (resultadoCadastro) {
+                                        var novoIdUsuario = resultadoCadastro.insertId || null;
+                                        logModel.registrarLog(
+                                            "GESTÃO DE USUÁRIO",
+                                            "CADASTRO",
+                                            `Novo usuário ${nome} (${email}) cadastrado na companhia ${idCompanhia}`,
+                                            "cadastro.html",
+                                            novoIdUsuario
+                                        );
+                                        res.json(resultadoCadastro);
+                                    })
+                                    .catch(function (erro) {
+                                        logModel.registrarLog(
+                                            "GESTÃO DE USUÁRIO",
+                                            "CADASTRO_ERRO",
+                                            `Falha ao cadastrar usuário ${email}`,
+                                            "cadastro.html",
+                                            null
+                                        );
+                                        console.log(erro);
+                                        console.log("\nHouve um erro ao realizar o cadastro! Erro: ", erro.sqlMessage || erro);
+                                        var mensagemErro = erro.code === "ER_DUP_ENTRY"
+                                            ? "Este e-mail já está cadastrado."
+                                            : "Não foi possível realizar o cadastro. Tente novamente mais tarde.";
+                                        res.status(500).send(mensagemErro);
+                                    });
+                            })
+                            .catch(function (erro) {
+                                console.log(erro);
+                                res.status(500).send("Não foi possível realizar o cadastro. Tente novamente mais tarde.");
+                            });
+                    })
+                    .catch(function (erro) {
+                        console.log(erro);
+                        res.status(500).send("Não foi possível realizar o cadastro. Tente novamente mais tarde.");
                     });
             })
-            .then(function (resultado) {
-                var novoIdUsuario = resultado.insertId || null;
-                logModel.registrarLog(
-                    "GESTÃO DE USUÁRIO",
-                    "CADASTRO",
-                    `Novo usuário ${nome} (${email}) cadastrado na companhia ${idCompanhia}`,
-                    "cadastro.html",
-                    novoIdUsuario
-                );
-                res.json(resultado);
-            })
             .catch(function (erro) {
-                logModel.registrarLog(
-                    "GESTÃO DE USUÁRIO",
-                    "CADASTRO_ERRO",
-                    `Falha ao cadastrar usuário ${email}`,
-                    "cadastro.html",
-                    null
-                );
                 console.log(erro);
-                console.log("\nHouve um erro ao realizar o cadastro! Erro: ", erro.sqlMessage || erro);
-                var mensagemErro = erro.code === "ER_DUP_ENTRY"
-                    ? "Este e-mail já está cadastrado."
-                    : "Não foi possível realizar o cadastro. Tente novamente mais tarde.";
-                res.status(500).send(mensagemErro);
+                res.status(500).send("Não foi possível realizar o cadastro. Tente novamente mais tarde.");
             });
     }
 }
@@ -216,17 +234,29 @@ function cadastrarFuncionario(req, res) {
     } else if (!senhaValida(senha)) {
         return res.status(400).send("A senha deve ter ao menos 8 caracteres, incluindo letra maiúscula, letra minúscula, número e um caractere especial (@, !, # ou $).");
     } else {
-        usuarioModel.cadastrarFuncionario(nome, email, senha, idCompanhia, idCargo)
-            .then(resultado => {
-                logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO", `Cadastrou o funcionário ${nome}`, "usuarios.html", fkUsuarioAcao);
-                res.json(resultado);
+        usuarioModel.buscarPorEmail(email)
+            .then(function (usuariosExistentes) {
+                if (usuariosExistentes.length > 0) {
+                    res.status(409).send("Este e-mail já está cadastrado.");
+                    return;
+                }
+
+                usuarioModel.cadastrarFuncionario(nome, email, senha, idCompanhia, idCargo)
+                    .then(resultado => {
+                        logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO", `Cadastrou o funcionário ${nome}`, "usuarios.html", fkUsuarioAcao);
+                        res.json(resultado);
+                    })
+                    .catch(erro => {
+                        logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO_ERRO", `Falha ao cadastrar o funcionário ${nome}`, "usuarios.html", fkUsuarioAcao);
+                        var mensagemErro = erro.code === "ER_DUP_ENTRY"
+                            ? "Este e-mail já está cadastrado."
+                            : "Não foi possível cadastrar o funcionário. Tente novamente mais tarde.";
+                        res.status(500).send(mensagemErro);
+                    });
             })
             .catch(erro => {
-                logModel.registrarLog("GESTÃO DE USUÁRIO", "CADASTRO_ERRO", `Falha ao cadastrar o funcionário ${nome}`, "usuarios.html", fkUsuarioAcao);
-                var mensagemErro = erro.code === "ER_DUP_ENTRY"
-                    ? "Este e-mail já está cadastrado."
-                    : "Não foi possível cadastrar o funcionário. Tente novamente mais tarde.";
-                res.status(500).send(mensagemErro);
+                console.log(erro);
+                res.status(500).send("Não foi possível cadastrar o funcionário. Tente novamente mais tarde.");
             });
     }
 }
@@ -237,13 +267,25 @@ function editarUsuario(req, res) {
     var fkCargo = req.body.fkCargo;
     var fkUsuarioAcao = req.body.fkUsuarioAcao;
 
-    usuarioModel.editarUsuario(idUsuario, email, fkCargo)
-        .then(resultado => {
-            logModel.registrarLog("GESTÃO DE USUÁRIO", "EDICAO", `Atualizou os dados do funcionário ID ${idUsuario}`, "usuarios.html", fkUsuarioAcao);
-            res.json(resultado);
+    usuarioModel.buscarPorEmail(email)
+        .then(function (usuariosExistentes) {
+            if (usuariosExistentes.length > 0 && usuariosExistentes[0].idUsuario != idUsuario) {
+                res.status(409).send("Este e-mail já está cadastrado.");
+                return;
+            }
+
+            usuarioModel.editarUsuario(idUsuario, email, fkCargo)
+                .then(resultado => {
+                    logModel.registrarLog("GESTÃO DE USUÁRIO", "EDICAO", `Atualizou os dados do funcionário ID ${idUsuario}`, "usuarios.html", fkUsuarioAcao);
+                    res.json(resultado);
+                })
+                .catch(erro => {
+                    logModel.registrarLog("GESTÃO DE USUÁRIO", "EDICAO_ERRO", `Falha ao salvar alterações do funcionário ID ${idUsuario}`, "usuarios.html", fkUsuarioAcao);
+                    res.status(500).json(erro.sqlMessage);
+                });
         })
         .catch(erro => {
-            logModel.registrarLog("GESTÃO DE USUÁRIO", "EDICAO_ERRO", `Falha ao salvar alterações do funcionário ID ${idUsuario}`, "usuarios.html", fkUsuarioAcao);
+            console.log(erro);
             res.status(500).json(erro.sqlMessage);
         });
 }
