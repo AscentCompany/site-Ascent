@@ -22,6 +22,7 @@ var permissaoRouter = require("./src/routes/permissoes");
 var alertaRouter = require("./src/routes/alertas");
 var kpiRouter = require("./src/routes/kpis");
 var graficosRouter = require("./src/routes/graficos");
+var perfilRouter = require("./src/routes/perfil");
 
 
 app.use(express.json());
@@ -37,6 +38,7 @@ app.use("/permissoes", permissaoRouter);
 app.use("/alertas", alertaRouter);
 app.use("/api/kpis", kpiRouter);
 app.use("/api/graficos", graficosRouter);
+app.use("/perfil", perfilRouter);
 
 app.listen(PORTA_APP, function () {
     console.log(`
