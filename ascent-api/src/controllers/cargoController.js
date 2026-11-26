@@ -34,26 +34,41 @@ function cadastrar(req, res) {
         .then(resultadoUltimo => {
             var idNovoCargo = resultadoUltimo[0].idNovoCargo;
 
-            if (permissoes.length === 0) {
-                logModel.registrarLog("GESTÃO DE CARGO", "CADASTRO", `Cadastrou o cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
-                res.json({ mensagem: "Cargo salvo sem permissões" });
-                return;
+            // Regra de negocio: todo cargo exceto 'Padrao' recebe a permissao de Perfil ('Editar Usuario') por padrao
+            var promessaPermissoes = Promise.resolve(permissoes);
+            var isPadrao = String(nomeCargo || "").toLowerCase().indexOf("padra") !== -1;
+            if (!isPadrao) {
+                promessaPermissoes = cargoModel.listarPermissoes().then(lista => {
+                    var permPerfil = lista.find(p => p.nome === "Editar Usuario");
+                    if (permPerfil && !permissoes.some(id => Number(id) === Number(permPerfil.idPermissao))) {
+                        return permissoes.concat([permPerfil.idPermissao]);
+                    }
+                    return permissoes;
+                });
             }
 
-            var promessas = permissoes.map(idPermissao => {
-                return cargoModel.cadastrarCargoPermissao(idNovoCargo, idPermissao);
-            });
+            return promessaPermissoes.then(permissoesFinais => {
+                if (permissoesFinais.length === 0) {
+                    logModel.registrarLog("GESTÃO DE CARGO", "CADASTRO", `Cadastrou o cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
+                    res.json({ mensagem: "Cargo salvo sem permissões" });
+                    return;
+                }
 
-            return Promise.all(promessas)
-                .then(() => {
-                    logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "CADASTRO", `Cadastrou o cargo ${nomeCargo} com permissões ${permissoes.join(", ")}`, "cargos.html", fkUsuarioAcao);
-                    res.json({ mensagem: "Cargo e permissões cadastrados!" });
-                })
-                .catch(erro => {
-                    console.error("Erro ao salvar permissão:", erro);
-                    logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "CADASTRO_ERRO", `Falha ao cadastrar permissões ao cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
-                    res.status(500).json(erro.sqlMessage || "Erro ao vincular permissões.");
+                var promessas = permissoesFinais.map(idPermissao => {
+                    return cargoModel.cadastrarCargoPermissao(idNovoCargo, idPermissao);
                 });
+
+                return Promise.all(promessas)
+                    .then(() => {
+                        logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "CADASTRO", `Cadastrou o cargo ${nomeCargo} com permissões ${permissoesFinais.join(", ")}`, "cargos.html", fkUsuarioAcao);
+                        res.json({ mensagem: "Cargo e permissões cadastrados!" });
+                    })
+                    .catch(erro => {
+                        console.error("Erro ao salvar permissão:", erro);
+                        logModel.registrarLog("GESTÃO DE CARGO PERMISSÃO", "CADASTRO_ERRO", `Falha ao cadastrar permissões ao cargo ${nomeCargo}`, "cargos.html", fkUsuarioAcao);
+                        res.status(500).json(erro.sqlMessage || "Erro ao vincular permissões.");
+                    });
+            });
         })
         .catch(erro => {
             console.error("Erro ao cadastrar cargo:", erro);

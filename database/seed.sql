@@ -173,3 +173,30 @@ LEFT JOIN cargoPermissao cp ON cp.fkCargo = c.idCargo AND cp.fkPermissao = p.idP
 WHERE co.codCompanhia = 1001
   AND c.cargo = 'Administrador'
   AND cp.fkCargo IS NULL;
+
+-- Garante a permissao 'Editar Usuario' (funcionalidade de Perfil) para todos os cargos exceto 'Padrao'
+INSERT INTO cargoPermissao (fkCargo, fkPermissao)
+SELECT c.idCargo, p.idPermissao
+FROM cargo c
+JOIN permissao p ON p.nomePermissao = 'Editar Usuario'
+LEFT JOIN cargoPermissao cp ON cp.fkCargo = c.idCargo AND cp.fkPermissao = p.idPermissao
+WHERE c.cargo NOT LIKE 'Padra%'
+  AND cp.fkCargo IS NULL;
+
+-- Permissoes operacionais padrao para Gestor de Operacoes Aereas
+INSERT INTO cargoPermissao (fkCargo, fkPermissao)
+SELECT c.idCargo, p.idPermissao
+FROM cargo c
+JOIN permissao p ON p.nomePermissao IN ('Acessar Dashboard Operacoes', 'Gerenciar Alertas Operacionais')
+LEFT JOIN cargoPermissao cp ON cp.fkCargo = c.idCargo AND cp.fkPermissao = p.idPermissao
+WHERE c.cargo = 'Gestor de Operacoes Aereas'
+  AND cp.fkCargo IS NULL;
+
+-- Permissoes analiticas padrao para Analista de Planejamento de Rotas
+INSERT INTO cargoPermissao (fkCargo, fkPermissao)
+SELECT c.idCargo, p.idPermissao
+FROM cargo c
+JOIN permissao p ON p.nomePermissao IN ('Acessar Dashboard Rotas', 'Acessar Central Recomendacoes')
+LEFT JOIN cargoPermissao cp ON cp.fkCargo = c.idCargo AND cp.fkPermissao = p.idPermissao
+WHERE c.cargo = 'Analista de Planejamento de Rotas'
+  AND cp.fkCargo IS NULL;

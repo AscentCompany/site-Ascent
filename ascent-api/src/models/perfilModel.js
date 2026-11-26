@@ -36,8 +36,18 @@ function atualizarSenha(idUsuario, novaSenha) {
     return database.executar(instrucao);
 }
 
+function atualizarNome(idUsuario, novoNome) {
+    var instrucao = `
+        UPDATE usuario
+        SET nome = '${esc(novoNome)}'
+        WHERE idUsuario = ${Number(idUsuario)};
+    `;
+    return database.executar(instrucao);
+}
+
 module.exports = {
     buscarPorId,
     validarSenhaAtual,
-    atualizarSenha
+    atualizarSenha,
+    atualizarNome
 };

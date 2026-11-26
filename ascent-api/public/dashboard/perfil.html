@@ -75,12 +75,12 @@
             
             <div class="input-group full-width">
               <label for="nomeCompleto">Nome completo</label>
-              <input type="text" id="nomeCompleto" placeholder="Nome completo" readonly>
+              <input type="text" id="nomeCompleto" placeholder="Nome completo">
             </div>
 
             <div class="input-group full-width">
-              <label for="email">Email</label>
-              <input type="email" id="email" placeholder="Email" readonly>
+              <label for="email">Email <span class="label-dica">(não passível de alteração)</span></label>
+              <input type="email" id="email" placeholder="Email" readonly tabindex="-1" class="nao-selecionavel">
             </div>
 
             <div class="input-group full-width">
@@ -99,8 +99,8 @@
             </div>
 
             <div class="btn-container">
-              <p id="msg-perfil" class="perfil-msg"></p>
               <button type="submit" class="btn-confirmar">Confirmar alteração</button>
+              <p id="msg-perfil" class="perfil-msg"></p>
             </div>
 
           </form>
@@ -136,41 +136,66 @@
 
   // Nome e e-mail vêm direto do banco e não são editáveis
   function carregarPerfil() {
+    if (!idUsuario) {
+      mostrarMensagem('Sessão não identificada. Por favor, saia e faça login novamente.', false);
+      return;
+    }
+
     fetch(`/perfil/${idUsuario}`)
-      .then(res => res.json().then(dados => ({ ok: res.ok, dados })))
-      .then(({ ok, dados }) => {
-        if (!ok) return mostrarMensagem(dados.mensagem, false);
-        document.getElementById('nomeCompleto').value = dados.nome;
-        document.getElementById('email').value = dados.email;
-        document.getElementById('nomeUsuarioBanner').textContent = dados.nome;
+      .then(res => {
+        if (!res.ok) {
+          return res.json().catch(() => ({})).then(dados => {
+            throw new Error(dados.mensagem || 'Não foi possível carregar o perfil.');
+          });
+        }
+        return res.json();
       })
-      .catch(() => mostrarMensagem('Não foi possível carregar o perfil.', false));
+      .then(dados => {
+        document.getElementById('nomeCompleto').value = dados.nome || '';
+        document.getElementById('email').value = dados.email || '';
+        document.getElementById('nomeUsuarioBanner').textContent = dados.nome || '';
+      })
+      .catch(erro => mostrarMensagem(erro.message || 'Não foi possível carregar o perfil.', false));
   }
 
-  // Única alteração permitida: a senha
-  function alterarSenha(event) {
+  // Salvar perfil (nome e opcionalmente a senha)
+  function salvarPerfil(event) {
     event.preventDefault();
 
+    const nomeCompleto = document.getElementById('nomeCompleto').value.trim();
     const senhaAtual = document.getElementById('senhaAtual').value;
     const novaSenha = document.getElementById('novaSenha').value;
     const confirmaSenha = document.getElementById('confirmaSenha').value;
 
-    if (!senhaAtual || !novaSenha || !confirmaSenha) {
-      return mostrarMensagem('Preencha todos os campos de senha.', false);
-    }
-    if (novaSenha !== confirmaSenha) {
-      return mostrarMensagem('A nova senha e a confirmação não coincidem.', false);
+    if (!nomeCompleto) {
+      return mostrarMensagem('O nome completo não pode ficar em branco.', false);
     }
 
-    fetch('/perfil/senha', {
+    if (senhaAtual || novaSenha || confirmaSenha) {
+      if (!senhaAtual || !novaSenha || !confirmaSenha) {
+        return mostrarMensagem('Para alterar a senha, preencha todos os campos de senha.', false);
+      }
+      if (novaSenha !== confirmaSenha) {
+        return mostrarMensagem('A nova senha e a confirmação não coincidem.', false);
+      }
+    }
+
+    fetch('/perfil/atualizar', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idUsuario, senhaAtual, novaSenha, confirmaSenha })
+      body: JSON.stringify({ idUsuario, nome: nomeCompleto, senhaAtual, novaSenha, confirmaSenha })
     })
       .then(res => res.json().then(dados => ({ ok: res.ok, dados })))
       .then(({ ok, dados }) => {
         mostrarMensagem(dados.mensagem, ok);
         if (ok) {
+          if (dados.nome) {
+            sessionStorage.NOME_USUARIO = dados.nome;
+            var elSidebar = document.getElementById('nome-usuario');
+            if (elSidebar) elSidebar.textContent = dados.nome;
+            var elBanner = document.getElementById('nomeUsuarioBanner');
+            if (elBanner) elBanner.textContent = dados.nome;
+          }
           document.getElementById('senhaAtual').value = '';
           document.getElementById('novaSenha').value = '';
           document.getElementById('confirmaSenha').value = '';
@@ -179,7 +204,7 @@
       .catch(() => mostrarMensagem('Erro de comunicação com o servidor.', false));
   }
 
-  document.getElementById('form-perfil').addEventListener('submit', alterarSenha);
+  document.getElementById('form-perfil').addEventListener('submit', salvarPerfil);
   carregarPerfil();
   })();
 </script>

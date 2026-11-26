@@ -283,6 +283,24 @@ body.menu-fechado .main-content {
   margin-left: 4px;
 }
 
+.input-group label .label-dica {
+  font-size: 12px;
+  font-weight: 600;
+  color: #999999;
+  margin-left: 6px;
+  font-style: italic;
+}
+
+.input-group input.nao-selecionavel {
+  background: #f0f0f2 !important;
+  color: #888888 !important;
+  cursor: not-allowed !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: none !important;
+  border-color: #dcdde3 !important;
+}
+
 .input-group input {
   width: 100%;
   height: 50px;
@@ -307,8 +325,26 @@ body.menu-fechado .main-content {
 .btn-container {
   width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   margin-top: 10px;
+}
+
+.perfil-msg {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  min-height: 20px;
+  transition: opacity .2s ease;
+}
+
+.perfil-msg.sucesso {
+  color: #107c41;
+}
+
+.perfil-msg.erro {
+  color: #d83b01;
 }
 
 .btn-confirmar {
