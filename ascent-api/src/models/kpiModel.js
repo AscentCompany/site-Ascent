@@ -168,8 +168,8 @@ function montarSqlMesesPorAno(expressaoAno) {
             SUM(av.numAssentos) AS totalAssentos,
             (SUM(v.qtdPassageiros) / NULLIF(SUM(av.numAssentos), 0)) * 100 AS taxaOcupacao
         FROM aeroportoDirecao ad
-        JOIN voo v ON v.idVoo = ad.fkVoo
-        JOIN aviao av ON av.idAviao = v.fkAviao
+        STRAIGHT_JOIN voo v ON v.idVoo = ad.fkVoo
+        STRAIGHT_JOIN aviao av ON av.idAviao = v.fkAviao
         WHERE ad.direcao = 'Partida'
           AND ${filtroData}
           AND ad.dia IS NOT NULL
@@ -215,8 +215,8 @@ function obterMesMaiorProcura() {
                     SUM(av.numAssentos) AS totalAssentos,
                     (SUM(v.qtdPassageiros) / NULLIF(SUM(av.numAssentos), 0)) * 100 AS taxaOcupacao
                 FROM aeroportoDirecao ad
-                JOIN voo v ON v.idVoo = ad.fkVoo
-                JOIN aviao av ON av.idAviao = v.fkAviao
+                STRAIGHT_JOIN voo v ON v.idVoo = ad.fkVoo
+                STRAIGHT_JOIN aviao av ON av.idAviao = v.fkAviao
                 WHERE ad.direcao = 'Partida'
                   AND ad.dia >= '${anoAnterior}-${mesFormatado}-01'
                   AND ad.dia < DATE_ADD('${anoAnterior}-${mesFormatado}-01', INTERVAL 1 MONTH)

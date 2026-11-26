@@ -18,12 +18,16 @@ public class Conexao {
         //  - fora do Docker (IDE / java -jar na EC2) usa "localhost".
         // Isso evita o clássico java.net.ConnectException: Connection refused
         // quando o .env aponta para "localhost" dentro do container (ou vice-versa).
-        String host = resolverHost(LeitorExcel.getEnvOrProp("DB_HOST", null));
-        String port = LeitorExcel.getEnvOrProp("DB_PORT", "3306");
-        String database = LeitorExcel.getEnvOrProp("DB_DATABASE", "ascent");
-        String user = LeitorExcel.getEnvOrProp("DB_USER", "admin");
-        String password = LeitorExcel.getEnvOrProp("DB_PASSWORD", "admin");
+        this(
+                resolverHost(LeitorExcel.getEnvOrProp("DB_HOST", null)),
+                LeitorExcel.getEnvOrProp("DB_PORT", "3306"),
+                LeitorExcel.getEnvOrProp("DB_DATABASE", "ascent"),
+                LeitorExcel.getEnvOrProp("DB_USER", "admin"),
+                LeitorExcel.getEnvOrProp("DB_PASSWORD", "admin")
+        );
+    }
 
+    public Conexao(String host, String port, String database, String user, String password) {
         DriverManagerDataSource driver = new DriverManagerDataSource();
         driver.setDriverClassName("com.mysql.cj.jdbc.Driver");
         driver.setUrl(String.format(
