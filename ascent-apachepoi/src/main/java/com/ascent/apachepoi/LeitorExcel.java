@@ -303,7 +303,7 @@ public class LeitorExcel {
         LocalTime hrPart = getTime(linha, c.hrPartida);
         if (dtPart != null && hrPart != null) {
             partida = new AeroportoDirecao();
-            partida.setDirecao("Partida");
+            partida.setDirecao("ORIGEM");
             partida.setDia(dtPart);
             partida.setHora(hrPart);
         }
@@ -314,7 +314,7 @@ public class LeitorExcel {
         LocalTime hrCheg = getTime(linha, c.hrChegada);
         if (dtCheg != null && hrCheg != null) {
             chegada = new AeroportoDirecao();
-            chegada.setDirecao("Destino");
+            chegada.setDirecao("DESTINO");
             chegada.setDia(dtCheg);
             chegada.setHora(hrCheg);
         }
