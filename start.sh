@@ -142,8 +142,9 @@ if [ -n "$RUNNING_CONTAINERS" ] || docker ps --filter "name=ascent" --filter "na
   compose down 2>/dev/null || true
 else
   compose down 2>/dev/null || true
+fi
+
 echo "=== 3. Preparando volume do MySQL (Persistência no EBS em /dados/mysql) ==="
-if [ "${IS_EC2:-false}" = true ]; then
 echo "=== 3. Removendo apenas containers legados (fora do compose) ==="
 for antigo in mysql; do
   if docker inspect "$antigo" >/dev/null 2>&1; then
@@ -221,7 +222,7 @@ else
     echo "ERRO: Não foi possível instalar docker compose. Abortando."
     exit 1
   fi
-done
+fi
 
 echo "=== 5. Atualizando imagens Docker (pull) ==="
 echo ">> Baixando imagens atualizadas..."
@@ -274,6 +275,7 @@ docker run -d \
   -e DB_PORT=3306 \
   lucasveneroso/ascent:ascent-logs >/dev/null 2>&1 || {
     echo ">> AVISO: Não foi possível iniciar container ascent-logs."
+  }
 
 compose() {
   "${COMPOSE[@]}" --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
@@ -310,6 +312,7 @@ echo "=== 10. Inicializando ascent-logs ==="
 NETWORK=""
 if [ -n "$MYSQL_ID" ]; then
   NETWORK="$(docker inspect -f '{{range $nome, $_ := .NetworkSettings.Networks}}{{$nome}}{{end}}' "$MYSQL_ID" 2>/dev/null || true)"
+fi
 echo "=== 10. Configurando DuckDNS + crontab @reboot ==="
 echo "=== 7. Inicializando ascent-logs ==="
 if [ -f "$SCRIPT_DIR/start-logs.sh" ]; then

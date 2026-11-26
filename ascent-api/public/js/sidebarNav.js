@@ -89,6 +89,18 @@
       return;
     }
 
+    var cacheFuncionalidades = typeof obterFuncionalidadesCargoCache === "function"
+      ? obterFuncionalidadesCargoCache()
+      : null;
+
+    if (cacheFuncionalidades !== null) {
+      if (cacheFuncionalidades.indexOf(funcionalidade) === -1) {
+        alert("Você não tem permissão para acessar esta página.");
+        window.location.href = "acessoRapido.html";
+      }
+      return;
+    }
+
     document.documentElement.style.visibility = "hidden";
     exigirFuncionalidadePagina(funcionalidade, "acessoRapido.html")
       .then(function (podeAcessar) {
@@ -113,12 +125,6 @@
 
     var navEl = document.querySelector(".sidebar .nav");
     var acessoGrid = document.querySelector(".acesso-grid");
-    if (navEl) {
-      navEl.style.visibility = "hidden";
-    }
-    if (acessoGrid) {
-      acessoGrid.style.visibility = "hidden";
-    }
 
     function aplicarRegras(funcionalidades) {
       var links = document.querySelectorAll(".sidebar .nav a[href], .acesso-grid a[href]");
@@ -142,6 +148,22 @@
       if (acessoGrid) {
         acessoGrid.style.visibility = "";
       }
+    }
+
+    var cacheFuncionalidades = typeof obterFuncionalidadesCargoCache === "function"
+      ? obterFuncionalidadesCargoCache()
+      : null;
+
+    if (cacheFuncionalidades !== null) {
+      aplicarRegras(cacheFuncionalidades);
+      return Promise.resolve(cacheFuncionalidades);
+    }
+
+    if (navEl) {
+      navEl.style.visibility = "hidden";
+    }
+    if (acessoGrid) {
+      acessoGrid.style.visibility = "hidden";
     }
 
     return carregarFuncionalidadesCargo()

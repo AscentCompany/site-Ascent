@@ -24,12 +24,68 @@ function validarSessao() {
     }
 }
 
+function obterChaveCacheFuncionalidades() {
+    var idCargo = Number(sessionStorage.CARGO_USUARIO);
+    var idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
+    if (!idCargo || !idCompanhia) {
+        return null;
+    }
+    return `${idCompanhia}:${idCargo}`;
+}
+
+function obterFuncionalidadesCargoCache() {
+    var chaveCache = obterChaveCacheFuncionalidades();
+    if (!chaveCache) {
+        return [];
+    }
+
+    try {
+        var bruto = sessionStorage.getItem("FUNCIONALIDADES_CARGO");
+        if (!bruto) {
+            return null;
+        }
+        var dados = JSON.parse(bruto);
+        if (dados && dados.chave === chaveCache && Array.isArray(dados.funcionalidades)) {
+            return dados.funcionalidades;
+        }
+    } catch (erro) {
+        console.warn("Cache de funcionalidades inválido:", erro);
+    }
+    return null;
+}
+
+function salvarFuncionalidadesCargoCache(funcionalidades) {
+    var chaveCache = obterChaveCacheFuncionalidades();
+    if (!chaveCache || !Array.isArray(funcionalidades)) {
+        return;
+    }
+
+    try {
+        sessionStorage.setItem("FUNCIONALIDADES_CARGO", JSON.stringify({
+            chave: chaveCache,
+            funcionalidades: funcionalidades
+        }));
+    } catch (erro) {
+        console.warn("Não foi possível salvar cache de funcionalidades:", erro);
+    }
+}
+
+function limparCacheFuncionalidadesCargo() {
+    funcionalidadesCargoCache = {};
+    sessionStorage.removeItem("FUNCIONALIDADES_CARGO");
+}
+
 function carregarFuncionalidadesCargo() {
     var idCargo = Number(sessionStorage.CARGO_USUARIO);
     var idCompanhia = Number(sessionStorage.COMPANHIA_USUARIO);
 
     if (!idCargo || !idCompanhia) {
         return Promise.resolve([]);
+    }
+
+    var cacheSessao = obterFuncionalidadesCargoCache();
+    if (cacheSessao !== null) {
+        return Promise.resolve(cacheSessao);
     }
 
     var chaveCache = `${idCompanhia}:${idCargo}`;
@@ -71,7 +127,9 @@ function carregarFuncionalidadesCargo() {
             }).map(function (permissao) {
                 return permissao.funcionalidade;
             });
-            return Array.from(new Set(funcionalidades));
+            var listaFuncionalidades = Array.from(new Set(funcionalidades));
+            salvarFuncionalidadesCargoCache(listaFuncionalidades);
+            return listaFuncionalidades;
         })
         .catch(function (erro) {
             delete funcionalidadesCargoCache[chaveCache];
