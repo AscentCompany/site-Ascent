@@ -63,8 +63,7 @@
             </svg>
           </div>
           <div class="perfil-info-user">
-            <h2 id="nomeUsuarioBanner">Thamyres Batista</h2>
-            <span>GERENTE</span>
+            <h2 id="nomeUsuarioBanner"></h2>
           </div>
         </div>
 
@@ -72,17 +71,16 @@
         <div class="perfil-card-form">
           <h1 class="titulo-alterar">ALTERAR PERFIL</h1>
 
-          <form class="form-grid" onsubmit="event.preventDefault();">
+          <form class="form-grid" id="form-perfil">
             
             <div class="input-group full-width">
               <label for="nomeCompleto">Nome completo</label>
-              <input type="text" id="nomeCompleto" placeholder="Nome completo">
+              <input type="text" id="nomeCompleto" placeholder="Nome completo" readonly>
             </div>
-
 
             <div class="input-group full-width">
               <label for="email">Email</label>
-              <input type="email" id="email" placeholder="Email">
+              <input type="email" id="email" placeholder="Email" readonly>
             </div>
 
             <div class="input-group full-width">
@@ -101,6 +99,7 @@
             </div>
 
             <div class="btn-container">
+              <p id="msg-perfil" class="perfil-msg"></p>
               <button type="submit" class="btn-confirmar">Confirmar alteração</button>
             </div>
 
@@ -113,21 +112,76 @@
 </div>
 
 <script>
-  // ---------- SCRIPT DA SIDEBAR E NOME DO USUÁRIO ----------
+  // ---------- SIDEBAR E NOME DO USUÁRIO ----------
   document.getElementById('nome-usuario').textContent = sessionStorage.NOME_USUARIO || 'Usuário';
-  if (sessionStorage.NOME_USUARIO != null) {
-    document.getElementById('nomeUsuarioBanner').textContent = sessionStorage.NOME_USUARIO;
-  }
 
   const btnMenu = document.getElementById('btn-menu');
   const overlay = document.getElementById('overlay');
   if (window.innerWidth <= 900) document.body.classList.add('menu-fechado');
-  
+
   if (btnMenu && overlay) {
     btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
     overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
   }
 
+  // ---------- PERFIL: INTEGRAÇÃO COM A API ----------
+  (function () {
+  const idUsuario = sessionStorage.ID_USUARIO;
+  const msgPerfil = document.getElementById('msg-perfil');
+
+  function mostrarMensagem(texto, sucesso) {
+    msgPerfil.textContent = texto;
+    msgPerfil.className = 'perfil-msg ' + (sucesso ? 'sucesso' : 'erro');
+  }
+
+  // Nome e e-mail vêm direto do banco e não são editáveis
+  function carregarPerfil() {
+    fetch(`/perfil/${idUsuario}`)
+      .then(res => res.json().then(dados => ({ ok: res.ok, dados })))
+      .then(({ ok, dados }) => {
+        if (!ok) return mostrarMensagem(dados.mensagem, false);
+        document.getElementById('nomeCompleto').value = dados.nome;
+        document.getElementById('email').value = dados.email;
+        document.getElementById('nomeUsuarioBanner').textContent = dados.nome;
+      })
+      .catch(() => mostrarMensagem('Não foi possível carregar o perfil.', false));
+  }
+
+  // Única alteração permitida: a senha
+  function alterarSenha(event) {
+    event.preventDefault();
+
+    const senhaAtual = document.getElementById('senhaAtual').value;
+    const novaSenha = document.getElementById('novaSenha').value;
+    const confirmaSenha = document.getElementById('confirmaSenha').value;
+
+    if (!senhaAtual || !novaSenha || !confirmaSenha) {
+      return mostrarMensagem('Preencha todos os campos de senha.', false);
+    }
+    if (novaSenha !== confirmaSenha) {
+      return mostrarMensagem('A nova senha e a confirmação não coincidem.', false);
+    }
+
+    fetch('/perfil/senha', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idUsuario, senhaAtual, novaSenha, confirmaSenha })
+    })
+      .then(res => res.json().then(dados => ({ ok: res.ok, dados })))
+      .then(({ ok, dados }) => {
+        mostrarMensagem(dados.mensagem, ok);
+        if (ok) {
+          document.getElementById('senhaAtual').value = '';
+          document.getElementById('novaSenha').value = '';
+          document.getElementById('confirmaSenha').value = '';
+        }
+      })
+      .catch(() => mostrarMensagem('Erro de comunicação com o servidor.', false));
+  }
+
+  document.getElementById('form-perfil').addEventListener('submit', alterarSenha);
+  carregarPerfil();
+  })();
 </script>
 
 </body>
