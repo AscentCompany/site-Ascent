@@ -22,7 +22,10 @@ function listarFuncionalidades() {
 }
 
 function cadastrarPermissao(nomePermissao) {
-    return database.executar(`INSERT INTO permissao (nomePermissao) VALUES ('${nomePermissao}');`);
+    return database.executar(
+        "INSERT INTO permissao (nomePermissao) VALUES (?);",
+        [nomePermissao]
+    );
 }
 
 function cadastrarPermissaoFuncionalidade(idPermissao, idFuncionalidade) {

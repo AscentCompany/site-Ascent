@@ -1,5 +1,5 @@
 -- =============================================
--- Script de criação do banco de dados Ascent
+-- Script de criacao do banco de dados Ascent
 -- Execute com: mysql -u root -p < banco.sql
 -- =============================================
 
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS aeroportoDirecao (
     FOREIGN KEY (fkVoo)       REFERENCES voo(idVoo)
 );
 
--- Dados iniciais: cargo padrão para não bloquear inserções
-INSERT INTO cargo (cargo) VALUES ('Padrão');
+-- Dados iniciais: cargo padrao para nao bloquear insercoes
+INSERT INTO cargo (cargo) VALUES ('Padrao');
 
 SELECT 'Banco criado com sucesso!' AS status;

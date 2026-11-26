@@ -16,7 +16,7 @@ function cadastrar(nome, email, senha, idCompanhia, idCargo) {
     var cargoSql = idCargo
         ? `${idCargo}`
         : `COALESCE(
-               (SELECT idCargo FROM cargo WHERE fkCompanhia = ${idCompanhia} AND cargo = 'Padrão' LIMIT 1),
+               (SELECT idCargo FROM cargo WHERE fkCompanhia = ${idCompanhia} AND cargo IN ('Padrao', 'Padrão') LIMIT 1),
                (SELECT idCargo FROM cargo WHERE fkCompanhia = ${idCompanhia} AND cargo NOT LIKE '%Admin%' ORDER BY idCargo DESC LIMIT 1),
                (SELECT idCargo FROM cargo WHERE fkCompanhia = ${idCompanhia} ORDER BY idCargo DESC LIMIT 1)
            )`;

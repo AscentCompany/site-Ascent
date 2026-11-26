@@ -135,7 +135,7 @@ function abrirModal(idAlerta) {
 window.onload = async function() {
   let podeConfigurarAlertas = false;
   try {
-    podeConfigurarAlertas = await usuarioTemFuncionalidade("Configurar Regras de Alertas");
+    podeConfigurarAlertas = await usuarioTemFuncionalidade("Configurar Regras Alertas");
   } catch (erro) {
     console.error("Erro ao verificar permissão para configurar alertas:", erro);
   }

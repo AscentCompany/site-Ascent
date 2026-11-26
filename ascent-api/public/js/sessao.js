@@ -139,9 +139,24 @@ function carregarFuncionalidadesCargo() {
     return funcionalidadesCargoCache[chaveCache];
 }
 
+function normalizarNomeFuncionalidade(nome) {
+    return String(nome || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\bde\s+/gi, "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
 function usuarioTemFuncionalidade(nomeFuncionalidade) {
     return carregarFuncionalidadesCargo().then(function (funcionalidades) {
-        return funcionalidades.indexOf(nomeFuncionalidade) !== -1;
+        if (!Array.isArray(funcionalidades)) return false;
+        if (funcionalidades.indexOf(nomeFuncionalidade) !== -1) return true;
+        var alvo = normalizarNomeFuncionalidade(nomeFuncionalidade);
+        return funcionalidades.some(function (f) {
+            return normalizarNomeFuncionalidade(f) === alvo;
+        });
     });
 }
 

@@ -2,7 +2,7 @@
 USE ascent;
 
 INSERT INTO companhia (codCompanhia, nomeCompanhia, paisCompanhia, razaoSocial, cnpj)
-SELECT 1001, 'Ascent Airlines', 'Brasil', 'Ascent Linhas Aéreas S.A.', '12.345.678/0001-99'
+SELECT 1001, 'Ascent Airlines', 'Brasil', 'Ascent Linhas Aereas S.A.', '12.345.678/0001-99'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM companhia WHERE codCompanhia = 1001);
 
@@ -15,11 +15,11 @@ WHERE c.codCompanhia = 1001
   );
 
 INSERT INTO cargo (cargo, fkCompanhia)
-SELECT 'Gestor de Operações Aereas', c.idCompanhia
+SELECT 'Gestor de Operacoes Aereas', c.idCompanhia
 FROM companhia c
 WHERE c.codCompanhia = 1001
   AND NOT EXISTS (
-    SELECT 1 FROM cargo g WHERE g.cargo = 'Gestor de Operações Aereas' AND g.fkCompanhia = c.idCompanhia
+    SELECT 1 FROM cargo g WHERE g.cargo = 'Gestor de Operacoes Aereas' AND g.fkCompanhia = c.idCompanhia
   );
 
 INSERT INTO cargo (cargo, fkCompanhia)
@@ -47,14 +47,14 @@ WHERE c.codCompanhia = 1001
 INSERT INTO usuario (nome, cpf, email, senha, fkCompanhia, fkCargo)
 SELECT 'Gustavo', '111.333.444-77', 'gustavo@ascent.com', 'gustavo', c.idCompanhia, g.idCargo
 FROM companhia c
-JOIN cargo g ON g.fkCompanhia = c.idCompanhia AND g.cargo = 'Gestor de Operações Aereas'
+JOIN cargo g ON g.fkCompanhia = c.idCompanhia AND g.cargo = 'Gestor de Operacoes Aereas'
 WHERE c.codCompanhia = 1001
   AND NOT EXISTS (SELECT 1 FROM usuario u WHERE u.cpf = '111.333.444-77');
 
 INSERT INTO usuario (nome, cpf, email, senha, fkCompanhia, fkCargo)
 SELECT 'Lucas', '111.222.333-88', 'lucas@ascent.com', 'lucas', c.idCompanhia, g.idCargo
 FROM companhia c
-JOIN cargo g ON g.fkCompanhia = c.idCompanhia AND g.cargo = 'Gestor de Operações Aereas'
+JOIN cargo g ON g.fkCompanhia = c.idCompanhia AND g.cargo = 'Gestor de Operacoes Aereas'
 WHERE c.codCompanhia = 1001
   AND NOT EXISTS (SELECT 1 FROM usuario u WHERE u.cpf = '111.222.333-88');
 
@@ -72,92 +72,96 @@ JOIN cargo g ON g.fkCompanhia = c.idCompanhia AND g.cargo = 'Analista de Planeja
 WHERE c.codCompanhia = 1001
   AND NOT EXISTS (SELECT 1 FROM usuario u WHERE u.cpf = '111.222.333-00');
 
--- Permissões padrão do sistema
+-- Permissoes padrao do sistema
 INSERT INTO permissao (nomePermissao)
-SELECT 'Acessar Dashboard de Rotas' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Acessar Dashboard de Rotas');
+SELECT 'Acessar Dashboard Rotas' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Acessar Dashboard Rotas');
 
 INSERT INTO permissao (nomePermissao)
-SELECT 'Acessar Dashboard de Operações' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Acessar Dashboard de Operações');
+SELECT 'Acessar Dashboard Operacoes' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Acessar Dashboard Operacoes');
 
 INSERT INTO permissao (nomePermissao)
 SELECT 'Gerenciar Alertas Operacionais' FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Gerenciar Alertas Operacionais');
 
 INSERT INTO permissao (nomePermissao)
-SELECT 'Gerenciar Organização' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Gerenciar Organização');
+SELECT 'Gerenciar Organizacao' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Gerenciar Organizacao');
 
 INSERT INTO permissao (nomePermissao)
-SELECT 'Editar Usuário' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Editar Usuário');
+SELECT 'Adicionar Usuario' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Adicionar Usuario');
 
 INSERT INTO permissao (nomePermissao)
-SELECT 'Acessar Central de Recomendações' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Acessar Central de Recomendações');
+SELECT 'Editar Usuario' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Editar Usuario');
 
--- Funcionalidades associadas aos módulos
-INSERT INTO funcionalidade (nomeFuncionalidade)
-SELECT 'Visualizar Dashboard de Rotas' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Visualizar Dashboard de Rotas');
+INSERT INTO permissao (nomePermissao)
+SELECT 'Acessar Central Recomendacoes' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM permissao WHERE nomePermissao = 'Acessar Central Recomendacoes');
 
+-- Funcionalidades associadas aos modulos
 INSERT INTO funcionalidade (nomeFuncionalidade)
-SELECT 'Visualizar Dashboard de Operações' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Visualizar Dashboard de Operações');
-
-INSERT INTO funcionalidade (nomeFuncionalidade)
-SELECT 'Configurar Regras de Alertas' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Configurar Regras de Alertas');
+SELECT 'Visualizar Dashboard Rotas' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Visualizar Dashboard Rotas');
 
 INSERT INTO funcionalidade (nomeFuncionalidade)
-SELECT 'Gerenciar Funcionários e Cargos' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Gerenciar Funcionários e Cargos');
+SELECT 'Visualizar Dashboard Operacoes' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Visualizar Dashboard Operacoes');
 
 INSERT INTO funcionalidade (nomeFuncionalidade)
-SELECT 'Editar Informações de Usuário' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Editar Informações de Usuário');
+SELECT 'Configurar Regras Alertas' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Configurar Regras Alertas');
 
 INSERT INTO funcionalidade (nomeFuncionalidade)
-SELECT 'Visualizar Central de Recomendações' FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Visualizar Central de Recomendações');
+SELECT 'Gerenciar Funcionarios e Cargos' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Gerenciar Funcionarios e Cargos');
 
--- Vínculo inicial entre Funcionalidades e Permissões (funcPermissao)
+INSERT INTO funcionalidade (nomeFuncionalidade)
+SELECT 'Editar Informacoes Usuario' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Editar Informacoes Usuario');
+
+INSERT INTO funcionalidade (nomeFuncionalidade)
+SELECT 'Visualizar Central Recomendacoes' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM funcionalidade WHERE nomeFuncionalidade = 'Visualizar Central Recomendacoes');
+
+-- Vinculo inicial entre Funcionalidades e Permissoes (funcPermissao)
 INSERT INTO funcPermissao (fkFuncionalidade, fkPermissao)
 SELECT f.idFuncionalidade, p.idPermissao
 FROM funcionalidade f, permissao p
-WHERE f.nomeFuncionalidade = 'Visualizar Dashboard de Rotas' AND p.nomePermissao = 'Acessar Dashboard de Rotas'
+WHERE f.nomeFuncionalidade = 'Visualizar Dashboard Rotas' AND p.nomePermissao = 'Acessar Dashboard Rotas'
   AND NOT EXISTS (SELECT 1 FROM funcPermissao WHERE fkFuncionalidade = f.idFuncionalidade AND fkPermissao = p.idPermissao);
 
 INSERT INTO funcPermissao (fkFuncionalidade, fkPermissao)
 SELECT f.idFuncionalidade, p.idPermissao
 FROM funcionalidade f, permissao p
-WHERE f.nomeFuncionalidade = 'Visualizar Dashboard de Operações' AND p.nomePermissao = 'Acessar Dashboard de Operações'
+WHERE f.nomeFuncionalidade = 'Visualizar Dashboard Operacoes' AND p.nomePermissao = 'Acessar Dashboard Operacoes'
   AND NOT EXISTS (SELECT 1 FROM funcPermissao WHERE fkFuncionalidade = f.idFuncionalidade AND fkPermissao = p.idPermissao);
 
 INSERT INTO funcPermissao (fkFuncionalidade, fkPermissao)
 SELECT f.idFuncionalidade, p.idPermissao
 FROM funcionalidade f, permissao p
-WHERE f.nomeFuncionalidade = 'Configurar Regras de Alertas' AND p.nomePermissao = 'Gerenciar Alertas Operacionais'
+WHERE f.nomeFuncionalidade = 'Configurar Regras Alertas' AND p.nomePermissao = 'Gerenciar Alertas Operacionais'
   AND NOT EXISTS (SELECT 1 FROM funcPermissao WHERE fkFuncionalidade = f.idFuncionalidade AND fkPermissao = p.idPermissao);
 
 INSERT INTO funcPermissao (fkFuncionalidade, fkPermissao)
 SELECT f.idFuncionalidade, p.idPermissao
 FROM funcionalidade f, permissao p
-WHERE f.nomeFuncionalidade = 'Gerenciar Funcionários e Cargos' AND p.nomePermissao = 'Gerenciar Organização'
+WHERE f.nomeFuncionalidade = 'Gerenciar Funcionarios e Cargos' AND p.nomePermissao = 'Gerenciar Organizacao'
   AND NOT EXISTS (SELECT 1 FROM funcPermissao WHERE fkFuncionalidade = f.idFuncionalidade AND fkPermissao = p.idPermissao);
 
 INSERT INTO funcPermissao (fkFuncionalidade, fkPermissao)
 SELECT f.idFuncionalidade, p.idPermissao
 FROM funcionalidade f, permissao p
-WHERE f.nomeFuncionalidade = 'Editar Informações de Usuário' AND p.nomePermissao = 'Editar Usuário'
+WHERE f.nomeFuncionalidade = 'Editar Informacoes Usuario' AND p.nomePermissao = 'Editar Usuario'
   AND NOT EXISTS (SELECT 1 FROM funcPermissao WHERE fkFuncionalidade = f.idFuncionalidade AND fkPermissao = p.idPermissao);
 
 INSERT INTO funcPermissao (fkFuncionalidade, fkPermissao)
 SELECT f.idFuncionalidade, p.idPermissao
 FROM funcionalidade f, permissao p
-WHERE f.nomeFuncionalidade = 'Visualizar Central de Recomendações'
-  AND p.nomePermissao = 'Acessar Central de Recomendações'
+WHERE f.nomeFuncionalidade = 'Visualizar Central Recomendacoes'
+  AND p.nomePermissao = 'Acessar Central Recomendacoes'
   AND NOT EXISTS (SELECT 1 FROM funcPermissao WHERE fkFuncionalidade = f.idFuncionalidade AND fkPermissao = p.idPermissao);
 
 INSERT INTO cargoPermissao (fkCargo, fkPermissao)

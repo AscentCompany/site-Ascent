@@ -73,14 +73,33 @@
   }
 
 
+  function normalizarNome(nome) {
+    return String(nome || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\bde\s+/gi, "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function temFuncionalidade(lista, nomeEsperado) {
+    if (!Array.isArray(lista)) return false;
+    if (lista.indexOf(nomeEsperado) !== -1) return true;
+    var alvo = normalizarNome(nomeEsperado);
+    return lista.some(function (f) {
+      return normalizarNome(f) === alvo;
+    });
+  }
+
   function aplicarControleAcessoPagina() {
     var funcionalidadesPorPagina = {
-      "dashboardrotas.html": "Visualizar Dashboard de Rotas",
-      "dashboardoperacoes.html": "Visualizar Dashboard de Operações",
-      "centralalertas.html": "Configurar Regras de Alertas",
-      "centralrecomendacoes.html": "Visualizar Central de Recomendações",
-      "configuraralertas.html": "Configurar Regras de Alertas",
-      "perfil.html": "Editar Informações de Usuário"
+      "dashboardrotas.html": "Visualizar Dashboard Rotas",
+      "dashboardoperacoes.html": "Visualizar Dashboard Operacoes",
+      "centralalertas.html": "Configurar Regras Alertas",
+      "centralrecomendacoes.html": "Visualizar Central Recomendacoes",
+      "configuraralertas.html": "Configurar Regras Alertas",
+      "perfil.html": "Editar Informacoes Usuario"
     };
     var pagina = window.location.pathname.split("/").pop().toLowerCase();
     var funcionalidade = funcionalidadesPorPagina[pagina];
@@ -94,7 +113,7 @@
       : null;
 
     if (cacheFuncionalidades !== null) {
-      if (cacheFuncionalidades.indexOf(funcionalidade) === -1) {
+      if (!temFuncionalidade(cacheFuncionalidades, funcionalidade)) {
         alert("Você não tem permissão para acessar esta página.");
         window.location.href = "acessoRapido.html";
       }
@@ -112,15 +131,15 @@
 
   function aplicarPermissoesSidebar() {
     var regras = [
-      { arquivo: "dashboardrotas.html", funcionalidade: "Visualizar Dashboard de Rotas" },
-      { arquivo: "dashboardoperacoes.html", funcionalidade: "Visualizar Dashboard de Operações" },
-      { arquivo: "usuarios.html", funcionalidade: "Gerenciar Funcionários e Cargos" },
-      { arquivo: "cargos.html", funcionalidade: "Gerenciar Funcionários e Cargos" },
-      { arquivo: "permissoes.html", funcionalidade: "Gerenciar Funcionários e Cargos" },
-      { arquivo: "centralalertas.html", funcionalidade: "Configurar Regras de Alertas" },
-      { arquivo: "centralrecomendacoes.html", funcionalidade: "Visualizar Central de Recomendações" },
-      { arquivo: "configuraralertas.html", funcionalidade: "Configurar Regras de Alertas" },
-      { arquivo: "perfil.html", funcionalidade: "Editar Informações de Usuário" }
+      { arquivo: "dashboardrotas.html", funcionalidade: "Visualizar Dashboard Rotas" },
+      { arquivo: "dashboardoperacoes.html", funcionalidade: "Visualizar Dashboard Operacoes" },
+      { arquivo: "usuarios.html", funcionalidade: "Gerenciar Funcionarios e Cargos" },
+      { arquivo: "cargos.html", funcionalidade: "Gerenciar Funcionarios e Cargos" },
+      { arquivo: "permissoes.html", funcionalidade: "Gerenciar Funcionarios e Cargos" },
+      { arquivo: "centralalertas.html", funcionalidade: "Configurar Regras Alertas" },
+      { arquivo: "centralrecomendacoes.html", funcionalidade: "Visualizar Central Recomendacoes" },
+      { arquivo: "configuraralertas.html", funcionalidade: "Configurar Regras Alertas" },
+      { arquivo: "perfil.html", funcionalidade: "Editar Informacoes Usuario" }
     ];
 
     var navEl = document.querySelector(".sidebar .nav");
@@ -139,7 +158,7 @@
         }
 
         var elemento = link.closest(".nav-item") || link;
-        elemento.style.display = funcionalidades.indexOf(regra.funcionalidade) !== -1 ? "" : "none";
+        elemento.style.display = temFuncionalidade(funcionalidades, regra.funcionalidade) ? "" : "none";
       });
 
       if (navEl) {

@@ -126,19 +126,19 @@ function cadastrar(req, res) {
                                             );
                                             return Promise.all(promises);
                                         })
-                                        // 3. Cria o cargo padrão sem permissões
-                                        .then(() => cargoModel.cadastrarCargo("Padrão", idCompanhiaReal))
+                                        // 3. Cria o cargo padrao sem permissoes
+                                        .then(() => cargoModel.cadastrarCargo("Padrao", idCompanhiaReal))
                                         // 4. Cadastra o 1º usuário com o cargo Administrador
                                         .then(() => usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, idCargoAdmin));
                                 });
                         }
 
-                        var cargoPadrao = cargosResultado.find(cargo => cargo.cargo === "Padrão");
+                        var cargoPadrao = cargosResultado.find(cargo => cargo.cargo === "Padrao" || cargo.cargo === "Padrão");
                         if (cargoPadrao) {
                             return usuarioModel.cadastrar(nome, email, senha, idCompanhiaReal, cargoPadrao.idCargo);
                         }
 
-                        return cargoModel.cadastrarCargo("Padrão", idCompanhiaReal)
+                        return cargoModel.cadastrarCargo("Padrao", idCompanhiaReal)
                             .then(() => cargoModel.buscarUltimoCargo(idCompanhiaReal))
                             .then(ultCargo => usuarioModel.cadastrar(
                                 nome,
