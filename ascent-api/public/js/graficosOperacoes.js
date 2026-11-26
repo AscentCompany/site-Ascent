@@ -28,7 +28,7 @@ function renderizarRotas(elemento, rotas, classeOcupacao) {
 
     let nomeRota = document.createElement('span');
     nomeRota.textContent = rota.rota;
-    nomeRota.title = rota.rota;
+    nomeRota.title = rota.nomeCompletoRota || rota.rota;
 
     let quantidadeVoos = document.createElement('span');
     quantidadeVoos.textContent = Number(rota.quantidadeVoos).toLocaleString('pt-BR');

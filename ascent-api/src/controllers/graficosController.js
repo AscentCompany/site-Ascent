@@ -20,6 +20,7 @@ function buscarInformativoRotas(req, res) {
 
                 return {
                     rota: registro.rota,
+                    nomeCompletoRota: registro.nomeCompletoRota,
                     quantidadeVoos: Number(registro.quantidadeVoos),
                     taxaOcupacao: (totalPassageiros / totalAssentos) * 100,
                     totalPassageiros: totalPassageiros,

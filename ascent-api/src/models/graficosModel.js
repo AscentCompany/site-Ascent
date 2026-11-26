@@ -14,10 +14,15 @@ function obterInformativoRotas(idCompanhia, anoReferencia) {
     let sql = `
         SELECT
             CONCAT(
+                COALESCE(NULLIF(TRIM(origem.icao), ''), NULLIF(TRIM(origem.nomeAeroporto), ''), NULLIF(TRIM(origem.municipio), ''), CONCAT('Aeroporto ', origem.idAeroporto)),
+                ' - ',
+                COALESCE(NULLIF(TRIM(destino.icao), ''), NULLIF(TRIM(destino.nomeAeroporto), ''), NULLIF(TRIM(destino.municipio), ''), CONCAT('Aeroporto ', destino.idAeroporto))
+            ) AS rota,
+            CONCAT(
                 COALESCE(NULLIF(TRIM(origem.nomeAeroporto), ''), NULLIF(TRIM(origem.municipio), ''), CONCAT('Aeroporto ', origem.idAeroporto)),
                 ' - ',
                 COALESCE(NULLIF(TRIM(destino.nomeAeroporto), ''), NULLIF(TRIM(destino.municipio), ''), CONCAT('Aeroporto ', destino.idAeroporto))
-            ) AS rota,
+            ) AS nomeCompletoRota,
             COUNT(DISTINCT v.idVoo) AS quantidadeVoos,
             SUM(v.qtdPassageiros) AS totalPassageiros,
             SUM(av.numAssentos) AS totalAssentos
@@ -35,6 +40,7 @@ function obterInformativoRotas(idCompanhia, anoReferencia) {
           AND partida.dia >= ?
           AND partida.dia < ?
         GROUP BY partida.fkAeroporto, chegada.fkAeroporto,
+                 origem.icao, destino.icao,
                  origem.nomeAeroporto, destino.nomeAeroporto,
                  origem.municipio, destino.municipio;
     `;
