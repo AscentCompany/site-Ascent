@@ -80,7 +80,7 @@
       </article>
 
       <article class="card kpi-card">
-        <h2>Volume médio de passageiros</h2>
+        <h2 id="kpi-titulo-volume-medio">Volume médio de passageiros</h2>
         <div class="kpi-comparacao">
           <div class="kpi-coluna">
             <span class="kpi-coluna-titulo">Sua companhia</span>
@@ -96,7 +96,7 @@
       </article>
 
       <article class="card kpi-card">
-        <h2>Companhia com maior ocupação</h2>
+        <h2 id="kpi-titulo-benchmark">Companhia com maior ocupação</h2>
         <div class="kpi-comparacao">
           <div class="kpi-coluna">
             <span class="kpi-coluna-titulo">Sua companhia</span>
@@ -112,7 +112,7 @@
       </article>
 
       <article class="card kpi-card">
-        <h2>Taxa de ocupação média</h2>
+        <h2 id="kpi-titulo-ocupacao-media">Taxa de ocupação média</h2>
         <div class="kpi-comparacao">
           <div class="kpi-coluna">
             <span class="kpi-coluna-titulo">Sua companhia</span>
@@ -264,6 +264,7 @@
 
   function carregarKpiBenchmark() {
     let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoTitulo = document.getElementById('kpi-titulo-benchmark');
     let elementoNomeSuaCompanhia = document.getElementById('kpi-nome-sua-companhia');
     let elementoTaxaSuaCompanhia = document.getElementById('kpi-taxa-sua-companhia');
     let elementoNomeBenchmark = document.getElementById('kpi-nome-benchmark');
@@ -279,6 +280,12 @@
       .then(function (json) {
         if (!json.sucesso || !json.dados) {
           throw new Error('Resposta inválida da API');
+        }
+
+        if (elementoTitulo) {
+          elementoTitulo.textContent = json.dados.anoReferencia
+            ? `Companhia com maior ocupação (${json.dados.anoReferencia})`
+            : 'Companhia com maior ocupação';
         }
 
         let suaCompanhia = json.dados.suaCompanhia;
@@ -303,6 +310,9 @@
       })
       .catch(function (erro) {
         console.error('Erro ao carregar KPI de ocupação:', erro);
+        if (elementoTitulo) {
+          elementoTitulo.textContent = 'Companhia com maior ocupação';
+        }
         elementoNomeSuaCompanhia.textContent = '--';
         elementoNomeSuaCompanhia.title = '';
         elementoTaxaSuaCompanhia.textContent = '--';
@@ -319,6 +329,7 @@
 
   function carregarKpiVolumeMedio() {
     let companhiaId = sessionStorage.COMPANHIA_USUARIO;
+    let elementoTitulo = document.getElementById('kpi-titulo-volume-medio');
     let elementoVolumeCompanhia = document.getElementById('kpi-volume-companhia');
     let elementoVolumeMercado = document.getElementById('kpi-volume-mercado');
 
@@ -334,6 +345,12 @@
           throw new Error('Resposta inválida da API');
         }
 
+        if (elementoTitulo) {
+          elementoTitulo.textContent = json.dados.anoReferencia
+            ? `Volume médio de passageiros (${json.dados.anoReferencia})`
+            : 'Volume médio de passageiros';
+        }
+
         let mediaMercado = Number(json.dados.mediaMercado) || 0;
         let mediaCompanhia = Number(json.dados.mediaCompanhia) || 0;
         let classeCompanhia = mediaCompanhia >= mediaMercado ? 'positive' : 'negative';
@@ -346,6 +363,9 @@
       })
       .catch(function (erro) {
         console.error('Erro ao carregar KPI de volume médio:', erro);
+        if (elementoTitulo) {
+          elementoTitulo.textContent = 'Volume médio de passageiros';
+        }
         elementoVolumeCompanhia.textContent = '--';
         elementoVolumeCompanhia.className = 'kpi-coluna-taxa';
 
@@ -421,6 +441,7 @@
 
   function carregarKpiOcupacaoMedia() {
     let companhiaId = Number(sessionStorage.COMPANHIA_USUARIO) || 1;
+    let elementoTitulo = document.getElementById('kpi-titulo-ocupacao-media');
     let elementoNomeCompanhia = document.getElementById('kpi-nome-ocupacao-companhia');
     let elementoTaxaCompanhia = document.getElementById('kpi-taxa-ocupacao-companhia');
     let elementoNomeMercado = document.getElementById('kpi-nome-ocupacao-mercado');
@@ -436,6 +457,12 @@
       .then(function (json) {
         if (!json.sucesso || !json.dados) {
           throw new Error('Resposta inválida da API');
+        }
+
+        if (elementoTitulo) {
+          elementoTitulo.textContent = json.dados.anoReferencia
+            ? `Taxa de ocupação média (${json.dados.anoReferencia})`
+            : 'Taxa de ocupação média';
         }
 
         let suaCompanhia = json.dados.suaCompanhia;
@@ -461,6 +488,9 @@
       })
       .catch(function (erro) {
         console.error('Erro ao carregar KPI de ocupação média:', erro);
+        if (elementoTitulo) {
+          elementoTitulo.textContent = 'Taxa de ocupação média';
+        }
         elementoNomeCompanhia.textContent = '--';
         elementoNomeCompanhia.title = '';
         elementoTaxaCompanhia.textContent = '--';
