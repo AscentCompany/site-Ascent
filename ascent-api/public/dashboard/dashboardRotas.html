@@ -541,6 +541,56 @@
   carregarKpiAeroportoMenorProcura();
   carregarKpiHubMaiorCirculacao();
   carregarKpiMesMaiorProcura();
+
+  // No mobile/touch (sem hover), tocar no ICAO exibe um balao flutuante com o nome completo
+  (function configurarTooltipTouchKpis() {
+    let balao = null;
+
+    function fecharBalao() {
+      if (balao) {
+        balao.remove();
+        balao = null;
+      }
+    }
+
+    document.addEventListener('click', function (evento) {
+      let alvo = evento.target.closest('.kpi-coluna-nome[title]');
+      if (!alvo || !alvo.getAttribute('title')) {
+        fecharBalao();
+        return;
+      }
+
+      if (!window.matchMedia('(hover: none)').matches) {
+        return;
+      }
+
+      evento.stopPropagation();
+      let texto = alvo.getAttribute('title');
+      if (balao && balao.dataset.origem === alvo.id) {
+        fecharBalao();
+        return;
+      }
+
+      fecharBalao();
+      balao = document.createElement('div');
+      balao.className = 'kpi-touch-tooltip';
+      balao.dataset.origem = alvo.id || '';
+      balao.textContent = texto;
+      document.body.appendChild(balao);
+
+      let ret = alvo.getBoundingClientRect();
+      let top = ret.bottom + 6;
+      if (top + balao.offsetHeight > window.innerHeight - 8) {
+        top = Math.max(8, ret.top - balao.offsetHeight - 6);
+      }
+      let left = Math.min(Math.max(8, ret.left), window.innerWidth - balao.offsetWidth - 8);
+      balao.style.top = top + 'px';
+      balao.style.left = left + 'px';
+    });
+
+    window.addEventListener('scroll', fecharBalao, { passive: true });
+    window.addEventListener('resize', fecharBalao);
+  })();
 </script>
 
 <div id="modal-alerta-container"></div>
