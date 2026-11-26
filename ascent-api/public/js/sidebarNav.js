@@ -148,6 +148,7 @@
       if (acessoGrid) {
         acessoGrid.style.visibility = "";
       }
+      document.documentElement.classList.add("permissoes-prontas");
     }
 
     var cacheFuncionalidades = typeof obterFuncionalidadesCargoCache === "function"
