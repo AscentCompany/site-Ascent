@@ -112,7 +112,8 @@ CREATE TABLE IF NOT EXISTS aeroporto (
     municipio     VARCHAR(100) NOT NULL,
     uf            VARCHAR(10)  NOT NULL,
     regiao        VARCHAR(100) NOT NULL,
-    pais          VARCHAR(100) NOT NULL
+    pais          VARCHAR(100) NOT NULL,
+    icao          VARCHAR(10)  NULL DEFAULT NULL
 );
 
 -- Tabela: AeroportoDirecao

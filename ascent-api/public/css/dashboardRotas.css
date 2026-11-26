@@ -729,6 +729,17 @@ body.menu-fechado .btn-menu {
   max-width: 100%;
 }
 
+.chart-status {
+  margin-top: 4px;
+  color: #777;
+  font-size: 11px;
+  text-align: center;
+}
+
+.chart-status:empty {
+  display: none;
+}
+
 .card-faixa .grafico-div {
   position: relative;
   width: 100%;

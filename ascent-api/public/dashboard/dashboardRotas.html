@@ -193,33 +193,37 @@
     <main class="main">
 
       <section class="card card-evolucao">
-        <h2 class="chart-title">DEMANDA POR TIPO DE VOOS</h2>
+        <h2 class="chart-title">DEMANDA POR TIPO DE VOOS (<span id="ano-grafico-linhas"></span>)</h2>
 
         <div class="chart-placeholder" style="position: relative; height: 210px;">
           <canvas id="grafico-linhas"></canvas>
         </div>
+        <p class="chart-status" id="status-grafico-linhas" role="status">Carregando dados...</p>
       </section>
 
       <section class="card card-mensal">
-        <h2 class="chart-title">DEMANDA POR TIPO DE VOOS POR HORÁRIO</h2>
+        <h2 class="chart-title">DEMANDA POR TIPO DE VOOS POR HORÁRIO (<span id="ano-grafico-horario"></span>)</h2>
 
         <div class="grafico-container" style="position: relative; height: 210px;">
           <canvas id="grafico-horario"></canvas>
         </div>
+        <p class="chart-status" id="status-grafico-horario" role="status">Carregando dados...</p>
       </section>
 
       <section class="card card-faixa">
-        <h2 class="chart-title">DEMANDA POR ROTA</h2>
+        <h2 class="chart-title">DEMANDA POR ROTA (<span id="ano-grafico-barras"></span>)</h2>
 
         <div class="grafico-div">
           <canvas id="grafico-barras"></canvas>
         </div>
+        <p class="chart-status" id="status-grafico-barras" role="status">Carregando dados...</p>
       </section>
       
     </main>
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/graficosRotas.js"></script>
 <script>
 
   document.getElementById('nome-usuario').textContent = sessionStorage.NOME_USUARIO || 'Usuário';
@@ -229,225 +233,6 @@
   if (window.innerWidth <= 900) document.body.classList.add('menu-fechado');
   btnMenu.addEventListener('click', () => document.body.classList.toggle('menu-fechado'));
   overlay.addEventListener('click', () => document.body.classList.add('menu-fechado'));
-
-
-  /*GRAFICOS*/
-  Chart.defaults.font.family = '"Nunito Sans", "Segoe UI", Arial, sans-serif';
-  Chart.defaults.color = '#2b2b2b';
-
-  const meses = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
-
-  /* 1) Demanda por tipo de voos (linhas) */
-  new Chart(document.getElementById('grafico-linhas'), {
-    type: 'line',
-    data: {
-      labels: meses,
-      datasets: [
-        {
-          label: 'Comerciais',
-          data: [3800, 4000, 4100, 4300, 4600, 4700, 4600, 4400, 4700, 4900, 5100, 5400],
-          borderColor: '#9ea4ac',
-          backgroundColor: '#9ea4ac',
-          tension: 0,
-          pointRadius: 4.5,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#9ea4ac',
-          pointBorderColor: '#9ea4ac',
-          borderWidth: 2.5
-        },
-        {
-          label: 'Turísticos',
-          data: [2000, 2300, 2400, 2700, 3200, 4700, 5700, 4200, 3400, 3200, 3500, 4000],
-          borderColor: '#ff6a00',
-          backgroundColor: '#ff6a00',
-          tension: 0,
-          pointRadius: 4.5,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#ff6a00',
-          pointBorderColor: '#ff6a00',
-          borderWidth: 2.5
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          position: 'top',
-          align: 'end',
-          labels: {
-            boxWidth: 8,
-            boxHeight: 8,
-            usePointStyle: true,
-            pointStyle: 'circle',
-            font: { size: 10 },
-            color: '#555'
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} passageiros`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          border: { display: false },
-          ticks: { font: { size: 10 }, color: '#777' }
-        },
-        y: {
-          beginAtZero: true,
-          min: 0,
-          max: 7000,
-          grid: { color: '#ececec' },
-          border: { display: false },
-          ticks: {
-            stepSize: 2000,
-            font: { size: 10 },
-            color: '#777',
-            callback: valor => valor.toLocaleString('pt-BR')
-          },
-          title: {
-            display: true,
-            text: 'Passageiros Transportados',
-            font: { size: 10, weight: '600' },
-            color: '#555'
-          }
-        }
-      }
-    }
-  });
-
-  /* 2) Demanda por tipo de voos por horário */
-  const horarios = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
-
-  new Chart(document.getElementById('grafico-horario'), {
-    type: 'line',
-    data: {
-      labels: horarios,
-      datasets: [
-        {
-          label: 'Comerciais',
-          data: [1200, 2100, 5100, 6000, 5400, 3000],
-          borderColor: '#9ea4ac',
-          backgroundColor: '#9ea4ac',
-          tension: 0,
-          pointRadius: 4.5,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#9ea4ac',
-          pointBorderColor: '#9ea4ac',
-          borderWidth: 2.5
-        },
-        {
-          label: 'Turísticos',
-          data: [800, 1300, 2800, 4500, 4100, 2500],
-          borderColor: '#ff6a00',
-          backgroundColor: '#ff6a00',
-          tension: 0,
-          pointRadius: 4.5,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#ff6a00',
-          pointBorderColor: '#ff6a00',
-          borderWidth: 2.5
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          position: 'top',
-          align: 'end',
-          labels: {
-            boxWidth: 8,
-            boxHeight: 8,
-            usePointStyle: true,
-            pointStyle: 'circle',
-            font: { size: 10 },
-            color: '#555'
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} passageiros`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          border: { display: false },
-          ticks: { font: { size: 10 }, color: '#777' }
-        },
-        y: {
-          beginAtZero: true,
-          min: 0,
-          max: 7000,
-          grid: { color: '#ececec' },
-          border: { display: false },
-          ticks: {
-            stepSize: 2000,
-            font: { size: 10 },
-            color: '#777',
-            callback: valor => valor.toLocaleString('pt-BR')
-          },
-          title: {
-            display: true,
-            text: 'Quantidade de passageiros',
-            font: { size: 10, weight: '600' },
-            color: '#555'
-          }
-        }
-      }
-    }
-  });
-
-  /*3) Demanda por rota (barras horizontais)*/
-  new Chart(document.getElementById('grafico-barras'), {
-    type: 'bar',
-    data: {
-      labels: ['SSA - GRU', 'FOR - GIG', 'GRU - GIG', 'MAO - CGB', 'CGH - REC', 'CWB - GRU', 'BSB - CGH', 'VIX - CGB', 'POA - GRU'],
-      datasets: [{
-        label: 'Demanda',
-        data: [10000, 4500, 12000, 3000, 5000, 2000, 2000, 2000, 7000],
-        backgroundColor: [
-          '#f5df7a', '#e9ec6a', '#78e05b', '#ff8a1f', '#ea4a0c',
-          '#4fd8cf', '#ffb866', '#dca8ee', '#ffa87a'
-        ],
-        borderRadius: 4,
-        categoryPercentage: 0.9,
-        barPercentage: 0.85
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: { label: ctx => ' ' + ctx.parsed.x.toLocaleString('pt-BR') + ' voos' }
-        }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          grid: { color: '#ececec' },
-          ticks: {
-            stepSize: 2000,
-            font: { size: 10 },
-            callback: v => (v === 0 ? '0' : (v / 1000) + 'mil')
-          }
-        },
-        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
-      }
-    }
-  });
 
   function preencherVariacao(elementoDestino, diferenca, textoComparacao, adicionarSeparador) {
     if (adicionarSeparador) {

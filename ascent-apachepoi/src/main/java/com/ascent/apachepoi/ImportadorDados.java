@@ -32,12 +32,14 @@ public class ImportadorDados extends LeitorExcel.ConsumidorLinha {
     private final PreparedStatement insertCompanhia;
     private final PreparedStatement insertAviao;
     private final PreparedStatement insertAeroporto;
+    private final PreparedStatement updateAeroportoIcao;
     private final PreparedStatement insertVoo;
     private final PreparedStatement insertDirecao;
 
     private final HashMap<Integer, Integer> companhiaPorCodigo = new HashMap<>();
     private final HashMap<String, Integer>  aviaoPorModelo     = new HashMap<>();
     private final HashMap<String, Integer>  aeroportoPorNome   = new HashMap<>();
+    private final HashMap<Integer, Boolean> aeroportoTemIcao   = new HashMap<>();
 
     private final HashMap<Integer, Boolean> companhiasVistas = new HashMap<>();
     private final HashMap<String, Boolean>  avioesVistos     = new HashMap<>();
@@ -79,8 +81,10 @@ public class ImportadorDados extends LeitorExcel.ConsumidorLinha {
                 "INSERT INTO aviao (numAssentos, modelo) VALUES (?,?)",
                 Statement.RETURN_GENERATED_KEYS);
         this.insertAeroporto = conexao.prepareStatement(
-                "INSERT INTO aeroporto (nomeAeroporto, municipio, uf, regiao, pais) VALUES (?,?,?,?,?)",
+                "INSERT INTO aeroporto (nomeAeroporto, municipio, uf, regiao, pais, icao) VALUES (?,?,?,?,?,?)",
                 Statement.RETURN_GENERATED_KEYS);
+        this.updateAeroportoIcao = conexao.prepareStatement(
+                "UPDATE aeroporto SET icao = ? WHERE idAeroporto = ? AND (icao IS NULL OR icao = '')");
         this.insertVoo = conexao.prepareStatement(
                 "INSERT INTO voo (numVoo, tipoVoo, qtdPassageiros, fkCompanhia, fkAviao) VALUES (?,?,?,?,?)",
                 Statement.RETURN_GENERATED_KEYS);
@@ -278,6 +282,7 @@ public class ImportadorDados extends LeitorExcel.ConsumidorLinha {
         companhiaPorCodigo.clear();
         aviaoPorModelo.clear();
         aeroportoPorNome.clear();
+        aeroportoTemIcao.clear();
 
         try (Statement st = conexao.createStatement()) {
             try (ResultSet rs = st.executeQuery("SELECT codCompanhia, idCompanhia FROM companhia")) {
@@ -292,10 +297,15 @@ public class ImportadorDados extends LeitorExcel.ConsumidorLinha {
                     if (modelo != null) aviaoPorModelo.put(modelo, rs.getInt(2));
                 }
             }
-            try (ResultSet rs = st.executeQuery("SELECT nomeAeroporto, idAeroporto FROM aeroporto")) {
+            try (ResultSet rs = st.executeQuery("SELECT nomeAeroporto, idAeroporto, icao FROM aeroporto")) {
                 while (rs.next()) {
                     String nome = rs.getString(1);
-                    if (nome != null) aeroportoPorNome.put(nome, rs.getInt(2));
+                    int idAero = rs.getInt(2);
+                    String icao = rs.getString(3);
+                    if (nome != null) {
+                        aeroportoPorNome.put(nome, idAero);
+                        aeroportoTemIcao.put(idAero, icao != null && !icao.isBlank());
+                    }
                 }
             }
         }
@@ -404,8 +414,19 @@ public class ImportadorDados extends LeitorExcel.ConsumidorLinha {
         if (a == null || a.getNomeAeroporto() == null || a.getNomeAeroporto().isBlank()) return null;
 
         String nome = a.getNomeAeroporto();
+        String icao = texto(a.getIcao(), "");
         Integer id = aeroportoPorNome.get(nome);
         if (id != null) {
+            if (!icao.isEmpty() && !Boolean.TRUE.equals(aeroportoTemIcao.get(id))) {
+                try {
+                    updateAeroportoIcao.setString(1, icao);
+                    updateAeroportoIcao.setInt(2, id);
+                    updateAeroportoIcao.executeUpdate();
+                    aeroportoTemIcao.put(id, Boolean.TRUE);
+                } catch (SQLException e) {
+                    throw new RuntimeException("Falha ao atualizar ICAO do aeroporto: " + e.getMessage(), e);
+                }
+            }
             aeroportosVistos.put(nome, Boolean.TRUE);
             return id;
         }
@@ -416,11 +437,13 @@ public class ImportadorDados extends LeitorExcel.ConsumidorLinha {
             insertAeroporto.setString(3, texto(a.getUf(), ""));
             insertAeroporto.setString(4, texto(a.getRegiao(), ""));
             insertAeroporto.setString(5, texto(a.getPais(), "BRASIL"));
+            insertAeroporto.setString(6, icao);
             insertAeroporto.executeUpdate();
 
             Integer novo = chaveGerada(insertAeroporto);
             if (novo != null) {
                 aeroportoPorNome.put(nome, novo);
+                aeroportoTemIcao.put(novo, !icao.isEmpty());
                 aeroportosVistos.put(nome, Boolean.TRUE);
             }
             return novo;
@@ -445,9 +468,10 @@ public class ImportadorDados extends LeitorExcel.ConsumidorLinha {
 
     public void fechar() {
         try { insertCompanhia.close(); } catch (SQLException ignored) { }
-        try { insertAviao.close(); }     catch (SQLException ignored) { }
-        try { insertAeroporto.close(); } catch (SQLException ignored) { }
-        try { insertVoo.close(); }       catch (SQLException ignored) { }
+        try { insertAviao.close(); }         catch (SQLException ignored) { }
+        try { insertAeroporto.close(); }     catch (SQLException ignored) { }
+        try { updateAeroportoIcao.close(); } catch (SQLException ignored) { }
+        try { insertVoo.close(); }           catch (SQLException ignored) { }
         try { insertDirecao.close(); }   catch (SQLException ignored) { }
         try { conexao.close(); }         catch (SQLException ignored) { }
     }

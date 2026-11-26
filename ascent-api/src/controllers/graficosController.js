@@ -158,7 +158,85 @@ function buscarGraficosOperacoes(req, res) {
         });
 }
 
+function buscarGraficosRotas(req, res) {
+    let idCompanhia = Number(req.params.idCompanhia);
+
+    if (!Number.isInteger(idCompanhia) || idCompanhia <= 0) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: "ID da companhia inválido ou não informado."
+        });
+    }
+
+    let anoReferencia = new Date().getFullYear() - 1;
+
+    Promise.all([
+        graficosModel.obterDemandaMensalPorTipo(idCompanhia, anoReferencia),
+        graficosModel.obterDemandaHorarioPorTipo(idCompanhia, anoReferencia),
+        graficosModel.obterDemandaPorRota(idCompanhia, anoReferencia)
+    ])
+        .then(function (resultados) {
+            let comerciaisMes = new Array(12).fill(0);
+            let turisticosMes = new Array(12).fill(0);
+
+            resultados[0].forEach(function (registro) {
+                let indiceMes = Number(registro.mes) - 1;
+                if (indiceMes < 0 || indiceMes >= 12) {
+                    return;
+                }
+                comerciaisMes[indiceMes] = Number(registro.passageirosComerciais) || 0;
+                turisticosMes[indiceMes] = Number(registro.passageirosTuristicos) || 0;
+            });
+
+            let comerciaisHorario = new Array(6).fill(0);
+            let turisticosHorario = new Array(6).fill(0);
+
+            resultados[1].forEach(function (registro) {
+                let faixa = Number(registro.faixaHorario);
+                if (faixa < 0 || faixa >= 6) {
+                    return;
+                }
+                comerciaisHorario[faixa] = Number(registro.passageirosComerciais) || 0;
+                turisticosHorario[faixa] = Number(registro.passageirosTuristicos) || 0;
+            });
+
+            let rotas = resultados[2].map(function (registro) {
+                return {
+                    rota: registro.rotaIcao,
+                    nomeCompletoRota: registro.nomeCompletoRota,
+                    quantidadeVoos: Number(registro.quantidadeVoos) || 0,
+                    totalPassageiros: Number(registro.totalPassageiros) || 0
+                };
+            });
+
+            res.json({
+                sucesso: true,
+                dados: {
+                    anoReferencia: anoReferencia,
+                    demandaMensal: {
+                        comerciais: comerciaisMes,
+                        turisticos: turisticosMes
+                    },
+                    demandaHorario: {
+                        comerciais: comerciaisHorario,
+                        turisticos: turisticosHorario
+                    },
+                    demandaPorRota: rotas
+                }
+            });
+        })
+        .catch(function (erro) {
+            console.error("Erro ao buscar gráficos de rotas:", erro);
+            res.status(500).json({
+                sucesso: false,
+                mensagem: "Erro ao buscar os gráficos de rotas.",
+                erro: erro.sqlMessage || erro.message || erro
+            });
+        });
+}
+
 module.exports = {
     buscarInformativoRotas,
-    buscarGraficosOperacoes
+    buscarGraficosOperacoes,
+    buscarGraficosRotas
 };

@@ -23,6 +23,23 @@ PREPARE stmt_col FROM @sql_add_col;
 EXECUTE stmt_col;
 DEALLOCATE PREPARE stmt_col;
 
+-- 1b. Garante coluna icao em aeroporto
+SET @col_icao_exists := (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'aeroporto'
+    AND COLUMN_NAME = 'icao'
+);
+SET @sql_add_icao := IF(
+  @col_icao_exists = 0,
+  'ALTER TABLE aeroporto ADD COLUMN icao VARCHAR(10) NULL DEFAULT NULL;',
+  'SELECT 1;'
+);
+PREPARE stmt_icao FROM @sql_add_icao;
+EXECUTE stmt_icao;
+DEALLOCATE PREPARE stmt_icao;
+
 -- 2. Permissoes padrao do sistema
 INSERT INTO permissao (nomePermissao)
 SELECT 'Acessar Dashboard Rotas' FROM DUAL
@@ -211,3 +228,46 @@ LEFT JOIN (
 ) ja_tem ON ja_tem.fkCompanhia = u.fkCompanhia
 SET u.fkCargo = c_admin.idCargo
 WHERE ja_tem.fkCompanhia IS NULL;
+
+-- 8. Preenche ICAO nos aeroportos ja cadastrados (sem precisar reimportar)
+UPDATE aeroporto
+SET icao = CASE
+  WHEN UPPER(nomeAeroporto) LIKE '%GUARULHOS%' OR UPPER(nomeAeroporto) LIKE '%FRANCO MONTORO%' THEN 'SBGR'
+  WHEN UPPER(nomeAeroporto) LIKE '%GALEAO%' OR UPPER(nomeAeroporto) LIKE '%ANTONIO CARLOS JOBIM%' THEN 'SBGL'
+  WHEN UPPER(nomeAeroporto) LIKE '%CONGONHAS%' THEN 'SBSP'
+  WHEN UPPER(nomeAeroporto) LIKE '%VIRACOPOS%' THEN 'SBKP'
+  WHEN UPPER(nomeAeroporto) LIKE '%JUSCELINO KUBITSCHEK%' OR UPPER(municipio) LIKE 'BRASILIA%' THEN 'SBBR'
+  WHEN UPPER(nomeAeroporto) LIKE '%CONFINS%' OR UPPER(nomeAeroporto) LIKE '%TANCREDO NEVES%' THEN 'SBCF'
+  WHEN UPPER(nomeAeroporto) LIKE '%SANTOS DUMONT%' THEN 'SBRJ'
+  WHEN UPPER(nomeAeroporto) LIKE '%SALVADOR%' OR UPPER(nomeAeroporto) LIKE '%LUIS EDUARDO MAGALHAES%' THEN 'SBSV'
+  WHEN UPPER(nomeAeroporto) LIKE '%GUARARAPES%' OR UPPER(municipio) LIKE 'RECIFE%' THEN 'SBRF'
+  WHEN UPPER(nomeAeroporto) LIKE '%PINTO MARTINS%' OR UPPER(municipio) LIKE 'FORTALEZA%' THEN 'SBFZ'
+  WHEN UPPER(nomeAeroporto) LIKE '%SALGADO FILHO%' OR UPPER(municipio) LIKE 'PORTO ALEGRE%' THEN 'SBPA'
+  WHEN UPPER(nomeAeroporto) LIKE '%AFONSO PENA%' THEN 'SBCT'
+  WHEN UPPER(nomeAeroporto) LIKE '%HERCILIO LUZ%' OR UPPER(municipio) LIKE 'FLORIANOPOLIS%' THEN 'SBFL'
+  WHEN UPPER(nomeAeroporto) LIKE '%EURICO DE AGUIAR SALLES%' OR UPPER(municipio) LIKE 'VITORIA%' THEN 'SBVT'
+  WHEN UPPER(nomeAeroporto) LIKE '%EDUARDO GOMES%' OR UPPER(municipio) LIKE 'MANAUS%' THEN 'SBEG'
+  WHEN UPPER(nomeAeroporto) LIKE '%VAL DE CANS%' OR UPPER(municipio) LIKE 'BELEM%' THEN 'SBBE'
+  WHEN UPPER(nomeAeroporto) LIKE '%SANTA GENOVEVA%' OR UPPER(municipio) LIKE 'GOIANIA%' THEN 'SBGO'
+  WHEN UPPER(nomeAeroporto) LIKE '%MARECHAL RONDON%' OR UPPER(municipio) LIKE 'CUIABA%' THEN 'SBCY'
+  WHEN UPPER(nomeAeroporto) LIKE '%ALUIZIO ALVES%' OR UPPER(nomeAeroporto) LIKE '%SAO GONCALO DO AMARANTE%' THEN 'SBSG'
+  WHEN UPPER(nomeAeroporto) LIKE '%ZUMBI DOS PALMARES%' OR UPPER(municipio) LIKE 'MACEIO%' THEN 'SBMO'
+  WHEN UPPER(nomeAeroporto) LIKE '%CATARATAS%' OR UPPER(municipio) LIKE 'FOZ DO IGUACU%' THEN 'SBFI'
+  WHEN UPPER(nomeAeroporto) LIKE '%VICTOR KONDER%' OR UPPER(municipio) LIKE 'NAVEGANTES%' THEN 'SBNF'
+  WHEN UPPER(nomeAeroporto) LIKE '%PORTO SEGURO%' THEN 'SBPS'
+  WHEN UPPER(nomeAeroporto) LIKE '%CUNHA MACHADO%' OR UPPER(municipio) LIKE 'SAO LUIS%' THEN 'SBSL'
+  WHEN UPPER(nomeAeroporto) LIKE '%CASTRO PINTO%' OR UPPER(municipio) LIKE 'JOAO PESSOA%' THEN 'SBJP'
+  WHEN UPPER(nomeAeroporto) LIKE '%PETRONIO PORTELLA%' OR UPPER(municipio) LIKE 'TERESINA%' THEN 'SBTE'
+  WHEN UPPER(nomeAeroporto) LIKE '%SANTA MARIA%' AND UPPER(uf) = 'SE' THEN 'SBAR'
+  WHEN UPPER(municipio) LIKE 'CAMPO GRANDE%' AND UPPER(uf) = 'MS' THEN 'SBCG'
+  WHEN UPPER(nomeAeroporto) LIKE '%JOSE RICHA%' OR UPPER(municipio) LIKE 'LONDRINA%' THEN 'SBLO'
+  WHEN UPPER(nomeAeroporto) LIKE '%LEITE LOPES%' OR UPPER(municipio) LIKE 'RIBEIRAO PRETO%' THEN 'SBRP'
+  WHEN UPPER(nomeAeroporto) LIKE '%CESAR BOMBONATO%' OR UPPER(municipio) LIKE 'UBERLANDIA%' THEN 'SBUL'
+  WHEN UPPER(nomeAeroporto) LIKE '%PAMPULHA%' THEN 'SBBH'
+  WHEN UPPER(nomeAeroporto) LIKE '%BACACHERI%' THEN 'SBBI'
+  WHEN UPPER(nomeAeroporto) LIKE '%CAMPO DE MARTE%' THEN 'SBMT'
+  WHEN UPPER(nomeAeroporto) LIKE '%JACAREPAGUA%' THEN 'SBJR'
+  ELSE icao
+END
+WHERE idAeroporto > 0
+  AND (icao IS NULL OR icao = '');

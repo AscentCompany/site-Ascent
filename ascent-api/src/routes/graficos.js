@@ -11,4 +11,8 @@ router.get("/operacoes/:idCompanhia", cache(15), function (req, res) {
     graficosController.buscarGraficosOperacoes(req, res);
 });
 
+router.get("/rotas/:idCompanhia", cache(15), function (req, res) {
+    graficosController.buscarGraficosRotas(req, res);
+});
+
 module.exports = router;
