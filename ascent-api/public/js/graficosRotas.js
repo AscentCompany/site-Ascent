@@ -199,6 +199,7 @@ const graficoBarrasRotas = new Chart(document.getElementById('grafico-barras'), 
     indexAxis: 'y',
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'index', axis: 'y', intersect: false },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -251,6 +252,39 @@ function definirEstadoGraficoRotas(idElemento, mensagem) {
   if (el) {
     el.textContent = mensagem;
   }
+}
+
+const canvasBarrasRotas = document.getElementById('grafico-barras');
+if (canvasBarrasRotas) {
+  canvasBarrasRotas.addEventListener('mousemove', function (evento) {
+    let escalaY = graficoBarrasRotas.scales && graficoBarrasRotas.scales.y;
+    if (!escalaY || !detalhesRotasGrafico.length) {
+      canvasBarrasRotas.title = '';
+      return;
+    }
+
+    let retangulo = canvasBarrasRotas.getBoundingClientRect();
+    let x = evento.clientX - retangulo.left;
+    let y = evento.clientY - retangulo.top;
+
+    if (x >= escalaY.left && x <= escalaY.right && y >= escalaY.top && y <= escalaY.bottom) {
+      let indice = escalaY.getValueForPixel(y);
+      let detalhe = detalhesRotasGrafico[indice];
+      if (detalhe && detalhe.nomeCompletoRota) {
+        canvasBarrasRotas.title = `${detalhe.rota}: ${detalhe.nomeCompletoRota}`;
+        canvasBarrasRotas.style.cursor = 'help';
+        return;
+      }
+    }
+
+    canvasBarrasRotas.title = '';
+    canvasBarrasRotas.style.cursor = '';
+  });
+
+  canvasBarrasRotas.addEventListener('mouseleave', function () {
+    canvasBarrasRotas.title = '';
+    canvasBarrasRotas.style.cursor = '';
+  });
 }
 
 function carregarGraficosRotas() {

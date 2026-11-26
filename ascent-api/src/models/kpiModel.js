@@ -323,6 +323,7 @@ function montarRotaIncidenciaItem(rotaRow, totalVoos) {
     if (!rotaRow || totalVoos <= 0) {
         return {
             rota: null,
+            nomeCompletoRota: null,
             quantidadeVoos: 0,
             totalVoos: totalVoos || 0,
             percentual: null
@@ -331,9 +332,12 @@ function montarRotaIncidenciaItem(rotaRow, totalVoos) {
 
     let voosRota = Number(rotaRow.quantidadeVoos) || 0;
     let percentual = Number(((voosRota / totalVoos) * 100).toFixed(1));
+    let icaoOrigem = rotaRow.icaoOrigem || rotaRow.nomeOrigem;
+    let icaoDestino = rotaRow.icaoDestino || rotaRow.nomeDestino;
 
     return {
-        rota: `${rotaRow.nomeOrigem} - ${rotaRow.nomeDestino}`,
+        rota: `${icaoOrigem} - ${icaoDestino}`,
+        nomeCompletoRota: `${rotaRow.nomeOrigem} - ${rotaRow.nomeDestino}`,
         quantidadeVoos: voosRota,
         totalVoos: totalVoos,
         percentual: percentual
@@ -360,6 +364,8 @@ function obterRotaMaiorIncidencia(idCompanhia) {
             SELECT
                 top.idOrigem,
                 top.idDestino,
+                NULLIF(TRIM(origem.icao), '') AS icaoOrigem,
+                NULLIF(TRIM(destino.icao), '') AS icaoDestino,
                 COALESCE(NULLIF(TRIM(origem.nomeAeroporto), ''), NULLIF(TRIM(origem.municipio), ''), CONCAT('Aeroporto ', origem.idAeroporto)) AS nomeOrigem,
                 COALESCE(NULLIF(TRIM(destino.nomeAeroporto), ''), NULLIF(TRIM(destino.municipio), ''), CONCAT('Aeroporto ', destino.idAeroporto)) AS nomeDestino,
                 top.quantidadeVoos,
@@ -394,6 +400,8 @@ function obterRotaMaiorIncidencia(idCompanhia) {
             SELECT
                 top.idOrigem,
                 top.idDestino,
+                NULLIF(TRIM(origem.icao), '') AS icaoOrigem,
+                NULLIF(TRIM(destino.icao), '') AS icaoDestino,
                 COALESCE(NULLIF(TRIM(origem.nomeAeroporto), ''), NULLIF(TRIM(origem.municipio), ''), CONCAT('Aeroporto ', origem.idAeroporto)) AS nomeOrigem,
                 COALESCE(NULLIF(TRIM(destino.nomeAeroporto), ''), NULLIF(TRIM(destino.municipio), ''), CONCAT('Aeroporto ', destino.idAeroporto)) AS nomeDestino,
                 top.quantidadeVoos,
@@ -440,6 +448,7 @@ function obterRotaMaiorIncidencia(idCompanhia) {
 function montarAeroportoMenorProcuraItem(row) {
     if (!row) {
         return {
+            icao: null,
             nomeAeroporto: null,
             totalPassageiros: null,
             totalAssentos: 0,
@@ -455,6 +464,7 @@ function montarAeroportoMenorProcuraItem(row) {
         : null;
 
     return {
+        icao: row.icao || row.nomeAeroporto,
         nomeAeroporto: row.nomeAeroporto,
         totalPassageiros: totalPass,
         totalAssentos: totalAssentos,
@@ -474,6 +484,7 @@ function obterAeroportoMenorProcura(idCompanhia) {
         let sqlCompanhia = `
             SELECT
                 top.idAeroporto,
+                NULLIF(TRIM(a.icao), '') AS icao,
                 COALESCE(NULLIF(TRIM(a.nomeAeroporto), ''), NULLIF(TRIM(a.municipio), ''), CONCAT('Aeroporto ', a.idAeroporto)) AS nomeAeroporto,
                 top.quantidadeVoos,
                 top.totalPassageiros,
@@ -501,6 +512,7 @@ function obterAeroportoMenorProcura(idCompanhia) {
         let sqlMercado = `
             SELECT
                 top.idAeroporto,
+                NULLIF(TRIM(a.icao), '') AS icao,
                 COALESCE(NULLIF(TRIM(a.nomeAeroporto), ''), NULLIF(TRIM(a.municipio), ''), CONCAT('Aeroporto ', a.idAeroporto)) AS nomeAeroporto,
                 top.quantidadeVoos,
                 top.totalPassageiros,
@@ -544,6 +556,7 @@ function obterAeroportoMenorProcura(idCompanhia) {
 function montarHubCirculacaoItem(hubRow, totalVoos) {
     if (!hubRow || totalVoos <= 0) {
         return {
+            icao: null,
             nomeAeroporto: null,
             voosNoAeroporto: 0,
             totalVoos: totalVoos || 0,
@@ -558,6 +571,7 @@ function montarHubCirculacaoItem(hubRow, totalVoos) {
         : Number(percentualBruto.toFixed(1));
 
     return {
+        icao: hubRow.icao || hubRow.nomeAeroporto,
         nomeAeroporto: hubRow.nomeAeroporto,
         voosNoAeroporto: voosHub,
         totalVoos: totalVoos,
@@ -584,6 +598,7 @@ function obterHubMaiorCirculacao(idCompanhia) {
         let sqlHubCompanhia = `
             SELECT
                 top.idAeroporto,
+                NULLIF(TRIM(a.icao), '') AS icao,
                 COALESCE(NULLIF(TRIM(a.nomeAeroporto), ''), NULLIF(TRIM(a.municipio), ''), CONCAT('Aeroporto ', a.idAeroporto)) AS nomeAeroporto,
                 top.voosNoAeroporto
             FROM (
@@ -610,6 +625,7 @@ function obterHubMaiorCirculacao(idCompanhia) {
         let sqlHubMercado = `
             SELECT
                 top.idAeroporto,
+                NULLIF(TRIM(a.icao), '') AS icao,
                 COALESCE(NULLIF(TRIM(a.nomeAeroporto), ''), NULLIF(TRIM(a.municipio), ''), CONCAT('Aeroporto ', a.idAeroporto)) AS nomeAeroporto,
                 top.voosNoAeroporto
             FROM (

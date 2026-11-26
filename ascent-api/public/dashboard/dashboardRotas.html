@@ -336,10 +336,10 @@
         let numMerc = merc.rota ? formatarFracaoNumeros(merc.quantidadeVoos, merc.totalVoos) : '--';
 
         elNomeComp.textContent = comp.rota || 'Sem dados';
-        elNomeComp.title = comp.rota || '';
+        elNomeComp.title = comp.nomeCompletoRota || '';
 
         elNomeMerc.textContent = merc.rota || 'Sem dados';
-        elNomeMerc.title = merc.rota || '';
+        elNomeMerc.title = merc.nomeCompletoRota || '';
 
         elTaxaComp.textContent = formatarPercentualKpi(comp.percentual);
         elTaxaComp.className = 'kpi-coluna-taxa';
@@ -394,13 +394,13 @@
         let comp = dados.suaCompanhia || {};
         let merc = dados.mercado || {};
 
-        let numComp = comp.nomeAeroporto ? formatarFracaoNumeros(comp.totalPassageiros, comp.totalAssentos) : '--';
-        let numMerc = merc.nomeAeroporto ? formatarFracaoNumeros(merc.totalPassageiros, merc.totalAssentos) : '--';
+        let numComp = comp.icao || comp.nomeAeroporto ? formatarFracaoNumeros(comp.totalPassageiros, comp.totalAssentos) : '--';
+        let numMerc = merc.icao || merc.nomeAeroporto ? formatarFracaoNumeros(merc.totalPassageiros, merc.totalAssentos) : '--';
 
-        elNomeComp.textContent = comp.nomeAeroporto || 'Sem dados';
+        elNomeComp.textContent = comp.icao || comp.nomeAeroporto || 'Sem dados';
         elNomeComp.title = comp.nomeAeroporto || '';
 
-        elNomeMerc.textContent = merc.nomeAeroporto || 'Sem dados';
+        elNomeMerc.textContent = merc.icao || merc.nomeAeroporto || 'Sem dados';
         elNomeMerc.title = merc.nomeAeroporto || '';
 
         let temComp = comp.totalPassageiros !== null && comp.totalPassageiros !== undefined;
@@ -458,13 +458,13 @@
         let comp = dados.suaCompanhia || {};
         let merc = dados.mercado || {};
 
-        let numComp = comp.nomeAeroporto ? formatarFracaoNumeros(comp.voosNoAeroporto, comp.totalVoos) : '--';
-        let numMerc = merc.nomeAeroporto ? formatarFracaoNumeros(merc.voosNoAeroporto, merc.totalVoos) : '--';
+        let numComp = comp.icao || comp.nomeAeroporto ? formatarFracaoNumeros(comp.voosNoAeroporto, comp.totalVoos) : '--';
+        let numMerc = merc.icao || merc.nomeAeroporto ? formatarFracaoNumeros(merc.voosNoAeroporto, merc.totalVoos) : '--';
 
-        elNomeComp.textContent = comp.nomeAeroporto || 'Sem dados';
+        elNomeComp.textContent = comp.icao || comp.nomeAeroporto || 'Sem dados';
         elNomeComp.title = comp.nomeAeroporto || '';
 
-        elNomeMerc.textContent = merc.nomeAeroporto || 'Sem dados';
+        elNomeMerc.textContent = merc.icao || merc.nomeAeroporto || 'Sem dados';
         elNomeMerc.title = merc.nomeAeroporto || '';
 
         let temComp = comp.percentual !== null && comp.percentual !== undefined;
